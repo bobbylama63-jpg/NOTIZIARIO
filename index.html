@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Notiziario Vocale Tavigliano</title>
+<style>
+  :root{
+    --font-scale: 1;
+    --wa-bg:#e5ddd5;
+    --wa-header:#075e54;
+    --wa-header-dark:#054a40;
+    --wa-bubble-in:#ffffff;
+    --wa-bubble-out:#dcf8c6;
+    --wa-green:#25d366;
+    --wa-teal:#128c7e;
+    --wa-text:#111b21;
+    --wa-sub:#667781;
+    --wa-accent:#00a884;
+    --wa-card-border:#e2e8f0;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --wa-bg:#0b141a;
+      --wa-header:#1f2c34;
+      --wa-header-dark:#101a20;
+      --wa-bubble-in:#202c33;
+      --wa-bubble-out:#005c4b;
+      --wa-text:#e9edef;
+      --wa-sub:#8696a0;
+      --wa-card-border:#2a3942;
+    }
+  }
+  :root[data-theme="dark"]{
+    --wa-bg:#0b141a;
+    --wa-header:#1f2c34;
+    --wa-header-dark:#101a20;
+    --wa-bubble-in:#202c33;
+    --wa-bubble-out:#005c4b;
+    --wa-text:#e9edef;
+    --wa-sub:#8696a0;
+    --wa-card-border:#2a3942;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--wa-bg);
+    color:var(--wa-text);
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+    font-size:calc(15px * var(--font-scale));
+  }
+  .phone{
+    width:100%;
+    max-width:540px;
+    min-height:100vh;
+    min-height:100dvh;
+    background:var(--wa-bg);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+  header{
+    background:var(--wa-header);
+    color:#fff;
+    padding:12px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    position:sticky;
+    top:0;
+    z-index:15;
+  }
+  .avatar{
+    width:42px;height:42px;border-radius:50%;
+    background:linear-gradient(135deg,var(--wa-green),var(--wa-teal));
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;flex-shrink:0;
+  }
+  .head-info{flex:1;min-width:0;}
+  .head-info .name{font-weight:700;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .head-info .status{font-size:0.78rem;opacity:0.85;}
+  .head-icons{display:flex;align-items:center;gap:8px;}
+
+  /* Strumenti Zoom */
+  .zoom-box{
+    display:flex;background:rgba(0,0,0,0.25);border-radius:14px;padding:2px 4px;
+    border:1px solid rgba(255,255,255,0.2);
+  }
+  .zoom-btn{
+    background:transparent;border:none;color:white;font-size:0.78rem;font-weight:800;
+    padding:3px 6px;cursor:pointer;border-radius:8px;
+  }
+
+  /* Notifica di stato per l'audio */
+  #audioNotice{
+    display:none;
+    background:#e0f2fe;
+    color:#0369a1;
+    border-bottom:1px solid #bae6fd;
+    padding:8px 14px;
+    font-size:0.8rem;
+    line-height:1.4;
+    font-weight:600;
+  }
+
+  .toolbar{
+    background:var(--wa-header-dark);
+    padding:8px 12px;
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    scrollbar-width:none;
+    position:sticky;
+    top:66px;
+    z-index:14;
+  }
+  .toolbar::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;
+    background:rgba(255,255,255,0.12);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.25);
+    padding:6px 14px;
+    border-radius:16px;
+    font-size:0.82rem;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active{background:var(--wa-green);border-color:var(--wa-green);color:#04331f;font-weight:700;}
+
+  .chat{
+    flex:1;
+    padding:16px 12px 100px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .msg{
+    max-width:94%;
+    background:var(--wa-bubble-in);
+    border-radius:12px;
+    padding:12px 14px 10px;
+    box-shadow:0 1px 2px rgba(0,0,0,0.12);
+    align-self:flex-start;
+    border:1px solid var(--wa-card-border);
+  }
+  .msg .cat{
+    font-size:0.8rem;
+    font-weight:800;
+    color:var(--wa-accent);
+    margin-bottom:4px;
+    text-transform:uppercase;
+  }
+  .msg .title{font-weight:700;font-size:0.98rem;margin-bottom:6px;line-height:1.4;}
+  .msg .body{font-size:0.92rem;color:var(--wa-text);line-height:1.5;}
+  
+  .fonte{
+    display:block;
+    margin-top:8px;
+    font-size:0.85rem;
+    font-weight:800;
+    color:var(--wa-accent);
+  }
+
+  .route-card{
+    background:rgba(0,0,0,0.04);
+    border-radius:10px;
+    padding:10px;
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .btn-maps{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    background:var(--wa-teal);
+    color:white;
+    text-decoration:none;
+    padding:8px 12px;
+    border-radius:8px;
+    font-size:0.85rem;
+    font-weight:700;
+    margin-top:4px;
+  }
+
+  .yt-box{
+    background:#fff1f2;
+    border:1px solid #fecdd3;
+    border-radius:12px;
+    padding:12px;
+    margin-top:10px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .btn-yt-music{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    background:#e11d48;
+    color:white;
+    text-decoration:none;
+    padding:9px 14px;
+    border-radius:10px;
+    font-size:0.85rem;
+    font-weight:700;
+  }
+
+  .voice-row{
+    display:flex;align-items:center;gap:10px;
+    margin-top:8px;
+    background:rgba(0,0,0,0.04);
+    border-radius:24px;
+    padding:6px 10px;
+  }
+  .play-btn{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--wa-accent);
+    border:none;color:#fff;font-size:16px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex:0 0 auto;
+  }
+  .wave{
+    flex:1;height:24px;display:flex;align-items:center;gap:3px;overflow:hidden;
+  }
+  .wave span{
+    width:3px;background:var(--wa-sub);border-radius:2px;
+    height:8px;opacity:0.7;
+  }
+  .msg.playing .wave span{
+    background:var(--wa-accent);
+    animation:eq 0.8s ease-in-out infinite alternate;
+  }
+  @keyframes eq{ 0%{height:4px;} 100%{height:20px;} }
+
+  .bottom-bar{
+    position:fixed;
+    bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:540px;
+    background:var(--wa-header-dark);
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    display:flex;gap:8px;align-items:center;
+    z-index:20;
+    box-shadow:0 -4px 15px rgba(0,0,0,0.2);
+  }
+  .bottom-bar button{
+    flex:1;
+    background:var(--wa-green);
+    color:#04331f;
+    border:none;
+    padding:12px 14px;
+    border-radius:24px;
+    font-size:0.95rem;
+    font-weight:800;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .bottom-bar button.secondary{
+    background:rgba(255,255,255,0.14);
+    color:#fff;
+    flex:0 0 auto;
+    width:44px;
+    border-radius:50%;
+    padding:0;height:44px;
+    font-size:16px;
+  }
+
+  .progress-wrap{
+    position:fixed;
+    top:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:540px;
+    height:4px;background:rgba(255,255,255,0.2);
+    z-index:30;
+  }
+  .progress-bar{height:100%;background:var(--wa-green);width:0%;transition:width .2s linear;}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+  <header>
+    <div class="avatar">📻</div>
+    <div class="head-info">
+      <div class="name">Notiziario di Tavigliano</div>
+      <div class="status">Giovedì 17 settembre — San Roberto Bellarmino</div>
+    </div>
+    <div class="head-icons">
+      <div class="zoom-box">
+        <button class="zoom-btn" onclick="applyFontScale(-0.1)">A−</button>
+        <button class="zoom-btn" onclick="applyFontScale(0)">A</button>
+        <button class="zoom-btn" onclick="applyFontScale(0.15)">A+</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra stato diagnostica audio -->
+  <div id="audioNotice"></div>
+
+  <div class="toolbar" id="toolbar"></div>
+
+  <!-- Riproduttore MP3 con priorità ad audio.mp3 -->
+  <audio id="bgMusic" loop preload="auto">
+    <source src="audio.mp3" type="audio/mpeg">
+    <source src="headline_update%20(2).mp3" type="audio/mpeg">
+    <source src="headline_update (2).mp3" type="audio/mpeg">
+    <source src="sottofondo.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="chat" id="chat"></div>
+
+  <div class="bottom-bar">
+    <button class="secondary" id="prevBtn" title="Precedente">⏮</button>
+    <button id="playAllBtn">▶️ Ascolta tutto</button>
+    <button class="secondary" id="copyAllBtn" title="Copia testo">📋</button>
+    <button class="secondary" id="nextBtn" title="Successivo">⏭</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const NEWS = [
+    {
+      cat: "🌦️ Meteo Tavigliano",
+      title: "Nubi sparse e schiarite, nessuna pioggia",
+      speak: "Iniziamo con il meteo. Giornata con nubi sparse alternate a schiarite, senza piogge. Massima di venticinque gradi, minima di quindici. Venti deboli e nessuna allerta. Fonte: 3 B Meteo.",
+      body: "Cielo con nubi sparse alternate a schiarite, precipitazioni assenti. Massima di 25°C, minima di 15°C. Venti deboli. <span class='fonte'>Fonte: 3BMeteo</span>",
+      time: "08:00"
+    },
+    {
+      cat: "📰 1. Newsbiella • Homepage",
+      title: "Bollo auto: esenzione per oltre 73mila biellesi",
+      speak: "Prima notizia da Newsbiella punto it: approvata l'esenzione del bollo auto per oltre settantatremila biellesi a partire dal duemilaventisette. Fonte: Newsbiella punto it.",
+      body: "La Regione Piemonte ha deliberato la manovra economica per l'esenzione del bollo auto a 73mila contribuenti biellesi dal 2027. <span class='fonte'>Fonte: Newsbiella.it</span>",
+      time: "08:01"
+    },
+    {
+      cat: "📰 2. Newsbiella • Homepage",
+      title: "Finti Carabinieri con arnesi da scasso: operazione Polizia",
+      speak: "Seconda notizia da Newsbiella punto it: blitz della Polizia a Biella contro finti carabinieri con strumenti da scasso; un arresto e due denunce. Fonte: Newsbiella punto it.",
+      body: "Operazione lampo della Polizia a Biella: sventata una truffa con un arresto e due denunce per possesso di arnesi da scasso. <span class='fonte'>Fonte: Newsbiella.it</span>",
+      time: "08:02"
+    },
+    {
+      cat: "🌲 Valle Cervo • Tavigliano",
+      title: "Successo a Tavigliano per la Ronda delle Cascine",
+      speak: "Dalla sezione Valle Cervo di Tavigliano: grande successo per la Ronda delle Cascine tra sentieri montani ed eccellenze gastronomiche. Fonte: Newsbiella punto it.",
+      body: "Pieno successo a Tavigliano per l'escursione naturalistica in cinque tappe alla scoperta delle cascine e dei sapori valligiani. <span class='fonte'>Fonte: Newsbiella.it</span>",
+      time: "08:03"
+    },
+    {
+      cat: "♻️ Rifiuti Tavigliano",
+      title: "Calendario Rifiuti: Oggi Organico",
+      speak: "Raccolta rifiuti a Tavigliano: oggi organico. Domani, venerdì diciotto, nessuna raccolta. La prossima martedì ventidue con la carta.",
+      body: "• <strong>Oggi:</strong> Raccolta <em>ORGANICO</em>.<br>• <strong>Domani:</strong> Nessuna raccolta.<br>• <strong>Martedì 22:</strong> <em>CARTA</em>.",
+      time: "08:04"
+    },
+    {
+      cat: "💊 Farmacie di Turno",
+      title: "Presidi più vicini & Navigatore GPS",
+      speak: "Farmacie: i riferimenti più vicini sono la Farmacia Savino ad Andorno a cinque minuti e la Farmacia Valeggia a Sagliano a sette minuti.",
+      body: "Tavigliano non ha farmacie nel comune:<br>" +
+            "<div class='route-card'><strong>1. Farmacia Savino (Andorno Micca)</strong><span>⏱ 5 min (3,2 km) via SP100 bis</span>" +
+            "<a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank'>🧭 Avvia Navigatore Andorno</a></div>" +
+            "<div class='route-card'><strong>2. Farmacia Valeggia (Sagliano Micca)</strong><span>⏱ 7 min (4,5 km) via SP100</span>" +
+            "<a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank'>🧭 Avvia Navigatore Sagliano</a></div>",
+      time: "08:05"
+    },
+    {
+      cat: "⛽ Prezzi Carburanti",
+      title: "Enercoop Biella: Prezzi & Mappa",
+      speak: "Carburanti: all'Enercoop di Biella, a quindici minuti, benzina self a due euro e nove centesimi, gasolio a due e ventiquattro, GPL a sessantotto centesimi e mezzo.",
+      body: "Distributore Enercoop Biella (Viale Macallè / Gli Orsi):<br>" +
+            "• <strong>Benzina:</strong> 2,09 €/L | <strong>Gasolio:</strong> 2,24 €/L | <strong>GPL:</strong> 0,685 €/L" +
+            "<div class='route-card'><span>⏱ Tempo stimato da Tavigliano: 15 min (10,5 km)</span>" +
+            "<a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Distributore+Enercoop+Biella' target='_blank'>🧭 Avvia Navigatore Enercoop</a></div>",
+      time: "08:06"
+    },
+    {
+      cat: "🎵 Canzone & Proverbio",
+      title: "Proverbio & Miniplayer Originale YouTube",
+      speak: "Chiudiamo con il proverbio piemontese: can ch'a bòja a mòrd nen, cane che abbaia non morde. La canzone del giorno è Nel blu dipinto di blu di Domenico Modugno. Buona giornata da Tavigliano!",
+      body: "• <strong>Proverbio piemontese:</strong> <em>«Can ch'a bòja a mòrd nen»</em> (Cane che abbaia non morde).<br>" +
+            "• <strong>Canzone del giorno:</strong> <em>Nel blu dipinto di blu</em> — Domenico Modugno (1958)." +
+            "<div class='yt-box'>" +
+            "  <strong>🎧 Ascolta il ritornello originale (30 sec):</strong>" +
+            "  <iframe width='100%' height='180' src='https://www.youtube-nocookie.com/embed/ViJgTYju8Gg?start=25&end=55&rel=0' title='Nel blu dipinto di blu' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen style='border-radius:8px;'></iframe>" +
+            "  <a class='btn-yt-music' href='https://music.youtube.com/watch?v=ViJgTYju8Gg' target='_blank'>🔴 Apri su YouTube Music</a>" +
+            "</div>",
+      time: "08:07"
+    }
+  ];
+
+  /* ==========================================================
+     GESTIONE SOTTOFONDO MP3 & DUCKING
+     ========================================================== */
+  const bgMusic = document.getElementById('bgMusic');
+  const notice = document.getElementById('audioNotice');
+  let isAudioReady = false;
+
+  bgMusic.addEventListener('canplaythrough', () => {
+    isAudioReady = true;
+    notice.style.display = 'none';
+  });
+
+  bgMusic.addEventListener('error', () => {
+    isAudioReady = false;
+    notice.style.display = 'block';
+    notice.innerHTML = "⚠️ <strong>File audio non trovato sul server.</strong><br>Verifica che nella cartella caricata su Netlify ci sia il file <code>audio.mp3</code> insieme a <code>index.html</code>.";
+  });
+
+  function startBackgroundMusic() {
+    bgMusic.volume = 0.60;
+    bgMusic.play().then(() => {
+      isAudioReady = true;
+      notice.style.display = 'none';
+    }).catch(err => {
+      notice.style.display = 'block';
+      notice.innerHTML = "ℹ️ Tocca lo schermo per attivare l'audio o apri il link direttamente in <strong>Chrome/Safari</strong>.";
+    });
+  }
+
+  function duckBackgroundMusic() {
+    fadeVolume(bgMusic, 0.12, 500); // Abbassa al 12% durante il parlato
+  }
+
+  function restoreBackgroundMusic() {
+    fadeVolume(bgMusic, 0.60, 700);
+  }
+
+  function stopBackgroundMusic() {
+    fadeVolume(bgMusic, 0, 1800, () => {
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+    });
+  }
+
+  let fadeTimer = null;
+  function fadeVolume(audio, target, duration, callback) {
+    if (fadeTimer) clearInterval(fadeTimer);
+    const start = audio.volume;
+    const steps = 20;
+    const delta = (target - start) / steps;
+    let count = 0;
+    fadeTimer = setInterval(() => {
+      count++;
+      let v = audio.volume + delta;
+      if (v < 0) v = 0;
+      if (v > 1) v = 1;
+      audio.volume = v;
+      if (count >= steps) {
+        clearInterval(fadeTimer);
+        fadeTimer = null;
+        audio.volume = target;
+        if (callback) callback();
+      }
+    }, duration / steps);
+  }
+
+  /* ==========================================================
+     SINTESI VOCALE & NAVIGAZIONE
+     ========================================================== */
+  const synth = window.speechSynthesis;
+  let activeIndex = -1;
+  let isPlayingAll = false;
+  let currentUtterance = null;
+
+  let currentScale = 1.0;
+  window.applyFontScale = function(delta) {
+    if (delta === 0) currentScale = 1.0;
+    else currentScale = Math.min(Math.max(currentScale + delta, 0.85), 1.45);
+    document.documentElement.style.setProperty('--font-scale', currentScale);
+  };
+
+  const chat = document.getElementById('chat');
+  const toolbar = document.getElementById('toolbar');
+
+  function renderToolbar() {
+    toolbar.innerHTML = '<div class="chip active" onclick="filterCat(\'all\', this)">Tutte</div>';
+    NEWS.forEach((item, idx) => {
+      const shortName = item.cat.split(' ')[0] + ' ' + (item.cat.split(' ')[1] || '');
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.innerText = shortName;
+      chip.onclick = () => filterCat(idx, chip);
+      toolbar.appendChild(chip);
+    });
+  }
+
+  function renderNews() {
+    chat.innerHTML = '';
+    NEWS.forEach((item, idx) => {
+      const el = document.createElement('div');
+      el.className = 'msg';
+      el.id = `msg-${idx}`;
+      
+      let waveSpans = '';
+      for (let i = 0; i < 30; i++) waveSpans += '<span></span>';
+
+      el.innerHTML = `
+        <div class="cat">${item.cat}</div>
+        <div class="title">${item.title}</div>
+        <div class="body">${item.body}</div>
+        <div class="voice-row">
+          <button class="play-btn" onclick="toggleSingle(${idx})">▶</button>
+          <div class="wave">${waveSpans}</div>
+        </div>
+      `;
+      chat.appendChild(el);
+    });
+  }
+
+  window.filterCat = function(idx, chipEl) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chipEl.classList.add('active');
+    if (idx === 'all') {
+      document.querySelectorAll('.msg').forEach(m => m.style.display = 'block');
+    } else {
+      document.querySelectorAll('.msg').forEach((m, i) => {
+        m.style.display = (i === idx) ? 'block' : 'none';
+      });
+    }
+  };
+
+  window.toggleSingle = function(idx) {
+    if (activeIndex === idx && synth.speaking) {
+      stopSpeech();
+    } else {
+      playItem(idx, false);
+    }
+  };
+
+  function playItem(idx, continueNext) {
+    stopSpeech();
+    activeIndex = idx;
+    const item = NEWS[idx];
+    
+    document.querySelectorAll('.msg').forEach(m => m.classList.remove('playing'));
+    const currentCard = document.getElementById(`msg-${idx}`);
+    if (currentCard) {
+      currentCard.classList.add('playing');
+      currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    startBackgroundMusic();
+    duckBackgroundMusic();
+
+    currentUtterance = new SpeechSynthesisUtterance(item.speak);
+    currentUtterance.lang = 'it-IT';
+    currentUtterance.rate = 0.95;
+
+    currentUtterance.onend = () => {
+      if (currentCard) currentCard.classList.remove('playing');
+      if (continueNext && idx + 1 < NEWS.length) {
+        playItem(idx + 1, true);
+      } else {
+        restoreBackgroundMusic();
+        setTimeout(stopBackgroundMusic, 1500);
+        stopSpeech();
+      }
+    };
+
+    currentUtterance.onerror = () => {
+      stopSpeech();
+      stopBackgroundMusic();
+    };
+
+    const pct = ((idx + 1) / NEWS.length) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+
+    synth.speak(currentUtterance);
+  }
+
+  function stopSpeech() {
+    synth.cancel();
+    if (activeIndex >= 0) {
+      const el = document.getElementById(`msg-${activeIndex}`);
+      if (el) el.classList.remove('playing');
+    }
+    activeIndex = -1;
+    document.getElementById('playAllBtn').innerText = '▶️ Ascolta tutto';
+  }
+
+  document.getElementById('playAllBtn').onclick = function() {
+    if (synth.speaking) {
+      stopSpeech();
+      stopBackgroundMusic();
+      isPlayingAll = false;
+    } else {
+      isPlayingAll = true;
+      this.innerText = '⏸️ Pausa';
+      playItem(0, true);
+    }
+  };
+
+  document.getElementById('prevBtn').onclick = () => {
+    let nextIdx = (activeIndex > 0) ? activeIndex - 1 : 0;
+    playItem(nextIdx, isPlayingAll);
+  };
+
+  document.getElementById('nextBtn').onclick = () => {
+    let nextIdx = (activeIndex + 1 < NEWS.length) ? activeIndex + 1 : 0;
+    playItem(nextIdx, isPlayingAll);
+  };
+
+  document.getElementById('copyAllBtn').onclick = () => {
+    const fullText = NEWS.map(n => `*${n.cat}*\n${n.title}\n${n.body.replace(/<[^>]*>/g, '')}`).join('\n\n');
+    navigator.clipboard.writeText(fullText);
+    alert("Testo copiato negli appunti!");
+  };
+
+  renderToolbar();
+  renderNews();
+})();
+</script>
+
+</body>
+</html>
