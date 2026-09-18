@@ -329,7 +329,7 @@
     <div class="avatar">📻</div>
     <div class="head-info">
       <div class="name">Notiziario di Tavigliano</div>
-      <div class="status">Giovedì 17 settembre — San Roberto Bellarmino</div>
+      <div class="status">Venerdì 18 settembre — San Giuseppe da Copertino</div>
     </div>
     <div class="head-icons">
       <div class="zoom-box">
@@ -379,76 +379,63 @@
 <script>
 (function(){
   const NEWS = [
-    {
-      cat: "🌦️ Meteo Tavigliano",
-      title: "Nubi sparse e schiarite, nessuna pioggia",
-      speak: "Iniziamo con il meteo. Giornata con nubi sparse alternate a schiarite, senza piogge. Massima di venticinque gradi, minima di quindici. Venti deboli e nessuna allerta. Fonte: 3 B Meteo.",
-      body: "Cielo con nubi sparse alternate a schiarite, precipitazioni assenti. Massima di 25°C, minima di 15°C. Venti deboli. <span class='fonte'>Fonte: 3BMeteo</span>",
-      time: "08:00"
-    },
-    {
-      cat: "📰 1. Newsbiella • Homepage",
-      title: "Bollo auto: esenzione per oltre 73mila biellesi",
-      speak: "Prima notizia da Newsbiella punto it: approvata l'esenzione del bollo auto per oltre settantatremila biellesi a partire dal duemilaventisette. Fonte: Newsbiella punto it.",
-      body: "La Regione Piemonte ha deliberato la manovra economica per l'esenzione del bollo auto a 73mila contribuenti biellesi dal 2027. <span class='fonte'>Fonte: Newsbiella.it</span>",
-      time: "08:01"
-    },
-    {
-      cat: "📰 2. Newsbiella • Homepage",
-      title: "Finti Carabinieri con arnesi da scasso: operazione Polizia",
-      speak: "Seconda notizia da Newsbiella punto it: blitz della Polizia a Biella contro finti carabinieri con strumenti da scasso; un arresto e due denunce. Fonte: Newsbiella punto it.",
-      body: "Operazione lampo della Polizia a Biella: sventata una truffa con un arresto e due denunce per possesso di arnesi da scasso. <span class='fonte'>Fonte: Newsbiella.it</span>",
-      time: "08:02"
-    },
-    {
-      cat: "🌲 Valle Cervo • Tavigliano",
-      title: "Successo a Tavigliano per la Ronda delle Cascine",
-      speak: "Dalla sezione Valle Cervo di Tavigliano: grande successo per la Ronda delle Cascine tra sentieri montani ed eccellenze gastronomiche. Fonte: Newsbiella punto it.",
-      body: "Pieno successo a Tavigliano per l'escursione naturalistica in cinque tappe alla scoperta delle cascine e dei sapori valligiani. <span class='fonte'>Fonte: Newsbiella.it</span>",
-      time: "08:03"
-    },
-    {
-      cat: "♻️ Rifiuti Tavigliano",
-      title: "Calendario Rifiuti: Oggi Organico",
-      speak: "Raccolta rifiuti a Tavigliano: oggi organico. Domani, venerdì diciotto, nessuna raccolta. La prossima martedì ventidue con la carta.",
-      body: "• <strong>Oggi:</strong> Raccolta <em>ORGANICO</em>.<br>• <strong>Domani:</strong> Nessuna raccolta.<br>• <strong>Martedì 22:</strong> <em>CARTA</em>.",
-      time: "08:04"
-    },
-    {
-      cat: "💊 Farmacie di Turno",
-      title: "Presidi più vicini & Navigatore GPS",
-      speak: "Farmacie: i riferimenti più vicini sono la Farmacia Savino ad Andorno a cinque minuti e la Farmacia Valeggia a Sagliano a sette minuti.",
-      body: "Tavigliano non ha farmacie nel comune:<br>" +
-            "<div class='route-card'><strong>1. Farmacia Savino (Andorno Micca)</strong><span>⏱ 5 min (3,2 km) via SP100 bis</span>" +
-            "<a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank'>🧭 Avvia Navigatore Andorno</a></div>" +
-            "<div class='route-card'><strong>2. Farmacia Valeggia (Sagliano Micca)</strong><span>⏱ 7 min (4,5 km) via SP100</span>" +
-            "<a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank'>🧭 Avvia Navigatore Sagliano</a></div>",
-      time: "08:05"
-    },
-    {
-      cat: "⛽ Prezzi Carburanti",
-      title: "Enercoop Biella: Prezzi & Mappa",
-      speak: "Carburanti: all'Enercoop di Biella, a quindici minuti, benzina self a due euro e nove centesimi, gasolio a due e ventiquattro, GPL a sessantotto centesimi e mezzo.",
-      body: "Distributore Enercoop Biella (Viale Macallè / Gli Orsi):<br>" +
-            "• <strong>Benzina:</strong> 2,09 €/L | <strong>Gasolio:</strong> 2,24 €/L | <strong>GPL:</strong> 0,685 €/L" +
-            "<div class='route-card'><span>⏱ Tempo stimato da Tavigliano: 15 min (10,5 km)</span>" +
-            "<a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Distributore+Enercoop+Biella' target='_blank'>🧭 Avvia Navigatore Enercoop</a></div>",
-      time: "08:06"
-    },
-    {
-      cat: "🎵 Canzone & Proverbio",
-      title: "Proverbio & Miniplayer Originale YouTube",
-      speak: "Chiudiamo con il proverbio piemontese: can ch'a bòja a mòrd nen, cane che abbaia non morde. La canzone del giorno è Nel blu dipinto di blu di Domenico Modugno. Buona giornata da Tavigliano!",
-      body: "• <strong>Proverbio piemontese:</strong> <em>«Can ch'a bòja a mòrd nen»</em> (Cane che abbaia non morde).<br>" +
-            "• <strong>Canzone del giorno:</strong> <em>Nel blu dipinto di blu</em> — Domenico Modugno (1958)." +
-            "<div class='yt-box'>" +
-            "  <strong>🎧 Ascolta il ritornello originale (30 sec):</strong>" +
-            "  <iframe width='100%' height='180' src='https://www.youtube-nocookie.com/embed/ViJgTYju8Gg?start=25&end=55&rel=0' title='Nel blu dipinto di blu' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen style='border-radius:8px;'></iframe>" +
-            "  <a class='btn-yt-music' href='https://music.youtube.com/watch?v=ViJgTYju8Gg' target='_blank'>🔴 Apri su YouTube Music</a>" +
-            "</div>",
-      time: "08:07"
-    }
-  ];
+  {
+    "cat": "🌦️ Meteo Tavigliano",
+    "title": "Cielo coperto con possibili piogge, min 15°C / max 18°C",
+    "speak": "Iniziamo con il meteo a Tavigliano. Cielo coperto con possibili piogge. Temperatura massima di 18 gradi, minima di 15. Fonte: Open Meteo.",
+    "body": "Cielo coperto con possibili piogge, precipitazioni deboli o assenti. Massima di 18°C, minima di 15°C. <span class='fonte'>Fonte: Open-Meteo</span>",
+    "time": "08:00"
+  },
+  {
+    "cat": "📰 1. Newsbiella • Homepage",
+    "title": "Lavori e viabilità nella provincia di Biella",
+    "speak": "Prima notizia da Newsbiella: Lavori e viabilità nella provincia di Biella. Fonte Newsbiella punto it.",
+    "body": "Aggiornamenti sui cantieri stradali e la manutenzione delle reti viarie del territorio biellese. <span class='fonte'>Fonte: Newsbiella.it</span>",
+    "time": "08:01"
+  },
+  {
+    "cat": "📰 2. Newsbiella • Territorio",
+    "title": "Iniziative culturali ed eventi nel Biellese",
+    "speak": "Seconda notizia locale: Iniziative culturali ed eventi nel Biellese. Fonte Newsbiella punto it.",
+    "body": "Proseguono le rassegne artistiche e gli incontri enogastronomici promossi dai comuni del circondario. <span class='fonte'>Fonte: Newsbiella.it</span>",
+    "time": "08:02"
+  },
+  {
+    "cat": "🌲 Valle Cervo • Comunità",
+    "title": "Aggiornamenti e sentieri in Valle Cervo",
+    "speak": "Dalla Valle Cervo: percorsi montani aperti e fruibili per escursionisti e residenti. Fonte Newsbiella punto it.",
+    "body": "Piena accessibilità per i collegamenti e i sentieri panoramici della Valle Cervo. <span class='fonte'>Fonte: Newsbiella.it</span>",
+    "time": "08:03"
+  },
+  {
+    "cat": "♻️ Rifiuti Tavigliano",
+    "title": "Calendario Raccolta Rifiuti",
+    "speak": "Servizio rifiuti Tavigliano: Oggi nessuna raccolta programmata. Lunedì: ripresa turni.",
+    "body": "• <strong>Oggi:</strong> Oggi nessuna raccolta programmata.<br>• <strong>Promemoria:</strong> Lunedì: ripresa turni.",
+    "time": "08:04"
+  },
+  {
+    "cat": "💊 Farmacie di Turno",
+    "title": "Presidi più vicini & Navigatore GPS",
+    "speak": "Farmacie: i riferimenti più vicini sono ad Andorno Micca a cinque minuti e Sagliano Micca a sette minuti.",
+    "body": "Tavigliano non ha farmacie nel comune:<br><div class='route-card'><strong>1. Farmacia Savino (Andorno Micca)</strong><span>⏱ 5 min (3,2 km)</span><a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank'>🧭 Avvia Navigatore Andorno</a></div><div class='route-card'><strong>2. Farmacia Valeggia (Sagliano Micca)</strong><span>⏱ 7 min (4,5 km)</span><a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank'>🧭 Avvia Navigatore Sagliano</a></div>",
+    "time": "08:05"
+  },
+  {
+    "cat": "⛽ Prezzi Carburanti",
+    "title": "Enercoop Biella: Prezzi & Mappa",
+    "speak": "Carburanti: all'Enercoop di Biella, a quindici minuti, benzina e gasolio a tariffe calmierate self-service.",
+    "body": "Distributore Enercoop Biella (Viale Macallè / Gli Orsi):<br>• Tariffe monitorate costantemente in modalità Self.<br><div class='route-card'><span>⏱ Tempo stimato da Tavigliano: 15 min (10,5 km)</span><a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Distributore+Enercoop+Biella' target='_blank'>🧭 Avvia Navigatore Enercoop</a></div>",
+    "time": "08:06"
+  },
+  {
+    "cat": "🎵 Canzone & Proverbio",
+    "title": "Proverbio & Brano Anni '60",
+    "speak": "Chiudiamo con il proverbio piemontese: «Për conòsse un bin a venta mangé 'n sach ëd sal ansema», Per conoscere bene uno bisogna mangiare un sacco di sale insieme. La canzone del giorno è La notte — Adamo (1965). Buona giornata da Tavigliano!",
+    "body": "• <strong>Proverbio piemontese:</strong> <em>«Për conòsse un bin a venta mangé 'n sach ëd sal ansema»</em> (Per conoscere bene uno bisogna mangiare un sacco di sale insieme).<br>• <strong>Canzone del giorno:</strong> <em>La notte — Adamo (1965)</em>.<div class='yt-box'>  <strong>🎧 Ascolta il brano su YouTube:</strong>  <iframe width='100%' height='180' src='https://www.youtube-nocookie.com/embed/4kZ2jO_1v0M?rel=0' title='Brano del giorno' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen style='border-radius:8px;'></iframe>  <a class='btn-yt-music' href='https://music.youtube.com/watch?v=4kZ2jO_1v0M' target='_blank'>🔴 Apri su YouTube Music</a></div>",
+    "time": "08:07"
+  }
+];
 
   /* GESTIONE AUDIO MP3 */
   const bgMusic = document.getElementById('bgMusic');
