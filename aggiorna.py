@@ -2,17 +2,16 @@ import datetime
 import glob
 import html
 import json
-import os
 import re
 import urllib.request
 import xml.etree.ElementTree as ET
 
 # ==============================================================================
-# 1. RILEVAZIONE AUTOMATICA DEL FILE MP3 (CARTELLA DIGITA O ROOT)
+# 1. RILEVAZIONE SOTTOFONDO MP3 (CARTELLA DIGITA O ROOT)
 # ==============================================================================
 candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glob("*.mp3")
 mp3_file = candidati_mp3[0].replace("\\", "/") if candidati_mp3 else "headlineupdate.mp3"
-print(f"File MP3 di sottofondo rilevato: {mp3_file}")
+print(f"Sottofondo musicale impostato su: {mp3_file}")
 
 # ==============================================================================
 # 2. DATA E SANTO DEL GIORNO
@@ -61,7 +60,7 @@ def controlla_conformita(titolo, testo):
     return True, "Conforme"
 
 # ==============================================================================
-# 4. PREVISIONI METEO CON 3B METEO
+# 4. PREVISIONI 3B METEO (TAVIGLIANO)
 # ==============================================================================
 def get_meteo():
     try:
@@ -96,69 +95,132 @@ def get_meteo():
         return {
             "cat": "🌦️ Meteo Tavigliano",
             "title": "Nubi sparse e clima montano",
-            "speak": "Previsioni meteo per Tavigliano: nubi sparse con brezze fresche e clima stabile.",
+            "speak": "Previsioni meteo per Tavigliano: nubi sparse con brezze fresche e tempo asciutto.",
             "body": "Nubi sparse e tempo asciutto lungo la Valle Cervo.<br><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='color:#0284c7; font-weight:700;'>🌐 Apri bollettino 3B Meteo</a>"
         }
 
 # ==============================================================================
-# 5. SCRAPING NOTIZIE DA NEWSBIELLA.IT/MOBILE.HTML
+# 5. ESTRAZIONE PRIME 2 NOTIZIE (APERTURA / CRONACA) SENZA ELENCHI
 # ==============================================================================
-def get_newsbiella_mobile():
-    trovate = []
-    headers = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
-    for target_url in ["https://www.newsbiella.it/mobile.html", "https://www.newsbiella.it/mobile"]:
+HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
+
+def get_prime_due_notizie():
+    articoli = []
+    # Fonti primarie: versione mobile, cronaca e homepage
+    sorgenti = [
+        "https://www.newsbiella.it/mobile",
+        "https://www.newsbiella.it/leggi-notizia/argomenti/cronaca-5.html",
+        "https://www.newsbiella.it/sommario/argomenti/cronaca-5.html",
+        "https://www.newsbiella.it/mobile.html"
+    ]
+    
+    for url in sorgenti:
         try:
-            req = urllib.request.Request(target_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=8) as res:
+            req = urllib.request.Request(url, headers=HEADERS)
+            with urllib.request.urlopen(req, timeout=7) as res:
                 raw_html = res.read().decode('utf-8', errors='ignore')
                 pattern = re.compile(r'<(?:h2|h3|a)[^>]*class="[^"]*(?:title|titolo|entry-title)[^"]*"[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
                 matches = pattern.findall(raw_html)
                 if not matches:
-                    pattern_fallback = re.compile(r'<h[23][^>]*>(.*?)</h[23]>', re.IGNORECASE | re.DOTALL)
-                    matches = pattern_fallback.findall(raw_html)
+                    pattern_fb = re.compile(r'<h[23][^>]*>(.*?)</h[23]>', re.IGNORECASE | re.DOTALL)
+                    matches = pattern_fb.findall(raw_html)
 
                 for m in matches:
-                    testo = re.sub(r'<[^>]+>', '', m).strip()
-                    testo = html.unescape(testo)
-                    testo = " ".join(testo.split())
-                    if len(testo) > 22 and testo not in [x["title"] for x in trovate]:
-                        trovate.append({
-                            "title": testo,
-                            "desc": "Primo piano dalla redazione territoriale di Newsbiella Mobile."
-                        })
-                    if len(trovate) >= 2:
+                    t = re.sub(r'<[^>]+>', '', m).strip()
+                    t = html.unescape(t)
+                    t = " ".join(t.split())
+                    if len(t) > 22 and not any(a["title"] == t for a in articoli):
+                        valido, _ = controlla_conformita(t, "")
+                        if valido:
+                            articoli.append({
+                                "title": t,
+                                "desc": "Primo piano dalla redazione territoriale di Newsbiella."
+                            })
+                    if len(articoli) >= 2:
                         break
         except Exception:
             pass
-        if len(trovate) >= 2:
+        if len(articoli) >= 2:
             break
 
-    if len(trovate) < 2:
+    # Se le pagine web non rispondono, estrazione di riserva da feed RSS
+    if len(articoli) < 2:
         try:
-            req = urllib.request.Request("https://www.newsbiella.it/rss.xml", headers=headers)
-            with urllib.request.urlopen(req, timeout=8) as res:
+            req = urllib.request.Request("https://www.newsbiella.it/rss.xml", headers=HEADERS)
+            with urllib.request.urlopen(req, timeout=7) as res:
                 root = ET.fromstring(res.read().decode('utf-8', errors='ignore'))
-                for item in root.findall('.//item')[:3]:
+                for item in root.findall('.//item'):
                     t = item.find('title').text.strip() if item.find('title') is not None else ""
                     d = item.find('description').text.strip() if item.find('description') is not None else ""
                     clean_d = re.sub('<[^<]+?>', '', d)[:140] + "..."
                     clean_t = re.sub('<[^<]+?>', '', t)
-                    if clean_t and clean_t not in [x["title"] for x in trovate]:
-                        trovate.append({"title": clean_t, "desc": clean_d})
-                    if len(trovate) >= 2:
+                    clean_t = " ".join(clean_t.split())
+                    if len(clean_t) > 20 and not any(a["title"] == clean_t for a in articoli):
+                        valido, _ = controlla_conformita(clean_t, clean_d)
+                        if valido:
+                            articoli.append({"title": clean_t, "desc": clean_d})
+                    if len(articoli) >= 2:
                         break
         except Exception:
             pass
 
-    if len(trovate) < 2:
-        trovate = [
-            {"title": "Interventi di manutenzione e sicurezza viaria nel Biellese", "desc": "Monitoraggio costante sui cantieri stradali e sui principali collegamenti della provincia."},
-            {"title": "Attività culturali e valorizzazione del territorio", "desc": "Proseguono le rassegne enogastronomiche e gli incontri promossi nei comuni valligiani."}
+    # Salvaguardia istituzionale
+    if len(articoli) < 2:
+        articoli = [
+            {"title": "Interventi di manutenzione e sicurezza viaria nel Biellese", "desc": "Monitoraggio costante sui cantieri stradali e sui principali collegamenti provinciali."},
+            {"title": "Attività culturali e valorizzazione dei borghi del territorio", "desc": "Proseguono le rassegne comunitarie e gli incontri promossi nei comuni valligiani."}
         ]
-    return trovate[:2]
+    return articoli[:2]
 
 # ==============================================================================
-# 6. CALENDARIO RIFIUTI TAVIGLIANO
+# 6. ESTRAZIONE VALLE CERVO (SOLO ED ESCLUSIVAMENTE SE SI PARLA DI TAVIGLIANO)
+# ==============================================================================
+def get_notizia_tavigliano():
+    sorgenti_valle = [
+        "https://www.newsbiella.it/sommario/argomenti/valle-cervo.html",
+        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
+        "https://www.newsbiella.it/rss.xml"
+    ]
+    
+    for url in sorgenti_valle:
+        try:
+            req = urllib.request.Request(url, headers=HEADERS)
+            with urllib.request.urlopen(req, timeout=7) as res:
+                raw_text = res.read().decode('utf-8', errors='ignore')
+                if "tavigliano" in raw_text.lower():
+                    # Se è un feed XML
+                    if "rss" in url:
+                        root = ET.fromstring(raw_text)
+                        for item in root.findall('.//item'):
+                            t = item.find('title').text.strip() if item.find('title') is not None else ""
+                            d = item.find('description').text.strip() if item.find('description') is not None else ""
+                            blocco = f"{t} {d}".lower()
+                            if "tavigliano" in blocco:
+                                clean_t = re.sub('<[^<]+?>', '', t).strip()
+                                clean_d = re.sub('<[^<]+?>', '', d)[:150].strip() + "..."
+                                valido, _ = controlla_conformita(clean_t, clean_d)
+                                if valido:
+                                    return {"title": clean_t, "desc": clean_d}
+                    # Se è una pagina HTML
+                    pattern = re.compile(r'<(?:h2|h3|a)[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
+                    matches = pattern.findall(raw_text)
+                    for m in matches:
+                        t = re.sub(r'<[^>]+>', '', m).strip()
+                        t = html.unescape(t)
+                        t = " ".join(t.split())
+                        if "tavigliano" in t.lower() and len(t) > 20:
+                            valido, _ = controlla_conformita(t, "")
+                            if valido:
+                                return {
+                                    "title": t,
+                                    "desc": "Notizia riguardante direttamente il territorio e la comunità di Tavigliano."
+                                }
+        except Exception:
+            pass
+    return None
+
+# ==============================================================================
+# 7. RIFIUTI TAVIGLIANO
 # ==============================================================================
 def get_rifiuti(weekday):
     giorni = {
@@ -176,28 +238,17 @@ def get_rifiuti(weekday):
     return {"cat": "♻️ Rifiuti Tavigliano", "title": "Calendario Raccolta Rifiuti", "speak": speak, "body": body}
 
 # ==============================================================================
-# 7. COMPOSIZIONE DATI
+# 8. COMPOSIZIONE DATI
 # ==============================================================================
 meteo_item = get_meteo()
-news = get_newsbiella_mobile()
-
-def crea_card_news(item, num):
-    valido, motivo = controlla_conformita(item["title"], item["desc"])
-    if valido:
-        spk = f"Notizia locale numero {num}: {item['title']}."
-        bod = item["desc"]
-        tit = item["title"]
-    else:
-        spk = f"Notizia numero {num}: contenuto momentaneamente sospeso per conformità editoriale."
-        bod = f"<span style='color:#ef4444; font-weight:700;'>⚠️ Contenuto non disponibile: {motivo}.</span>"
-        tit = "Notizia non disponibile"
-    return {"cat": f"📰 {num}. Newsbiella Mobile", "title": tit, "speak": spk, "body": bod}
+prime_due = get_prime_due_notizie()
+notizia_tav = get_notizia_tavigliano()
 
 PROVERBI = [
     ("«Can ch'a bòja a mòrd nen»", "Cane che abbaia non morde"),
     ("«Chi a peul nen bate 'l caval, a bat la sela»", "Chi non può battere il cavallo, batte la sella"),
     ("«A fesse d'òr a s'ancurnisa la miseria»", "A farsi d'oro si incornicia la miseria"),
-    ("«Për conòsse un bin a venta mangé 'n sach ëd sal ansema»", "Per conoscere bene uno bisogna mangiare un sacco di sale insieme"),
+    ("«Për conòsse un bin a venta mangé 'n sach ëd sal ansema»", "Per conoscere bene qualcuno bisogna mangiare un sacco di sale insieme"),
     ("«L'eva ch'a cor a pòrta nen d'infezion»", "L'acqua che scorre non porta infezioni")
 ]
 proverbio = PROVERBI[(today.day - 1) % len(PROVERBI)]
@@ -210,76 +261,102 @@ news_data = [
         "body": f"• <strong>Data:</strong> {giorno_settimana} {today.day} {nome_mese} {today.year}<br>• <strong>Santo del giorno:</strong> {santo}"
     },
     meteo_item,
-    crea_card_news(news[0], 1),
-    crea_card_news(news[1], 2),
-    get_rifiuti(today.weekday()),
-    # FARMACIE: NUMERI NON LETTI A VOCE
+    # PRIMA NOTIZIA: LETTURA DIRETTA SENZA DIRE "NOTIZIA 1"
     {
-        "cat": "💊 Farmacie di Turno & Servizi",
-        "title": "Turni CAP 13900 & Presidi di Zona",
-        "speak": (
-            "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, "
-            "potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. "
-            "I presidi territoriali più vicini sono la Farmacia Savino ad Andorno Micca "
-            "e la Farmacia Valeggia a Sagliano Micca. "
-            "Nella scheda trovate i pulsanti diretti per avviare la telefonata e per aprire il navigatore."
-        ),
-        "body": (
-            "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>"
-            "  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>"
-            "  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>"
-            "  <div style='margin-top:8px;'>"
-            "    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>"
-            "  </div>"
-            "</div>"
-            "<strong>Presidi locali più vicini:</strong><br>"
-            "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
-            "  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>"
-            "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
-            "    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>"
-            "    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>"
-            "  </div>"
-            "</div>"
-            "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
-            "  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>"
-            "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
-            "    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>"
-            "    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>"
-            "  </div>"
-            "</div>"
-        )
+        "cat": "📰 Cronaca e Territorio",
+        "title": prime_due[0]["title"],
+        "speak": f"{prime_due[0]['title']}. {prime_due[0]['desc']}",
+        "body": prime_due[0]["desc"]
     },
+    # SECONDA NOTIZIA: LETTURA DIRETTA SENZA DIRE "NOTIZIA 2"
     {
-        "cat": "💡 Saggezza Tradizionale",
-        "title": "Proverbio Piemontese del Giorno",
-        "speak": f"Prima del riepilogo, il proverbio piemontese di oggi: {proverbio[0]}, che significa: {proverbio[1]}.",
-        "body": f"• <strong>In dialetto piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
-    },
-    # RIEPILOGO UNICO DELLE FONTI NEL FINALE
-    {
-        "cat": "📢 Trasparenza & Riepilogo Fonti",
-        "title": "Riepilogo Ufficiale Fonti del Notiziario",
-        "speak": (
-            "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: "
-            "previsioni meteo a cura di 3B Meteo; notizie dalla versione mobile di Newsbiella punto it; "
-            "calendario raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. "
-            "Una buona giornata a tutta la comunità di Tavigliano!"
-        ),
-        "body": (
-            "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
-            "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>"
-            "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-            "  • <strong>Notizie Territoriali:</strong> Newsbiella.it/mobile.html<br>"
-            "  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>"
-            "  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>"
-            "  • <strong>Calendario:</strong> Archivio Liturgico Diocesano"
-            "</div>"
-        )
+        "cat": "📰 Cronaca e Territorio",
+        "title": prime_due[1]["title"],
+        "speak": f"{prime_due[1]['title']}. {prime_due[1]['desc']}",
+        "body": prime_due[1]["desc"]
     }
 ]
 
+# VALLE CERVO: AGGIUNTA SOLO SE RIGUARDA TAVIGLIANO
+if notizia_tav:
+    news_data.append({
+        "cat": "🌲 Valle Cervo • Tavigliano",
+        "title": notizia_tav["title"],
+        "speak": f"{notizia_tav['title']}. {notizia_tav['desc']}",
+        "body": notizia_tav["desc"]
+    })
+
+# RIFIUTI
+news_data.append(get_rifiuti(today.weekday()))
+
+# FARMACIE (SENZA LETTURA VOCALE DEI NUMERI)
+news_data.append({
+    "cat": "💊 Farmacie di Turno & Servizi",
+    "title": "Turni CAP 13900 & Presidi di Zona",
+    "speak": (
+        "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, "
+        "potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. "
+        "I presidi più vicini sono la Farmacia Savino ad Andorno Micca e la Farmacia Valeggia a Sagliano Micca. "
+        "Nella scheda trovate i pulsanti per telefonare e per avviare il navigatore."
+    ),
+    "body": (
+        "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>"
+        "  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>"
+        "  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>"
+        "  <div style='margin-top:8px;'>"
+        "    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>"
+        "  </div>"
+        "</div>"
+        "<strong>Presidi locali più vicini:</strong><br>"
+        "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
+        "  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>"
+        "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
+        "    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>"
+        "    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>"
+        "  </div>"
+        "</div>"
+        "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
+        "  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>"
+        "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
+        "    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>"
+        "    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>"
+        "  </div>"
+        "</div>"
+    )
+})
+
+# PROVERBIO PIEMONTESE
+news_data.append({
+    "cat": "💡 Saggezza Tradizionale",
+    "title": "Proverbio Piemontese del Giorno",
+    "speak": f"Prima del riepilogo, il proverbio piemontese di oggi: {proverbio[0]}, che significa: {proverbio[1]}.",
+    "body": f"• <strong>In dialetto piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
+})
+
+# RIEPILOGO UNICO FONTI NEL FINALE
+news_data.append({
+    "cat": "📢 Trasparenza & Riepilogo Fonti",
+    "title": "Riepilogo Ufficiale Fonti del Notiziario",
+    "speak": (
+        "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: "
+        "previsioni meteo a cura di 3B Meteo; notizie dalla redazione di Newsbiella punto it; "
+        "calendario raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. "
+        "Una buona giornata a tutta la comunità di Tavigliano!"
+    ),
+    "body": (
+        "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
+        "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>"
+        "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
+        "  • <strong>Notizie Locali:</strong> Newsbiella.it<br>"
+        "  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>"
+        "  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>"
+        "  • <strong>Calendario:</strong> Archivio Liturgico Diocesano"
+        "</div>"
+    )
+})
+
 # ==============================================================================
-# 8. GENERATORE HTML CON SOTTOFONDO MP3 INTEGRATO
+# 9. GENERATORE HTML COMPLETO (STUDIO RADIO & WOW EFFECTS)
 # ==============================================================================
 json_news = json.dumps(news_data, ensure_ascii=False, indent=2)
 
@@ -346,7 +423,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     100% {{ transform: translate(-100%, 0); }}
   }}
 
-  /* HEADER CON EFFETTO NEON ON AIR */
+  /* HEADER RADIO ON AIR */
   header {{
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(10px);
@@ -394,7 +471,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     to {{ opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }}
   }}
 
-  /* NOTIZIE SPOTLIGHT */
+  /* NOTIZIE CON EFFETTO SPOTLIGHT */
   .news-stream {{
     padding: 14px 12px;
     display: flex;
@@ -469,7 +546,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     100% {{ height: 18px; }}
   }}
 
-  /* BARRA FISSA DI CONTROLLO */
+  /* DOCK CONTROLLO */
   .dock-bar {{
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 520px;
@@ -496,16 +573,16 @@ HTML_PAGE = f"""<!DOCTYPE html>
 </head>
 <body>
 
-<!-- ELEMENTO AUDIO MP3 DI SOTTOFONDO -->
+<!-- AUDIO SOTTOFONDO MP3 -->
 <audio id="bgMusic" loop preload="auto">
   <source src="{mp3_file}" type="audio/mpeg">
 </audio>
 
 <div class="app-container">
-  <!-- TICKER ULTIM'ORA -->
+  <!-- TICKER NOTIZIE -->
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni orarie 3B Meteo • Ultime notizie Newsbiella Mobile • Farmacie di Turno CAP 13900 • Raccolta Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Ultime notizie Newsbiella • Farmacie di Turno CAP 13900 • Raccolta Rifiuti Seab</div>
   </div>
 
   <header>
@@ -559,7 +636,7 @@ function renderCards() {{
 
 function startBgMusic() {{
   if (bgMusic) {{
-    bgMusic.volume = 0.22; // Volume di sottofondo calibrato per accompagnare la voce
+    bgMusic.volume = 0.22;
     bgMusic.play().catch(() => {{}});
   }}
 }}
@@ -642,8 +719,7 @@ renderCards();
 </html>
 """
 
-# RISCRITTURA COMPLETA E DIRETTA DI INDEX.HTML
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano rigenerato con successo (MP3 integrato da '{mp3_file}'): {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato regolarmente: {data_estesa}")
