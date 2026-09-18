@@ -5,424 +5,411 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Notiziario Tavigliano</title>
 <style>
-  :root{
-    --font-scale: 1;
-    --wa-bg:#e5ddd5;
-    --wa-header:#075e54;
-    --wa-header-dark:#054a40;
-    --wa-bubble-in:#ffffff;
-    --wa-green:#25d366;
-    --wa-teal:#128c7e;
-    --wa-text:#111b21;
-    --wa-sub:#667781;
-    --wa-accent:#00a884;
-    --wa-card-border:#e2e8f0;
+  :root {
+    --bg-dark: #090e13;
+    --card-bg: rgba(18, 27, 34, 0.85);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --green-neon: #00a884;
+    --green-light: #25d366;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --wa-bg:#0b141a;
-      --wa-header:#1f2c34;
-      --wa-header-dark:#101a20;
-      --wa-bubble-in:#202c33;
-      --wa-text:#e9edef;
-      --wa-sub:#8696a0;
-      --wa-card-border:#2a3942;
-    }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--wa-bg);
-    color:var(--wa-text);
-    display:flex;
-    justify-content:center;
-    min-height:100vh;
-    font-size:calc(15px * var(--font-scale));
-  }
-  .phone{
-    width:100%;
-    max-width:540px;
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    position:relative;
-  }
-  header{
-    background:var(--wa-header);
-    color:#fff;
-    padding:12px 16px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    position:sticky;
-    top:0;
-    z-index:15;
-  }
-  .avatar{
-    width:42px;height:42px;border-radius:50%;
-    background:linear-gradient(135deg,var(--wa-green),var(--wa-teal));
-    display:flex;align-items:center;justify-content:center;
-    font-size:22px;flex-shrink:0;
-  }
-  .head-info{flex:1;min-width:0;}
-  .head-info .name{font-weight:700;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .head-info .status{font-size:0.78rem;opacity:0.9;}
-  .head-icons{display:flex;align-items:center;gap:8px;}
-
-  .zoom-box{
-    display:flex;background:rgba(0,0,0,0.25);border-radius:14px;padding:2px 4px;
-    border:1px solid rgba(255,255,255,0.2);
-  }
-  .zoom-btn{
-    background:transparent;border:none;color:white;font-size:0.78rem;font-weight:800;
-    padding:3px 6px;cursor:pointer;border-radius:8px;
+  .app-container {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding-bottom: 90px;
   }
 
-  .music-master-card{
-    background:linear-gradient(135deg, #075e54, #128c7e);
-    color:white;
-    margin:10px 12px 4px;
-    padding:12px 14px;
-    border-radius:14px;
-    box-shadow:0 3px 10px rgba(0,0,0,0.15);
-    display:flex;
-    flex-direction:column;
-    gap:10px;
+  /* EFFETTO WOW 1: BREAKING NEWS TICKER TG24 */
+  .ticker-bar {
+    background: linear-gradient(90deg, #0284c7, #0369a1);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
-  .music-master-top{display:flex;align-items:center;justify-content:space-between;}
-  .music-master-title{font-size:0.92rem;font-weight:700;display:flex;align-items:center;gap:6px;}
-  .music-status-pill{font-size:0.75rem;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;}
-  .music-controls-row{display:flex;align-items:center;gap:12px;}
-  .btn-music-play{
-    background:var(--wa-green);color:#04331f;border:none;padding:8px 16px;
-    border-radius:20px;font-weight:800;font-size:0.85rem;cursor:pointer;
+  .ticker-tag {
+    background: #0c4a6e;
+    padding: 5px 12px;
+    letter-spacing: 1px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    flex-shrink: 0;
   }
-  .music-vol-wrap{flex:1;display:flex;align-items:center;gap:8px;font-size:0.75rem;}
-  .music-vol-wrap input[type=range]{flex:1;accent-color:var(--wa-green);}
-
-  .chat{
-    flex:1;
-    padding:14px 12px 100px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
+  .ticker-marquee {
+    display: inline-block;
+    padding-left: 100%;
+    animation: scorri 25s linear infinite;
   }
-  .msg{
-    max-width:96%;
-    background:var(--wa-bubble-in);
-    border-radius:12px;
-    padding:12px 14px 10px;
-    box-shadow:0 1px 3px rgba(0,0,0,0.1);
-    align-self:flex-start;
-    border:1px solid var(--wa-card-border);
-  }
-  .msg .cat{font-size:0.8rem;font-weight:800;color:var(--wa-accent);margin-bottom:4px;text-transform:uppercase;}
-  .msg .title{font-weight:700;font-size:0.98rem;margin-bottom:6px;line-height:1.4;}
-  .msg .body{font-size:0.92rem;color:var(--wa-text);line-height:1.5;}
-
-  .fonte-box{
-    margin-top:12px;
-    padding:8px 12px;
-    background:rgba(0,168,132,0.12);
-    border-left:4px solid #00a884;
-    border-radius:6px;
-    font-size:0.83rem;
-    font-weight:700;
-    color:#064e3b;
+  @keyframes scorri {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-100%, 0); }
   }
 
-  .route-card{
-    background:rgba(0,0,0,0.03);
-    border:1px solid #cbd5e1;
-    border-radius:10px;
-    padding:10px;
-    margin-top:8px;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
+  /* HEADER CON EFFETTO WOW 2: NEON ON AIR */
+  header {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--card-border);
   }
-  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
-  .btn-phone{
-    background:#00a884;color:#fff;text-decoration:none;padding:7px 12px;
-    border-radius:8px;font-weight:700;font-size:0.83rem;
+  .station-logo {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--green-neon), #0284c7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(0, 168, 132, 0.4);
   }
-  .btn-maps{
-    background:#128c7e;color:#fff;text-decoration:none;padding:7px 12px;
-    border-radius:8px;font-weight:700;font-size:0.83rem;
+  .station-details { flex: 1; min-width: 0; }
+  .station-name { font-weight: 800; font-size: 1.05rem; letter-spacing: 0.3px; }
+  .station-status { font-size: 0.76rem; color: var(--green-neon); font-weight: 600; }
+
+  .neon-on-air {
+    background: #1e293b;
+    color: #64748b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    display: flex; align-items: center; gap: 5px;
+    transition: all 0.3s;
+  }
+  .neon-on-air.active {
+    background: #ef4444;
+    color: white;
+    border-color: #f87171;
+    box-shadow: 0 0 15px #ef4444;
+    animation: glow-neon 1s infinite alternate;
+  }
+  @keyframes glow-neon {
+    from { opacity: 0.85; filter: drop-shadow(0 0 4px #ef4444); }
+    to { opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }
   }
 
-  .audio-preview-box{
-    background:#fff1f2;
-    border:1px solid #fecdd3;
-    border-radius:12px;
-    padding:12px;
-    margin-top:10px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
+  /* LISTA NOTIZIE CON EFFETTO WOW 3: SPOTLIGHT ED EQUALIZZATORE */
+  .news-stream {
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
-  .btn-full-song{
-    display:inline-flex;align-items:center;justify-content:center;gap:6px;
-    background:#e11d48;color:white;text-decoration:none;padding:8px 14px;
-    border-radius:8px;font-size:0.85rem;font-weight:700;margin-top:4px;
+  .news-card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--card-border);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .news-card.active-play {
+    border-color: var(--green-neon);
+    box-shadow: 0 0 20px rgba(0, 168, 132, 0.45);
+    transform: scale(1.02);
+  }
+  .news-cat {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--green-neon);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+  .news-title {
+    font-weight: 700;
+    font-size: 0.98rem;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .news-body {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    line-height: 1.5;
   }
 
-  .voice-row{
-    display:flex;align-items:center;gap:10px;margin-top:10px;
-    background:rgba(0,0,0,0.04);border-radius:24px;padding:6px 10px;
+  /* CONTROLLI AUDIO CARD ED EQUALIZZATORE DINAMICO */
+  .audio-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 24px;
+    padding: 6px 12px;
+    border: 1px solid rgba(255,255,255,0.05);
   }
-  .play-btn{
-    width:36px;height:36px;border-radius:50%;background:var(--wa-accent);
-    border:none;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
+  .btn-single-play {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--green-neon); border: none; color: #042f2e;
+    font-size: 14px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
   }
-  .wave{flex:1;height:20px;display:flex;align-items:center;gap:3px;overflow:hidden;}
-  .wave span{width:3px;background:var(--wa-sub);border-radius:2px;height:6px;opacity:0.6;}
-  .msg.playing .wave span{background:var(--wa-accent);animation:eq 0.8s ease-in-out infinite alternate;}
-  @keyframes eq{0%{height:4px;} 100%{height:18px;}}
+  .eq-spectrum {
+    flex: 1; height: 20px; display: flex; align-items: center; gap: 3px;
+  }
+  .eq-spectrum span {
+    width: 3px; background: #475569; border-radius: 2px; height: 4px;
+  }
+  .news-card.active-play .eq-spectrum span {
+    background: var(--green-light);
+    animation: spectrum 0.75s ease-in-out infinite alternate;
+  }
+  .eq-spectrum span:nth-child(2n) { animation-delay: 0.15s; }
+  .eq-spectrum span:nth-child(3n) { animation-delay: 0.3s; }
+  .eq-spectrum span:nth-child(4n) { animation-delay: 0.45s; }
+  @keyframes spectrum {
+    0% { height: 3px; }
+    100% { height: 18px; }
+  }
 
-  .bottom-bar{
-    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-    width:100%;max-width:540px;background:var(--wa-header-dark);
-    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
-    display:flex;gap:8px;align-items:center;z-index:20;
-    box-shadow:0 -4px 15px rgba(0,0,0,0.2);
+  /* BARRA FISSA IN BASSO */
+  .dock-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 520px;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(12px);
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--card-border);
+    z-index: 30;
   }
-  .bottom-bar button{
-    flex:1;background:var(--wa-green);color:#04331f;border:none;padding:12px;
-    border-radius:24px;font-size:0.95rem;font-weight:800;cursor:pointer;
+  .dock-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--green-neon), var(--green-light));
+    color: #042f2e;
+    border: none;
+    padding: 14px;
+    border-radius: 28px;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+    cursor: pointer;
   }
 </style>
 </head>
 <body>
 
-<div class="phone">
-  <header>
-    <div class="avatar">📻</div>
-    <div class="head-info">
-      <div class="name">Notiziario di Tavigliano</div>
-      <div class="status" id="headerStatus">Edizione Quotidiana Aggiornata</div>
-    </div>
-    <div class="head-icons">
-      <div class="zoom-box">
-        <button class="zoom-btn" onclick="applyFontScale(-0.1)">A−</button>
-        <button class="zoom-btn" onclick="applyFontScale(0)">A</button>
-        <button class="zoom-btn" onclick="applyFontScale(0.15)">A+</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- SOTTOFONDO MP3 -->
-  <audio id="bgMusic" loop preload="auto">
-    <source src="headlineupdate.mp3" type="audio/mpeg">
-  </audio>
-
-  <!-- CONTROLLO SOTTOFONDO -->
-  <div class="music-master-card">
-    <div class="music-master-top">
-      <div class="music-master-title">🎵 Sottofondo: headlineupdate.mp3</div>
-      <span class="music-status-pill" id="musicStatusPill">Pronto ✅</span>
-    </div>
-    <div class="music-controls-row">
-      <button class="btn-music-play" id="btnManualMusic" onclick="toggleManualMusic()">▶️ Avvia Musica</button>
-      <div class="music-vol-wrap">
-        <span>Vol</span>
-        <input type="range" id="volRange" min="0" max="1" step="0.05" value="0.35" oninput="setMusicVol(this.value)">
-      </div>
-    </div>
+<div class="app-container">
+  <!-- TICKER ULTIM'ORA -->
+  <div class="ticker-bar">
+    <div class="ticker-tag">🔴 TG24 LIVE</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Dati meteo ufficiali 3B Meteo • Ultime notizie Newsbiella Mobile • Farmacie di Turno CAP 13900 • Raccolta Rifiuti Seab</div>
   </div>
 
-  <div class="chat" id="chat"></div>
+  <header>
+    <div class="station-logo">📻</div>
+    <div class="station-details">
+      <div class="station-name">Notiziario di Tavigliano</div>
+      <div class="station-status">Venerdì 18 settembre — San Giuseppe da Copertino</div>
+    </div>
+    <div class="neon-on-air" id="onAirSign">● ON AIR</div>
+  </header>
 
-  <div class="bottom-bar">
-    <button id="playAllBtn">▶️ Ascolta Notiziario Completo</button>
+  <div class="news-stream" id="newsStream"></div>
+
+  <div class="dock-bar">
+    <button class="dock-btn" id="btnMasterPlay" onclick="toggleMasterBroadcast()">▶️ AVVIA TRASMISSIONE COMPLETA</button>
   </div>
 </div>
 
 <script>
-(function(){
-  const NEWS = [
+const NEWS = [
   {
     "cat": "🎙️ Buongiorno Tavigliano",
     "title": "Oggi è Venerdì 18 settembre",
     "speak": "Buongiorno Tavigliano! Oggi è Venerdì 18 settembre. Santo del giorno: San Giuseppe da Copertino.",
-    "body": "• <strong>Data:</strong> Venerdì 18 settembre 2026<br>• <strong>Santo del giorno:</strong> San Giuseppe da Copertino",
-    "time": "08:00"
+    "body": "• <strong>Data:</strong> Venerdì 18 settembre 2026<br>• <strong>Santo del giorno:</strong> San Giuseppe da Copertino"
   },
   {
     "cat": "🌦️ Meteo Tavigliano",
-    "title": "Cielo coperto con deboli piogge locali (15°C / 18°C)",
-    "speak": "Previsioni meteo per Tavigliano: Cielo coperto con deboli piogge locali. Temperatura massima prevista di 18 gradi, minima di 15.",
-    "body": "• <strong>Situazione:</strong> Cielo coperto con deboli piogge locali.<br>• <strong>Temperatura massima:</strong> 18°C<br>• <strong>Temperatura minima:</strong> 15°C<br>• <strong>Venti:</strong> deboli di brezza montana.<br><div style='margin-top:8px;'><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🌐 Bollettino Orario Completo Tavigliano</a></div>",
-    "time": "08:01"
+    "title": "Cielo molto nuvoloso con deboli piogge locali (15°C / 18°C)",
+    "speak": "Previsioni meteo per Tavigliano: Cielo molto nuvoloso con deboli piogge locali. Temperatura massima di 18 gradi, minima di 15.",
+    "body": "• <strong>Quadro atmosferico:</strong> Cielo molto nuvoloso con deboli piogge locali.<br>• <strong>Temperatura massima:</strong> 18°C<br>• <strong>Temperatura minima:</strong> 15°C<br>• <strong>Venti:</strong> deboli di brezza montana.<br><div style='margin-top:10px;'><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🌐 Consulta Bollettino Orario 3B Meteo</a></div>"
   },
   {
     "cat": "📰 1. Newsbiella Mobile",
-    "title": "Ue, nuove regole sui social per i minori: niente account autonomi...",
-    "speak": "Notizia locale numero 1: Ue, nuove regole sui social per i minori: niente account autonomi....",
-    "body": "Aggiornamento in primo piano dalla redazione di Newsbiella Mobile.",
-    "time": "08:02"
+    "title": "Biella, il vescovo Farinella incontra il nuovo comandante provinciale...",
+    "speak": "Notizia locale numero 1: Biella, il vescovo Farinella incontra il nuovo comandante provinciale....",
+    "body": "Primo piano dalla redazione territoriale di Newsbiella Mobile."
   },
   {
     "cat": "📰 2. Newsbiella Mobile",
-    "title": "L'Oroscopo di Corinne dal 18 al 24 settembre",
-    "speak": "Notizia locale numero 2: L'Oroscopo di Corinne dal 18 al 24 settembre.",
-    "body": "Aggiornamento in primo piano dalla redazione di Newsbiella Mobile.",
-    "time": "08:03"
+    "title": "Ue, nuove regole sui social per i minori: niente account autonomi...",
+    "speak": "Notizia locale numero 2: Ue, nuove regole sui social per i minori: niente account autonomi....",
+    "body": "Primo piano dalla redazione territoriale di Newsbiella Mobile."
   },
   {
     "cat": "♻️ Rifiuti Tavigliano",
     "title": "Calendario Raccolta Rifiuti",
-    "speak": "Servizio igiene urbana a Tavigliano: Oggi nessuna raccolta programmata. Promemoria: Lunedì: ripresa turni.",
-    "body": "• <strong>Oggi:</strong> Oggi nessuna raccolta programmata.<br>• <strong>Promemoria:</strong> Lunedì: ripresa turni.",
-    "time": "08:04"
+    "speak": "Servizio igiene urbana a Tavigliano: Oggi nessuna raccolta programmata. Promemoria per l'indomani: Lunedì: ripresa turni.",
+    "body": "• <strong>Oggi:</strong> Oggi nessuna raccolta programmata.<br>• <strong>Promemoria:</strong> Lunedì: ripresa turni."
   },
   {
     "cat": "💊 Farmacie di Turno & Servizi",
     "title": "Turni CAP 13900 & Presidi di Zona",
-    "speak": "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi del circondario con codice postale 13900, potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. I presidi territoriali più vicini sono la Farmacia Savino di Andorno Micca, telefono 015 47 27 79, e la Farmacia Valeggia di Sagliano Micca, telefono 015 47 23 32, con pulsante per avviare il navigatore.",
-    "body": "<div style='background:rgba(0,168,132,0.12); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>  <strong>🔍 Ricerca Ufficiale Turni Biellese (CAP 13900):</strong><br>  <span style='font-size:0.85rem; color:#064e3b;'>Verifica turni aperti adesso, orari festivi e notturni</span><br>  <div style='margin-top:8px;'>    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>  </div></div><strong>Presidi locali più vicini a Tavigliano:</strong><br><div style='background:rgba(0,0,0,0.03); border-radius:8px; padding:8px; margin-top:6px;'>  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>  <a href='tel:015472779' style='color:#00a884; font-weight:700; text-decoration:none;'>📞 Chiama 015 472779</a> •   <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='color:#128c7e; font-weight:700; text-decoration:none;'>🧭 Mappa GPS</a></div><div style='background:rgba(0,0,0,0.03); border-radius:8px; padding:8px; margin-top:6px;'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>  <a href='tel:015472332' style='color:#00a884; font-weight:700; text-decoration:none;'>📞 Chiama 015 472332</a> •   <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='color:#128c7e; font-weight:700; text-decoration:none;'>🧭 Mappa GPS</a></div>",
-    "time": "08:05"
+    "speak": "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. I presidi più vicini sono la Farmacia Savino ad Andorno Micca, telefono 015 47 27 79, e la Farmacia Valeggia a Sagliano Micca, telefono 015 47 23 32.",
+    "body": "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>  <div style='margin-top:8px;'>    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>  </div></div><strong>Presidi locali più vicini:</strong><br><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 015 472779</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 015 472332</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div>"
   },
   {
     "cat": "💡 Saggezza Tradizionale",
     "title": "Proverbio Piemontese del Giorno",
     "speak": "Prima del riepilogo, il proverbio piemontese di oggi: «A fesse d'òr a s'ancurnisa la miseria», che significa: A farsi d'oro si incornicia la miseria.",
-    "body": "• <strong>In lingua piemontese:</strong> <em>«A fesse d'òr a s'ancurnisa la miseria»</em><br>• <strong>Significato:</strong> A farsi d'oro si incornicia la miseria."
+    "body": "• <strong>In dialetto piemontese:</strong> <em>«A fesse d'òr a s'ancurnisa la miseria»</em><br>• <strong>Significato:</strong> A farsi d'oro si incornicia la miseria."
   },
   {
     "cat": "📢 Trasparenza & Riepilogo Fonti",
-    "title": "Fonti Ufficiali Verificate del Notiziario",
-    "speak": "Notiziario completato. Ecco il riepilogo delle fonti ufficiali di questa edizione: le previsioni del tempo sono fornite da 3B Meteo; la cronaca locale dalla versione mobile di Newsbiella punto it; il calendario ecologico da Seab Biella; la ricerca sanitaria da Farmacie di Turno punto org e Federfarma Biella. Una serena giornata a tutti i cittadini di Tavigliano!",
-    "body": "<div style='background:rgba(0,168,132,0.12); border-left:5px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>  <div style='font-size:0.95rem; font-weight:800; color:#064e3b; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>  • <strong>Notizie Locali:</strong> Newsbiella.it/mobile.html<br>  • <strong>Igiene Urbana:</strong> Seab Biella (Raccolta Comune di Tavigliano)<br>  • <strong>Farmacie e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>  • <strong>Calendario:</strong> Archivio Liturgico Diocesano</div>",
-    "time": "08:07"
+    "title": "Riepilogo Ufficiale Fonti del Notiziario",
+    "speak": "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: previsioni meteo a cura di 3B Meteo; notizie dalla versione mobile di Newsbiella punto it; calendario raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. Una buona giornata a tutta la comunità di Tavigliano!",
+    "body": "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>  • <strong>Notizie Territoriali:</strong> Newsbiella.it/mobile.html<br>  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>  • <strong>Calendario:</strong> Archivio Liturgico Diocesano</div>"
   }
 ];
 
-  /* GESTIONE SOTTOFONDO MP3 */
-  const bgMusic = document.getElementById('bgMusic');
-  const btnManual = document.getElementById('btnManualMusic');
-  const statusPill = document.getElementById('musicStatusPill');
-  const volRange = document.getElementById('volRange');
-  let defaultVolume = parseFloat(volRange.value);
+const synth = window.speechSynthesis;
+let currentTrack = -1;
+const newsStream = document.getElementById('newsStream');
+const onAirSign = document.getElementById('onAirSign');
+const btnMaster = document.getElementById('btnMasterPlay');
 
-  bgMusic.addEventListener('playing', () => {
-    statusPill.innerText = "In riproduzione 🎶";
-    btnManual.innerText = "⏸️ Pausa";
-    btnManual.style.background = "#f43f5e";
+// EFFETTO WOW 4: JINGLE SONORO A TRE TONI (CHIME TG)
+function playBroadcastJingle(callback) {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+    const notes = [523.25, 659.25, 783.99]; // Accordo Maggiore C5, E5, G5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.36);
+    });
+    setTimeout(callback, 500);
+  } catch (e) {
+    callback();
+  }
+}
+
+function renderCards() {
+  newsStream.innerHTML = '';
+  NEWS.forEach((item, index) => {
+    const card = document.createElement('div');
+    card.className = 'news-card';
+    card.id = `card-${index}`;
+    
+    let eqSpans = '';
+    for (let s = 0; s < 26; s++) eqSpans += '<span></span>';
+
+    card.innerHTML = `
+      <div class="news-cat">${item.cat}</div>
+      <div class="news-title">${item.title}</div>
+      <div class="news-body">${item.body}</div>
+      <div class="audio-bar">
+        <button class="btn-single-play" onclick="playSingleItem(${index})">▶</button>
+        <div class="eq-spectrum">${eqSpans}</div>
+      </div>
+    `;
+    newsStream.appendChild(card);
   });
-  bgMusic.addEventListener('pause', () => {
-    statusPill.innerText = "In pausa ⏸️";
-    btnManual.innerText = "▶️ Avvia Musica";
-    btnManual.style.background = "var(--wa-green)";
-  });
+}
 
-  window.toggleManualMusic = function() {
-    if (bgMusic.paused) {
-      bgMusic.volume = defaultVolume;
-      bgMusic.play().catch(()=>{});
-    } else {
-      bgMusic.pause();
-    }
-  };
-
-  window.setMusicVol = function(val) {
-    defaultVolume = parseFloat(val);
-    bgMusic.volume = defaultVolume;
-  };
-
-  /* SINTESI VOCALE */
-  const synth = window.speechSynthesis;
-  let activeIndex = -1;
-  const chat = document.getElementById('chat');
-
-  function renderNews() {
-    chat.innerHTML = '';
-    NEWS.forEach((item, idx) => {
-      const el = document.createElement('div');
-      el.className = 'msg';
-      el.id = `msg-${idx}`;
-      let waveSpans = '';
-      for (let i = 0; i < 28; i++) waveSpans += '<span></span>';
-      el.innerHTML = `
-        <div class="cat">${item.cat}</div>
-        <div class="title">${item.title}</div>
-        <div class="body">${item.body}</div>
-        <div class="voice-row">
-          <button class="play-btn" onclick="toggleSingle(${idx})">▶</button>
-          <div class="wave">${waveSpans}</div>
-        </div>
-      `;
-      chat.appendChild(el);
+window.playSingleItem = function(index) {
+  if (currentTrack === index && synth.speaking) {
+    stopBroadcast();
+  } else {
+    playBroadcastJingle(() => {
+      startVoice(index, false);
     });
   }
+};
 
-  window.toggleSingle = function(idx) {
-    if (activeIndex === idx && synth.speaking) {
-      stopSpeech();
-    } else {
-      playItem(idx, false);
-    }
-  };
+function startVoice(index, autoNext) {
+  stopVoiceOnly();
+  currentTrack = index;
+  const item = NEWS[index];
 
-  function playItem(idx, continueNext) {
-    stopSpeech();
-    activeIndex = idx;
-    const item = NEWS[idx];
-    document.querySelectorAll('.msg').forEach(m => m.classList.remove('playing'));
-    const currentCard = document.getElementById(`msg-${idx}`);
-    if (currentCard) {
-      currentCard.classList.add('playing');
-      currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    if (!bgMusic.paused) bgMusic.volume = defaultVolume * 0.25;
-
-    const utter = new SpeechSynthesisUtterance(item.speak);
-    utter.lang = 'it-IT';
-    utter.rate = 0.95;
-
-    utter.onend = () => {
-      if (currentCard) currentCard.classList.remove('playing');
-      if (continueNext && idx + 1 < NEWS.length) {
-        playItem(idx + 1, true);
-      } else {
-        if (!bgMusic.paused) bgMusic.volume = defaultVolume;
-        stopSpeech();
-      }
-    };
-    utter.onerror = () => stopSpeech();
-
-    synth.speak(utter);
+  document.querySelectorAll('.news-card').forEach(c => c.classList.remove('active-play'));
+  const activeCard = document.getElementById(`card-${index}`);
+  if (activeCard) {
+    activeCard.classList.add('active-play');
+    activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  function stopSpeech() {
-    synth.cancel();
-    if (activeIndex >= 0) {
-      const el = document.getElementById(`msg-${activeIndex}`);
-      if (el) el.classList.remove('playing');
-    }
-    activeIndex = -1;
-    document.getElementById('playAllBtn').innerText = '▶️ Ascolta Notiziario Completo';
-  }
+  onAirSign.classList.add('active');
 
-  document.getElementById('playAllBtn').onclick = function() {
-    if (synth.speaking) {
-      stopSpeech();
+  const utter = new SpeechSynthesisUtterance(item.speak);
+  utter.lang = 'it-IT';
+  utter.rate = 0.95;
+
+  utter.onend = () => {
+    if (activeCard) activeCard.classList.remove('active-play');
+    if (autoNext && index + 1 < NEWS.length) {
+      startVoice(index + 1, true);
     } else {
-      this.innerText = '⏸️ Pausa';
-      playItem(0, true);
+      stopBroadcast();
     }
   };
+  utter.onerror = () => stopBroadcast();
 
-  window.applyFontScale = function(delta) {
-    const scale = delta === 0 ? 1.0 : (delta > 0 ? 1.15 : 0.9);
-    document.documentElement.style.setProperty('--font-scale', scale);
-  };
+  synth.speak(utter);
+}
 
-  renderNews();
-})();
+function stopVoiceOnly() {
+  synth.cancel();
+  if (currentTrack >= 0) {
+    const el = document.getElementById(`card-${currentTrack}`);
+    if (el) el.classList.remove('active-play');
+  }
+}
+
+function stopBroadcast() {
+  stopVoiceOnly();
+  currentTrack = -1;
+  onAirSign.classList.remove('active');
+  btnMaster.innerText = '▶️ AVVIA TRASMISSIONE COMPLETA';
+}
+
+window.toggleMasterBroadcast = function() {
+  if (synth.speaking) {
+    stopBroadcast();
+  } else {
+    btnMaster.innerText = '⏸️ METTI IN PAUSA';
+    playBroadcastJingle(() => {
+      startVoice(0, true);
+    });
+  }
+};
+
+renderCards();
 </script>
 </body>
 </html>
