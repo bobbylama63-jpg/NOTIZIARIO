@@ -61,7 +61,7 @@
     100% { transform: translate(-100%, 0); }
   }
 
-  /* HEADER CON EFFETTO NEON ON AIR */
+  /* HEADER RADIO ON AIR */
   header {
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(10px);
@@ -109,7 +109,7 @@
     to { opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }
   }
 
-  /* NOTIZIE SPOTLIGHT */
+  /* NOTIZIE CON EFFETTO SPOTLIGHT */
   .news-stream {
     padding: 14px 12px;
     display: flex;
@@ -184,7 +184,7 @@
     100% { height: 18px; }
   }
 
-  /* BARRA FISSA DI CONTROLLO */
+  /* DOCK CONTROLLO */
   .dock-bar {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 520px;
@@ -211,16 +211,16 @@
 </head>
 <body>
 
-<!-- ELEMENTO AUDIO MP3 DI SOTTOFONDO -->
+<!-- AUDIO SOTTOFONDO MP3 -->
 <audio id="bgMusic" loop preload="auto">
   <source src="headlineupdate.mp3" type="audio/mpeg">
 </audio>
 
 <div class="app-container">
-  <!-- TICKER ULTIM'ORA -->
+  <!-- TICKER NOTIZIE -->
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni orarie 3B Meteo • Ultime notizie Newsbiella Mobile • Farmacie di Turno CAP 13900 • Raccolta Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Ultime notizie Newsbiella • Farmacie di Turno CAP 13900 • Raccolta Rifiuti Seab</div>
   </div>
 
   <header>
@@ -254,16 +254,22 @@ const NEWS = [
     "body": "• <strong>Quadro atmosferico:</strong> Cielo molto nuvoloso con deboli piogge locali.<br>• <strong>Temperatura massima:</strong> 18°C<br>• <strong>Temperatura minima:</strong> 15°C<br>• <strong>Venti:</strong> deboli di brezza montana.<br><div style='margin-top:10px;'><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🌐 Consulta Bollettino Orario 3B Meteo</a></div>"
   },
   {
-    "cat": "📰 1. Newsbiella Mobile",
+    "cat": "📰 Cronaca e Territorio",
     "title": "Biella, il vescovo Farinella incontra il nuovo comandante provinciale...",
-    "speak": "Notizia locale numero 1: Biella, il vescovo Farinella incontra il nuovo comandante provinciale....",
-    "body": "Primo piano dalla redazione territoriale di Newsbiella Mobile."
+    "speak": "Biella, il vescovo Farinella incontra il nuovo comandante provinciale.... Primo piano dalla redazione territoriale di Newsbiella.",
+    "body": "Primo piano dalla redazione territoriale di Newsbiella."
   },
   {
-    "cat": "📰 2. Newsbiella Mobile",
+    "cat": "📰 Cronaca e Territorio",
     "title": "Ue, nuove regole sui social per i minori: niente account autonomi...",
-    "speak": "Notizia locale numero 2: Ue, nuove regole sui social per i minori: niente account autonomi....",
-    "body": "Primo piano dalla redazione territoriale di Newsbiella Mobile."
+    "speak": "Ue, nuove regole sui social per i minori: niente account autonomi.... Primo piano dalla redazione territoriale di Newsbiella.",
+    "body": "Primo piano dalla redazione territoriale di Newsbiella."
+  },
+  {
+    "cat": "🌲 Valle Cervo • Tavigliano",
+    "title": "Tavigliano, a frazione Sella l'arte è di casa FOTO",
+    "speak": "Tavigliano, a frazione Sella l'arte è di casa FOTO. Notizia riguardante direttamente il territorio e la comunità di Tavigliano.",
+    "body": "Notizia riguardante direttamente il territorio e la comunità di Tavigliano."
   },
   {
     "cat": "♻️ Rifiuti Tavigliano",
@@ -274,7 +280,7 @@ const NEWS = [
   {
     "cat": "💊 Farmacie di Turno & Servizi",
     "title": "Turni CAP 13900 & Presidi di Zona",
-    "speak": "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. I presidi territoriali più vicini sono la Farmacia Savino ad Andorno Micca e la Farmacia Valeggia a Sagliano Micca. Nella scheda trovate i pulsanti diretti per avviare la telefonata e per aprire il navigatore.",
+    "speak": "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. I presidi più vicini sono la Farmacia Savino ad Andorno Micca e la Farmacia Valeggia a Sagliano Micca. Nella scheda trovate i pulsanti per telefonare e per avviare il navigatore.",
     "body": "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>  <div style='margin-top:8px;'>    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>  </div></div><strong>Presidi locali più vicini:</strong><br><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div>"
   },
   {
@@ -286,8 +292,8 @@ const NEWS = [
   {
     "cat": "📢 Trasparenza & Riepilogo Fonti",
     "title": "Riepilogo Ufficiale Fonti del Notiziario",
-    "speak": "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: previsioni meteo a cura di 3B Meteo; notizie dalla versione mobile di Newsbiella punto it; calendario raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. Una buona giornata a tutta la comunità di Tavigliano!",
-    "body": "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>  • <strong>Notizie Territoriali:</strong> Newsbiella.it/mobile.html<br>  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>  • <strong>Calendario:</strong> Archivio Liturgico Diocesano</div>"
+    "speak": "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: previsioni meteo a cura di 3B Meteo; notizie dalla redazione di Newsbiella punto it; calendario raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. Una buona giornata a tutta la comunità di Tavigliano!",
+    "body": "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>  • <strong>Notizie Locali:</strong> Newsbiella.it<br>  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>  • <strong>Calendario:</strong> Archivio Liturgico Diocesano</div>"
   }
 ];
 
@@ -323,7 +329,7 @@ function renderCards() {
 
 function startBgMusic() {
   if (bgMusic) {
-    bgMusic.volume = 0.22; // Volume di sottofondo calibrato per accompagnare la voce
+    bgMusic.volume = 0.22;
     bgMusic.play().catch(() => {});
   }
 }
