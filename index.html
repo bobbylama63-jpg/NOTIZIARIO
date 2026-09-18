@@ -11,7 +11,6 @@
     --wa-header:#075e54;
     --wa-header-dark:#054a40;
     --wa-bubble-in:#ffffff;
-    --wa-bubble-out:#dcf8c6;
     --wa-green:#25d366;
     --wa-teal:#128c7e;
     --wa-text:#111b21;
@@ -25,21 +24,10 @@
       --wa-header:#1f2c34;
       --wa-header-dark:#101a20;
       --wa-bubble-in:#202c33;
-      --wa-bubble-out:#005c4b;
       --wa-text:#e9edef;
       --wa-sub:#8696a0;
       --wa-card-border:#2a3942;
     }
-  }
-  :root[data-theme="dark"]{
-    --wa-bg:#0b141a;
-    --wa-header:#1f2c34;
-    --wa-header-dark:#101a20;
-    --wa-bubble-in:#202c33;
-    --wa-bubble-out:#005c4b;
-    --wa-text:#e9edef;
-    --wa-sub:#8696a0;
-    --wa-card-border:#2a3942;
   }
   *{box-sizing:border-box;}
   body{
@@ -84,7 +72,7 @@
   .head-info .status{font-size:0.78rem;opacity:0.85;}
   .head-icons{display:flex;align-items:center;gap:8px;}
 
-  /* Strumenti Zoom */
+  /* Zoom */
   .zoom-box{
     display:flex;background:rgba(0,0,0,0.25);border-radius:14px;padding:2px 4px;
     border:1px solid rgba(255,255,255,0.2);
@@ -94,16 +82,65 @@
     padding:3px 6px;cursor:pointer;border-radius:8px;
   }
 
-  /* Notifica di stato per l'audio */
-  #audioNotice{
-    display:none;
-    background:#e0f2fe;
-    color:#0369a1;
-    border-bottom:1px solid #bae6fd;
-    padding:8px 14px;
-    font-size:0.8rem;
-    line-height:1.4;
-    font-weight:600;
+  /* Box Lettore Dedicato MP3 */
+  .music-master-card{
+    background:linear-gradient(135deg, #075e54, #128c7e);
+    color:white;
+    margin:10px 12px 4px;
+    padding:12px 14px;
+    border-radius:14px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.15);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .music-master-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .music-master-title{
+    font-size:0.92rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .music-status-pill{
+    font-size:0.75rem;
+    background:rgba(255,255,255,0.2);
+    padding:2px 8px;
+    border-radius:10px;
+  }
+  .music-controls-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .btn-music-play{
+    background:var(--wa-green);
+    color:#04331f;
+    border:none;
+    padding:8px 16px;
+    border-radius:20px;
+    font-weight:800;
+    font-size:0.85rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-shrink:0;
+  }
+  .music-vol-wrap{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.75rem;
+  }
+  .music-vol-wrap input[type=range]{
+    flex:1;
+    accent-color:var(--wa-green);
   }
 
   .toolbar{
@@ -133,7 +170,7 @@
 
   .chat{
     flex:1;
-    padding:16px 12px 100px;
+    padding:14px 12px 100px;
     display:flex;
     flex-direction:column;
     gap:12px;
@@ -303,18 +340,31 @@
     </div>
   </header>
 
-  <!-- Barra stato diagnostica audio -->
-  <div id="audioNotice"></div>
+  <!-- ELEMENTO AUDIO COLLEGATO AL TUO MP3 -->
+  <audio id="bgMusic" loop preload="auto">
+    <source src="headlineupdate.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- BOX DEDICATO CONTROLLO MUSICA -->
+  <div class="music-master-card">
+    <div class="music-master-top">
+      <div class="music-master-title">
+        <span>🎵 Sottofondo: headlineupdate.mp3</span>
+      </div>
+      <span class="music-status-pill" id="musicStatusPill">In attesa...</span>
+    </div>
+    <div class="music-controls-row">
+      <button class="btn-music-play" id="btnManualMusic" onclick="toggleManualMusic()">
+        ▶️ Avvia Musica
+      </button>
+      <div class="music-vol-wrap">
+        <span>Vol</span>
+        <input type="range" id="volRange" min="0" max="1" step="0.05" value="0.45" oninput="setMusicVol(this.value)">
+      </div>
+    </div>
+  </div>
 
   <div class="toolbar" id="toolbar"></div>
-
-  <!-- Riproduttore MP3 con priorità ad audio.mp3 -->
-  <audio id="bgMusic" loop preload="auto">
-    <source src="audio.mp3" type="audio/mpeg">
-    <source src="headline_update%20(2).mp3" type="audio/mpeg">
-    <source src="headline_update (2).mp3" type="audio/mpeg">
-    <source src="sottofondo.mp3" type="audio/mpeg">
-  </audio>
 
   <div class="chat" id="chat"></div>
 
@@ -400,75 +450,65 @@
     }
   ];
 
-  /* ==========================================================
-     GESTIONE SOTTOFONDO MP3 & DUCKING
-     ========================================================== */
+  /* GESTIONE AUDIO MP3 */
   const bgMusic = document.getElementById('bgMusic');
-  const notice = document.getElementById('audioNotice');
-  let isAudioReady = false;
+  const btnManual = document.getElementById('btnManualMusic');
+  const statusPill = document.getElementById('musicStatusPill');
+  const volRange = document.getElementById('volRange');
+
+  let defaultVolume = parseFloat(volRange.value);
 
   bgMusic.addEventListener('canplaythrough', () => {
-    isAudioReady = true;
-    notice.style.display = 'none';
+    statusPill.innerText = "Pronto ✅";
+    statusPill.style.background = "rgba(37, 211, 102, 0.3)";
+  });
+
+  bgMusic.addEventListener('playing', () => {
+    statusPill.innerText = "In riproduzione 🎶";
+    btnManual.innerText = "⏸️ Ferma Musica";
+    btnManual.style.background = "#f43f5e";
+    btnManual.style.color = "white";
+  });
+
+  bgMusic.addEventListener('pause', () => {
+    statusPill.innerText = "In pausa ⏸️";
+    btnManual.innerText = "▶️ Avvia Musica";
+    btnManual.style.background = "var(--wa-green)";
+    btnManual.style.color = "#04331f";
   });
 
   bgMusic.addEventListener('error', () => {
-    isAudioReady = false;
-    notice.style.display = 'block';
-    notice.innerHTML = "⚠️ <strong>File audio non trovato sul server.</strong><br>Verifica che nella cartella caricata su Netlify ci sia il file <code>audio.mp3</code> insieme a <code>index.html</code>.";
+    statusPill.innerText = "File non trovato ❌";
+    statusPill.style.background = "rgba(239, 68, 68, 0.4)";
   });
 
-  function startBackgroundMusic() {
-    bgMusic.volume = 0.60;
-    bgMusic.play().then(() => {
-      isAudioReady = true;
-      notice.style.display = 'none';
-    }).catch(err => {
-      notice.style.display = 'block';
-      notice.innerHTML = "ℹ️ Tocca lo schermo per attivare l'audio o apri il link direttamente in <strong>Chrome/Safari</strong>.";
-    });
-  }
-
-  function duckBackgroundMusic() {
-    fadeVolume(bgMusic, 0.12, 500); // Abbassa al 12% durante il parlato
-  }
-
-  function restoreBackgroundMusic() {
-    fadeVolume(bgMusic, 0.60, 700);
-  }
-
-  function stopBackgroundMusic() {
-    fadeVolume(bgMusic, 0, 1800, () => {
+  window.toggleManualMusic = function() {
+    if (bgMusic.paused) {
+      bgMusic.volume = defaultVolume;
+      bgMusic.play();
+    } else {
       bgMusic.pause();
-      bgMusic.currentTime = 0;
-    });
+    }
+  };
+
+  window.setMusicVol = function(val) {
+    defaultVolume = parseFloat(val);
+    bgMusic.volume = defaultVolume;
+  };
+
+  function duckMusic() {
+    if (!bgMusic.paused) {
+      bgMusic.volume = defaultVolume * 0.25; // Abbassa al 25% del volume impostato
+    }
   }
 
-  let fadeTimer = null;
-  function fadeVolume(audio, target, duration, callback) {
-    if (fadeTimer) clearInterval(fadeTimer);
-    const start = audio.volume;
-    const steps = 20;
-    const delta = (target - start) / steps;
-    let count = 0;
-    fadeTimer = setInterval(() => {
-      count++;
-      let v = audio.volume + delta;
-      if (v < 0) v = 0;
-      if (v > 1) v = 1;
-      audio.volume = v;
-      if (count >= steps) {
-        clearInterval(fadeTimer);
-        fadeTimer = null;
-        audio.volume = target;
-        if (callback) callback();
-      }
-    }, duration / steps);
+  function restoreMusic() {
+    if (!bgMusic.paused) {
+      bgMusic.volume = defaultVolume;
+    }
   }
 
-  /* ==========================================================
-     SINTESI VOCALE & NAVIGAZIONE
-     ========================================================== */
+  /* SINTESI VOCALE */
   const synth = window.speechSynthesis;
   let activeIndex = -1;
   let isPlayingAll = false;
@@ -551,8 +591,11 @@
       currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    startBackgroundMusic();
-    duckBackgroundMusic();
+    if (bgMusic.paused) {
+      bgMusic.volume = defaultVolume;
+      bgMusic.play().catch(() => {});
+    }
+    duckMusic();
 
     currentUtterance = new SpeechSynthesisUtterance(item.speak);
     currentUtterance.lang = 'it-IT';
@@ -563,15 +606,13 @@
       if (continueNext && idx + 1 < NEWS.length) {
         playItem(idx + 1, true);
       } else {
-        restoreBackgroundMusic();
-        setTimeout(stopBackgroundMusic, 1500);
+        restoreMusic();
         stopSpeech();
       }
     };
 
     currentUtterance.onerror = () => {
       stopSpeech();
-      stopBackgroundMusic();
     };
 
     const pct = ((idx + 1) / NEWS.length) * 100;
@@ -588,12 +629,12 @@
     }
     activeIndex = -1;
     document.getElementById('playAllBtn').innerText = '▶️ Ascolta tutto';
+    restoreMusic();
   }
 
   document.getElementById('playAllBtn').onclick = function() {
     if (synth.speaking) {
       stopSpeech();
-      stopBackgroundMusic();
       isPlayingAll = false;
     } else {
       isPlayingAll = true;
