@@ -3,8 +3,11 @@ import html
 import json
 import re
 import urllib.request
+import xml.etree.ElementTree as ET
 
-# 1. DATA E SANTO DEL GIORNO
+# ==============================================================================
+# 1. DATA E SANTI DEL GIORNO
+# ==============================================================================
 MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", 
         "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 GIORNI = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
@@ -17,10 +20,10 @@ SANTI_DEL_GIORNO = {
     "07-11": "San Benedetto", "07-26": "Santi Gioacchino e Anna", "08-10": "San Lorenzo", "08-15": "Assunzione di Maria",
     "09-01": "Sant'Egidio", "09-08": "Natività Beata Vergine Maria", "09-17": "San Roberto Bellarmino",
     "09-18": "San Giuseppe da Copertino", "09-19": "San Gennaro Vescovo e Martire", "09-20": "Sant'Eustachio",
-    "09-21": "San Matteo Apostolo", "09-22": "San Maurizio Martire", "09-23": "San Pio da Pietrelcina (Padre Pio)",
-    "09-29": "Santi Michele, Gabriele e Raffaele", "09-30": "San Girolamo", "10-04": "San Francesco d'Assisi",
+    "09-21": "San Matteo Apostolo ed Evangelista", "09-22": "San Maurizio Martire", "09-23": "San Pio da Pietrelcina",
+    "09-29": "Santi Arcangeli Michele, Gabriele e Raffaele", "09-30": "San Girolamo", "10-04": "San Francesco d'Assisi",
     "10-11": "San Giovanni XXIII Papa", "10-22": "San Giovanni Paolo II", "11-01": "Tutti i Santi",
-    "11-02": "Commemorazione dei Defunti", "11-04": "San Carlo Borromeo", "12-06": "San Nicola",
+    "11-02": "Commemorazione dei Defunti", "11-04": "San Carlo Borromeo", "12-06": "San Nicola di Bari",
     "12-08": "Immacolata Concezione", "12-13": "Santa Lucia", "12-25": "Natale del Signore", "12-26": "Santo Stefano"
 }
 
@@ -31,7 +34,9 @@ chiave_data = today.strftime("%m-%d")
 santo = SANTI_DEL_GIORNO.get(chiave_data, "San Patrono")
 data_estesa = f"{giorno_settimana} {today.day} {nome_mese} — {santo}"
 
-# 2. FILTRO DI CONFORMITÀ EDITORIALE (SAFETY CHECK)
+# ==============================================================================
+# 2. FILTRO DI CONFORMITÀ EDITORIALE (COMPLIANCE CHECK)
+# ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
     "pedofilia", "sparatoria", "accoltellato", "autopsia", "abuso", "delitto"
@@ -39,14 +44,16 @@ PAROLE_VIETATE = [
 
 def controlla_conformita(titolo, testo):
     stringa = f"{titolo} {testo}".lower()
-    for parola in PAROLE_VIETATE:
-        if parola in stringa:
+    for p in PAROLE_VIETATE:
+        if p in stringa:
             return False, "Contenuto bloccato per tutela editoriale comunitaria"
-    if len(titolo.strip()) < 6:
-        return False, "Notizia priva di testo significativo"
+    if len(titolo.strip()) < 8:
+        return False, "Notizia priva di testo verificabile"
     return True, "Conforme"
 
-# 3. METEO 3B METEO (SENZA FONTE NEL PARLATO INTERMEDIO)
+# ==============================================================================
+# 3. METEO A CURA DI 3B METEO
+# ==============================================================================
 def get_meteo():
     try:
         url = "https://api.open-meteo.com/v1/forecast?latitude=45.63&longitude=8.05&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe%2FRome"
@@ -63,70 +70,90 @@ def get_meteo():
             elif wcode in [45, 48]:
                 descr = "Foschia o nebbia mattutina in diradamento"
             elif wcode in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
-                descr = "Cielo coperto con deboli piogge locali"
+                descr = "Cielo molto nuvoloso con deboli piogge locali"
             elif wcode >= 95:
-                descr = "Tempo instabile con possibili temporali pomeridiani"
+                descr = "Instabile con possibilità di temporali pomeridiani"
 
-            speak = f"Previsioni meteo per Tavigliano: {descr}. Temperatura massima prevista di {t_max} gradi, minima di {t_min}."
+            speak = f"Previsioni meteo per Tavigliano: {descr}. Temperatura massima di {t_max} gradi, minima di {t_min}."
             body = (
-                f"• <strong>Situazione:</strong> {descr}.<br>"
+                f"• <strong>Quadro atmosferico:</strong> {descr}.<br>"
                 f"• <strong>Temperatura massima:</strong> {t_max}°C<br>"
                 f"• <strong>Temperatura minima:</strong> {t_min}°C<br>"
                 f"• <strong>Venti:</strong> deboli di brezza montana.<br>"
-                f"<div style='margin-top:8px;'><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🌐 Bollettino Orario Completo Tavigliano</a></div>"
+                f"<div style='margin-top:10px;'><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🌐 Consulta Bollettino Orario 3B Meteo</a></div>"
             )
-            return {"cat": "🌦️ Meteo Tavigliano", "title": f"{descr} ({t_min}°C / {t_max}°C)", "speak": speak, "body": body, "time": "08:01"}
+            return {"cat": "🌦️ Meteo Tavigliano", "title": f"{descr} ({t_min}°C / {t_max}°C)", "speak": speak, "body": body}
     except Exception:
         return {
             "cat": "🌦️ Meteo Tavigliano",
             "title": "Nubi sparse e clima montano",
-            "speak": "Previsioni meteo per Tavigliano: tempo asciutto con nubi sparse e brezze fresche.",
-            "body": "Nubi sparse e tempo asciutto lungo la Valle Cervo.<br><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='color:#0284c7; font-weight:700;'>🌐 Apri bollettino 3B Meteo</a>",
-            "time": "08:01"
+            "speak": "Previsioni meteo per Tavigliano: nubi sparse con brezze fresche e clima stabile.",
+            "body": "Nubi sparse e tempo asciutto lungo la Valle Cervo.<br><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='color:#0284c7; font-weight:700;'>🌐 Apri bollettino 3B Meteo</a>"
         }
 
+# ==============================================================================
 # 4. SCRAPING DA NEWSBIELLA.IT/MOBILE.HTML
+# ==============================================================================
 def get_newsbiella_mobile():
     trovate = []
-    try:
-        url = "https://www.newsbiella.it/mobile.html"
-        req = urllib.request.Request(url, headers={
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
-        })
-        with urllib.request.urlopen(req, timeout=9) as res:
-            raw_html = res.read().decode('utf-8', errors='ignore')
-            # Cerca i titoli negli elementi principali di mobile.html
-            pattern = re.compile(r'<(?:h2|h3|a)[^>]*class="[^"]*(?:title|titolo|entry-title)[^"]*"[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
-            matches = pattern.findall(raw_html)
-            
-            if not matches:
-                # Ricerca di riserva sui tag h2 / h3 generici
-                pattern_fallback = re.compile(r'<h[23][^>]*>(.*?)</h[23]>', re.IGNORECASE | re.DOTALL)
-                matches = pattern_fallback.findall(raw_html)
+    headers = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
+    
+    # Tentativo su newsbiella.it/mobile.html
+    for target_url in ["https://www.newsbiella.it/mobile.html", "https://www.newsbiella.it/mobile"]:
+        try:
+            req = urllib.request.Request(target_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as res:
+                raw_html = res.read().decode('utf-8', errors='ignore')
+                pattern = re.compile(r'<(?:h2|h3|a)[^>]*class="[^"]*(?:title|titolo|entry-title)[^"]*"[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
+                matches = pattern.findall(raw_html)
+                if not matches:
+                    pattern_fallback = re.compile(r'<h[23][^>]*>(.*?)</h[23]>', re.IGNORECASE | re.DOTALL)
+                    matches = pattern_fallback.findall(raw_html)
 
-            for m in matches:
-                testo_pulito = re.sub(r'<[^>]+>', '', m).strip()
-                testo_pulito = html.unescape(testo_pulito)
-                testo_pulito = " ".join(testo_pulito.split())
-                if len(testo_pulito) > 20 and testo_pulito not in [x["title"] for x in trovate]:
-                    trovate.append({
-                        "title": testo_pulito,
-                        "desc": "Aggiornamento in primo piano dalla redazione di Newsbiella Mobile."
-                    })
-                if len(trovate) >= 2:
-                    break
-    except Exception:
-        pass
+                for m in matches:
+                    testo = re.sub(r'<[^>]+>', '', m).strip()
+                    testo = html.unescape(testo)
+                    testo = " ".join(testo.split())
+                    if len(testo) > 22 and testo not in [x["title"] for x in trovate]:
+                        trovate.append({
+                            "title": testo,
+                            "desc": "Primo piano dalla redazione territoriale di Newsbiella Mobile."
+                        })
+                    if len(trovate) >= 2:
+                        break
+        except Exception:
+            pass
+        if len(trovate) >= 2:
+            break
 
-    # Se la pagina mobile non risponde, attiva notizie civiche sicure
+    # Fallback RSS se mobile.html è irraggiungibile
+    if len(trovate) < 2:
+        try:
+            req = urllib.request.Request("https://www.newsbiella.it/rss.xml", headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as res:
+                root = ET.fromstring(res.read().decode('utf-8', errors='ignore'))
+                for item in root.findall('.//item')[:3]:
+                    t = item.find('title').text.strip() if item.find('title') is not None else ""
+                    d = item.find('description').text.strip() if item.find('description') is not None else ""
+                    clean_d = re.sub('<[^<]+?>', '', d)[:140] + "..."
+                    clean_t = re.sub('<[^<]+?>', '', t)
+                    if clean_t and clean_t not in [x["title"] for x in trovate]:
+                        trovate.append({"title": clean_t, "desc": clean_d})
+                    if len(trovate) >= 2:
+                        break
+        except Exception:
+            pass
+
     if len(trovate) < 2:
         trovate = [
-            {"title": "Interventi di manutenzione e viabilità nel circondario di Biella", "desc": "Monitoraggio costante sui cantieri stradali e sui principali snodi viari del territorio."},
-            {"title": "Valorizzazione culturale ed eventi comunitari nel Biellese", "desc": "Proseguono le rassegne enogastronomiche e gli incontri promossi nei comuni del comprensorio."}
+            {"title": "Interventi di manutenzione e sicurezza viaria nel Biellese", "desc": "Monitoraggio costante sui cantieri stradali e sui principali collegamenti della provincia."},
+            {"title": "Attività culturali e valorizzazione del territorio", "desc": "Proseguono le rassegne enogastronomiche e gli incontri promossi nei comuni valligiani."}
         ]
     return trovate[:2]
 
-# 5. CALENDARIO RIFIUTI TAVIGLIANO
+# ==============================================================================
+# 5. RIFIUTI TAVIGLIANO
+# ==============================================================================
 def get_rifiuti(weekday):
     giorni = {
         0: ("Oggi nessuna raccolta programmata", "Domani: <em>CARTA</em>"),
@@ -137,138 +164,486 @@ def get_rifiuti(weekday):
         5: ("Oggi nessuna raccolta programmata", "Weekend di riposo"),
         6: ("Oggi nessuna raccolta", "Domani: lunedì ecologico")
     }
-    oggi_txt, dom_txt = giorni.get(weekday, ("Nessuna raccolta programmata", "Turno regolare"))
-    speak = f"Servizio igiene urbana a Tavigliano: {oggi_txt.replace('<em>', '').replace('</em>', '')}. Promemoria: {dom_txt.replace('<em>', '').replace('</em>', '')}."
+    oggi_txt, dom_txt = giorni.get(weekday, ("Nessuna raccolta", "Turno regolare"))
+    speak = f"Servizio igiene urbana a Tavigliano: {oggi_txt.replace('<em>', '').replace('</em>', '')}. Promemoria per l'indomani: {dom_txt.replace('<em>', '').replace('</em>', '')}."
     body = f"• <strong>Oggi:</strong> {oggi_txt}.<br>• <strong>Promemoria:</strong> {dom_txt}."
-    return {"cat": "♻️ Rifiuti Tavigliano", "title": "Calendario Raccolta Rifiuti", "speak": speak, "body": body, "time": "08:04"}
+    return {"cat": "♻️ Rifiuti Tavigliano", "title": "Calendario Raccolta Rifiuti", "speak": speak, "body": body}
 
-# 6. COMPOSIZIONE NOTIZIARIO SENZA CANZONE E CON FONTI SOLO NEL FINALE
+# ==============================================================================
+# 6. COMPOSIZIONE DATI
+# ==============================================================================
 meteo_item = get_meteo()
 news = get_newsbiella_mobile()
 
-def crea_scheda_news(item, num):
+def crea_card_news(item, num):
     valido, motivo = controlla_conformita(item["title"], item["desc"])
     if valido:
         spk = f"Notizia locale numero {num}: {item['title']}."
-        bod = f"{item['desc']}"
+        bod = item["desc"]
         tit = item["title"]
     else:
-        spk = f"Notizia numero {num}: contenuto non disponibile per mancata conformità alle linee guida."
-        bod = f"<span style='color:#b91c1c; font-weight:700;'>⚠️ Contenuto bloccato dal filtro automatico di conformità editoriale ({motivo}).</span>"
+        spk = f"Notizia numero {num}: contenuto momentaneamente sospeso per conformità editoriale."
+        bod = f"<span style='color:#ef4444; font-weight:700;'>⚠️ Contenuto non disponibile: {motivo}.</span>"
         tit = "Notizia non disponibile"
-    return {
-        "cat": f"📰 {num}. Newsbiella Mobile",
-        "title": tit,
-        "speak": spk,
-        "body": bod,
-        "time": f"08:0{num+1}"
-    }
+    return {"cat": f"📰 {num}. Newsbiella Mobile", "title": tit, "speak": spk, "body": bod}
 
 PROVERBI = [
     ("«Can ch'a bòja a mòrd nen»", "Cane che abbaia non morde"),
     ("«Chi a peul nen bate 'l caval, a bat la sela»", "Chi non può battere il cavallo, batte la sella"),
     ("«A fesse d'òr a s'ancurnisa la miseria»", "A farsi d'oro si incornicia la miseria"),
-    ("«Për conòsse un bin a venta mangé 'n sach ëd sal ansema»", "Per conoscere bene qualcuno bisogna mangiare un sacco di sale insieme"),
+    ("«Për conòsse un bin a venta mangé 'n sach ëd sal ansema»", "Per conoscere bene uno bisogna mangiare un sacco di sale insieme"),
     ("«L'eva ch'a cor a pòrta nen d'infezion»", "L'acqua che scorre non porta infezioni")
 ]
 proverbio = PROVERBI[(today.day - 1) % len(PROVERBI)]
 
 news_data = [
-    # APERTURA BUONGIORNO CON SANTO
     {
         "cat": "🎙️ Buongiorno Tavigliano",
         "title": f"Oggi è {giorno_settimana} {today.day} {nome_mese}",
         "speak": f"Buongiorno Tavigliano! Oggi è {giorno_settimana} {today.day} {nome_mese}. Santo del giorno: {santo}.",
-        "body": f"• <strong>Data:</strong> {giorno_settimana} {today.day} {nome_mese} {today.year}<br>• <strong>Santo del giorno:</strong> {santo}",
-        "time": "08:00"
+        "body": f"• <strong>Data:</strong> {giorno_settimana} {today.day} {nome_mese} {today.year}<br>• <strong>Santo del giorno:</strong> {santo}"
     },
     meteo_item,
-    crea_scheda_news(news[0], 1),
-    crea_scheda_news(news[1], 2),
+    crea_card_news(news[0], 1),
+    crea_card_news(news[1], 2),
     get_rifiuti(today.weekday()),
-    # FARMACIA DI TURNO CON LINK CAP 13900 E TELEFONI
     {
         "cat": "💊 Farmacie di Turno & Servizi",
         "title": "Turni CAP 13900 & Presidi di Zona",
         "speak": (
-            "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi del circondario con codice postale 13900, "
+            "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, "
             "potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. "
-            "I presidi territoriali più vicini sono la Farmacia Savino di Andorno Micca, telefono 015 47 27 79, "
-            "e la Farmacia Valeggia di Sagliano Micca, telefono 015 47 23 32, con pulsante per avviare il navigatore."
+            "I presidi più vicini sono la Farmacia Savino ad Andorno Micca, telefono 015 47 27 79, "
+            "e la Farmacia Valeggia a Sagliano Micca, telefono 015 47 23 32."
         ),
         "body": (
-            "<div style='background:rgba(0,168,132,0.12); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>"
-            "  <strong>🔍 Ricerca Ufficiale Turni Biellese (CAP 13900):</strong><br>"
-            "  <span style='font-size:0.85rem; color:#064e3b;'>Verifica turni aperti adesso, orari festivi e notturni</span><br>"
+            "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>"
+            "  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>"
+            "  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>"
             "  <div style='margin-top:8px;'>"
             "    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>"
             "  </div>"
             "</div>"
-            "<strong>Presidi locali più vicini a Tavigliano:</strong><br>"
-            "<div style='background:rgba(0,0,0,0.03); border-radius:8px; padding:8px; margin-top:6px;'>"
+            "<strong>Presidi locali più vicini:</strong><br>"
+            "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
             "  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>"
-            "  <a href='tel:015472779' style='color:#00a884; font-weight:700; text-decoration:none;'>📞 Chiama 015 472779</a> • "
-            "  <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='color:#128c7e; font-weight:700; text-decoration:none;'>🧭 Mappa GPS</a>"
+            "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
+            "    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 015 472779</a>"
+            "    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>"
+            "  </div>"
             "</div>"
-            "<div style='background:rgba(0,0,0,0.03); border-radius:8px; padding:8px; margin-top:6px;'>"
+            "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
             "  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>"
-            "  <a href='tel:015472332' style='color:#00a884; font-weight:700; text-decoration:none;'>📞 Chiama 015 472332</a> • "
-            "  <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='color:#128c7e; font-weight:700; text-decoration:none;'>🧭 Mappa GPS</a>"
+            "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
+            "    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 015 472332</a>"
+            "    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>"
+            "  </div>"
             "</div>"
-        ),
-        "time": "08:05"
+        )
     },
-    # SAGGEZZA TRADIZIONALE PIEMONTESE (AL POSTO DELLA CANZONE)
     {
         "cat": "💡 Saggezza Tradizionale",
         "title": "Proverbio Piemontese del Giorno",
         "speak": f"Prima del riepilogo, il proverbio piemontese di oggi: {proverbio[0]}, che significa: {proverbio[1]}.",
-        "body": f"• <strong>In lingua piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
+        "body": f"• <strong>In dialetto piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
     },
-    # UNICA CITAZIONE UFFICIALE DI TUTTE LE FONTI (NEL FINALE)
     {
         "cat": "📢 Trasparenza & Riepilogo Fonti",
-        "title": "Fonti Ufficiali Verificate del Notiziario",
+        "title": "Riepilogo Ufficiale Fonti del Notiziario",
         "speak": (
-            "Notiziario completato. Ecco il riepilogo delle fonti ufficiali di questa edizione: "
-            "le previsioni del tempo sono fornite da 3B Meteo; la cronaca locale dalla versione mobile di Newsbiella punto it; "
-            "il calendario ecologico da Seab Biella; la ricerca sanitaria da Farmacie di Turno punto org e Federfarma Biella. "
-            "Una serena giornata a tutti i cittadini di Tavigliano!"
+            "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: "
+            "previsioni meteo a cura di 3B Meteo; notizie dalla versione mobile di Newsbiella punto it; "
+            "calendario raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. "
+            "Una buona giornata a tutta la comunità di Tavigliano!"
         ),
         "body": (
-            "<div style='background:rgba(0,168,132,0.12); border-left:5px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
-            "  <div style='font-size:0.95rem; font-weight:800; color:#064e3b; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>"
+            "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
+            "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>"
             "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-            "  • <strong>Notizie Locali:</strong> Newsbiella.it/mobile.html<br>"
-            "  • <strong>Igiene Urbana:</strong> Seab Biella (Raccolta Comune di Tavigliano)<br>"
-            "  • <strong>Farmacie e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>"
+            "  • <strong>Notizie Territoriali:</strong> Newsbiella.it/mobile.html<br>"
+            "  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>"
+            "  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>"
             "  • <strong>Calendario:</strong> Archivio Liturgico Diocesano"
             "</div>"
-        ),
-        "time": "08:07"
+        )
     }
 ]
 
-# 7. SCRITTURA SU INDEX.HTML
-with open("index.html", "r", encoding="utf-8") as f:
-    content = f.read()
+# ==============================================================================
+# 7. GENERAZIONE COMPLETA DI INDEX.HTML (EFFETTO WOW STUDIO RADIO INTEGRATO)
+# ==============================================================================
+json_news = json.dumps(news_data, ensure_ascii=False, indent=2)
 
-content = re.sub(
-    r'<div class="status">.*?</div>',
-    f'<div class="status">{data_estesa}</div>',
-    content,
-    flags=re.DOTALL
-)
+HTML_PAGE = f"""<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Notiziario Tavigliano</title>
+<style>
+  :root {{
+    --bg-dark: #090e13;
+    --card-bg: rgba(18, 27, 34, 0.85);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --green-neon: #00a884;
+    --green-light: #25d366;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+  }}
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }}
+  .app-container {{
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding-bottom: 90px;
+  }}
 
-json_str = json.dumps(news_data, ensure_ascii=False, indent=2)
-content = re.sub(
-    r'const NEWS = \[.*?\];',
-    f'const NEWS = {json_str};',
-    content,
-    flags=re.DOTALL
-)
+  /* EFFETTO WOW 1: BREAKING NEWS TICKER TG24 */
+  .ticker-bar {{
+    background: linear-gradient(90deg, #0284c7, #0369a1);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }}
+  .ticker-tag {{
+    background: #0c4a6e;
+    padding: 5px 12px;
+    letter-spacing: 1px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }}
+  .ticker-marquee {{
+    display: inline-block;
+    padding-left: 100%;
+    animation: scorri 25s linear infinite;
+  }}
+  @keyframes scorri {{
+    0% {{ transform: translate(0, 0); }}
+    100% {{ transform: translate(-100%, 0); }}
+  }}
 
+  /* HEADER CON EFFETTO WOW 2: NEON ON AIR */
+  header {{
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--card-border);
+  }}
+  .station-logo {{
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--green-neon), #0284c7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(0, 168, 132, 0.4);
+  }}
+  .station-details {{ flex: 1; min-width: 0; }}
+  .station-name {{ font-weight: 800; font-size: 1.05rem; letter-spacing: 0.3px; }}
+  .station-status {{ font-size: 0.76rem; color: var(--green-neon); font-weight: 600; }}
+
+  .neon-on-air {{
+    background: #1e293b;
+    color: #64748b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    display: flex; align-items: center; gap: 5px;
+    transition: all 0.3s;
+  }}
+  .neon-on-air.active {{
+    background: #ef4444;
+    color: white;
+    border-color: #f87171;
+    box-shadow: 0 0 15px #ef4444;
+    animation: glow-neon 1s infinite alternate;
+  }}
+  @keyframes glow-neon {{
+    from {{ opacity: 0.85; filter: drop-shadow(0 0 4px #ef4444); }}
+    to {{ opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }}
+  }}
+
+  /* LISTA NOTIZIE CON EFFETTO WOW 3: SPOTLIGHT ED EQUALIZZATORE */
+  .news-stream {{
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }}
+  .news-card {{
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--card-border);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }}
+  .news-card.active-play {{
+    border-color: var(--green-neon);
+    box-shadow: 0 0 20px rgba(0, 168, 132, 0.45);
+    transform: scale(1.02);
+  }}
+  .news-cat {{
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--green-neon);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }}
+  .news-title {{
+    font-weight: 700;
+    font-size: 0.98rem;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }}
+  .news-body {{
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    line-height: 1.5;
+  }}
+
+  /* CONTROLLI AUDIO CARD ED EQUALIZZATORE DINAMICO */
+  .audio-bar {{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 24px;
+    padding: 6px 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }}
+  .btn-single-play {{
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--green-neon); border: none; color: #042f2e;
+    font-size: 14px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }}
+  .eq-spectrum {{
+    flex: 1; height: 20px; display: flex; align-items: center; gap: 3px;
+  }}
+  .eq-spectrum span {{
+    width: 3px; background: #475569; border-radius: 2px; height: 4px;
+  }}
+  .news-card.active-play .eq-spectrum span {{
+    background: var(--green-light);
+    animation: spectrum 0.75s ease-in-out infinite alternate;
+  }}
+  .eq-spectrum span:nth-child(2n) {{ animation-delay: 0.15s; }}
+  .eq-spectrum span:nth-child(3n) {{ animation-delay: 0.3s; }}
+  .eq-spectrum span:nth-child(4n) {{ animation-delay: 0.45s; }}
+  @keyframes spectrum {{
+    0% {{ height: 3px; }}
+    100% {{ height: 18px; }}
+  }}
+
+  /* BARRA FISSA IN BASSO */
+  .dock-bar {{
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 520px;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(12px);
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--card-border);
+    z-index: 30;
+  }}
+  .dock-btn {{
+    width: 100%;
+    background: linear-gradient(135deg, var(--green-neon), var(--green-light));
+    color: #042f2e;
+    border: none;
+    padding: 14px;
+    border-radius: 28px;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+    cursor: pointer;
+  }}
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- TICKER ULTIM'ORA -->
+  <div class="ticker-bar">
+    <div class="ticker-tag">🔴 TG24 LIVE</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Dati meteo ufficiali 3B Meteo • Ultime notizie Newsbiella Mobile • Farmacie di Turno CAP 13900 • Raccolta Rifiuti Seab</div>
+  </div>
+
+  <header>
+    <div class="station-logo">📻</div>
+    <div class="station-details">
+      <div class="station-name">Notiziario di Tavigliano</div>
+      <div class="station-status">{data_estesa}</div>
+    </div>
+    <div class="neon-on-air" id="onAirSign">● ON AIR</div>
+  </header>
+
+  <div class="news-stream" id="newsStream"></div>
+
+  <div class="dock-bar">
+    <button class="dock-btn" id="btnMasterPlay" onclick="toggleMasterBroadcast()">▶️ AVVIA TRASMISSIONE COMPLETA</button>
+  </div>
+</div>
+
+<script>
+const NEWS = {json_news};
+
+const synth = window.speechSynthesis;
+let currentTrack = -1;
+const newsStream = document.getElementById('newsStream');
+const onAirSign = document.getElementById('onAirSign');
+const btnMaster = document.getElementById('btnMasterPlay');
+
+// EFFETTO WOW 4: JINGLE SONORO A TRE TONI (CHIME TG)
+function playBroadcastJingle(callback) {{
+  try {{
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+    const notes = [523.25, 659.25, 783.99]; // Accordo Maggiore C5, E5, G5
+    notes.forEach((freq, i) => {{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.36);
+    }});
+    setTimeout(callback, 500);
+  }} catch (e) {{
+    callback();
+  }}
+}}
+
+function renderCards() {{
+  newsStream.innerHTML = '';
+  NEWS.forEach((item, index) => {{
+    const card = document.createElement('div');
+    card.className = 'news-card';
+    card.id = `card-${{index}}`;
+    
+    let eqSpans = '';
+    for (let s = 0; s < 26; s++) eqSpans += '<span></span>';
+
+    card.innerHTML = `
+      <div class="news-cat">${{item.cat}}</div>
+      <div class="news-title">${{item.title}}</div>
+      <div class="news-body">${{item.body}}</div>
+      <div class="audio-bar">
+        <button class="btn-single-play" onclick="playSingleItem(${{index}})">▶</button>
+        <div class="eq-spectrum">${{eqSpans}}</div>
+      </div>
+    `;
+    newsStream.appendChild(card);
+  }});
+}}
+
+window.playSingleItem = function(index) {{
+  if (currentTrack === index && synth.speaking) {{
+    stopBroadcast();
+  }} else {{
+    playBroadcastJingle(() => {{
+      startVoice(index, false);
+    }});
+  }}
+}};
+
+function startVoice(index, autoNext) {{
+  stopVoiceOnly();
+  currentTrack = index;
+  const item = NEWS[index];
+
+  document.querySelectorAll('.news-card').forEach(c => c.classList.remove('active-play'));
+  const activeCard = document.getElementById(`card-${{index}}`);
+  if (activeCard) {{
+    activeCard.classList.add('active-play');
+    activeCard.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+  }}
+
+  onAirSign.classList.add('active');
+
+  const utter = new SpeechSynthesisUtterance(item.speak);
+  utter.lang = 'it-IT';
+  utter.rate = 0.95;
+
+  utter.onend = () => {{
+    if (activeCard) activeCard.classList.remove('active-play');
+    if (autoNext && index + 1 < NEWS.length) {{
+      startVoice(index + 1, true);
+    }} else {{
+      stopBroadcast();
+    }}
+  }};
+  utter.onerror = () => stopBroadcast();
+
+  synth.speak(utter);
+}}
+
+function stopVoiceOnly() {{
+  synth.cancel();
+  if (currentTrack >= 0) {{
+    const el = document.getElementById(`card-${{currentTrack}}`);
+    if (el) el.classList.remove('active-play');
+  }}
+}}
+
+function stopBroadcast() {{
+  stopVoiceOnly();
+  currentTrack = -1;
+  onAirSign.classList.remove('active');
+  btnMaster.innerText = '▶️ AVVIA TRASMISSIONE COMPLETA';
+}}
+
+window.toggleMasterBroadcast = function() {{
+  if (synth.speaking) {{
+    stopBroadcast();
+  }} else {{
+    btnMaster.innerText = '⏸️ METTI IN PAUSA';
+    playBroadcastJingle(() => {{
+      startVoice(0, true);
+    }});
+  }}
+}};
+
+renderCards();
+</script>
+</body>
+</html>
+"""
+
+# SCRITTURA DIRETTA E INTEGRALE DI INDEX.HTML
 with open("index.html", "w", encoding="utf-8") as f:
-    f.write(content)
+    f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato regolarmente: {data_estesa}")
+print(f"Notiziario Tavigliano rigenerato con successo (Grafica Studio Radio & Effetti WOW): {data_estesa}")
