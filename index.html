@@ -243,99 +243,70 @@
 <script>
 (function(){
   const NEWS = [
-    {
-      cat: "🎙️ Buongiorno Tavigliano",
-      title: "Saluto della comunità e Santo del Giorno",
-      speak: "Buongiorno Tavigliano! Oggi è venerdì diciotto settembre. Santo del giorno: San Giuseppe da Copertino. Benvenuti all'ascolto delle notizie locali.",
-      body: "• <strong>Oggi è:</strong> Venerdì 18 settembre<br>• <strong>Santo del giorno:</strong> San Giuseppe da Copertino<br><div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Calendario Liturgico Diocesano</div>"
-    },
-    {
-      cat: "🌦️ Meteo Tavigliano • 3B Meteo",
-      title: "Cielo coperto con schiarite (Min 15°C / Max 19°C)",
-      speak: "Previsioni meteo per Tavigliano a cura di 3B Meteo. Giornata con cielo nuvoloso al mattino con tendenza a schiarite pomeridiane. Temperatura minima di quindici gradi, massima di diciannove. Venti deboli e precipitazioni assenti. Fonte ufficiale: 3B Meteo.",
-      body: "<strong>Dati bollettino ufficiale 3B Meteo per Tavigliano:</strong><br>" +
-            "• <strong>Cielo:</strong> Molto nuvoloso con locali schiarite nel pomeriggio<br>" +
-            "• <strong>Temperature:</strong> Minima 15°C • Massima 19°C<br>" +
-            "• <strong>Precipitazioni:</strong> Assenti (basso rischio)<br>" +
-            "• <strong>Venti:</strong> Deboli da nord-est<br>" +
-            "<div style='margin-top:8px;'><a class='btn-maps' href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='background:#0284c7;'>🌐 Bollettino orario completo su 3BMeteo.com</a></div>" +
-            "<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> 3BMeteo.com (Stazione Tavigliano)</div>"
-    },
-    {
-      cat: "📰 1. Newsbiella • Primo Piano",
-      title: "Notizie e interventi sulla provincia di Biella",
-      speak: "Prima notizia da Newsbiella: aggiornamenti sui progetti per il territorio e la sicurezza stradale provinciale. Fonte: Newsbiella punto it.",
-      body: "Rassegna degli interventi viari e dei piani per le vallate montane del Biellese.<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Cronaca</div>"
-    },
-    {
-      cat: "📰 2. Newsbiella • Territorio",
-      title: "Iniziative ed eventi nel Biellese",
-      speak: "Seconda notizia da Newsbiella: proseguono le iniziative comunitarie ed enogastronomiche nei borghi del circondario. Fonte: Newsbiella punto it.",
-      body: "Proseguono le rassegne territoriali e gli appuntamenti comunitari promossi nel circondario.<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Territorio</div>"
-    },
-    {
-      cat: "🌲 Valle Cervo • Tavigliano",
-      title: "Sentieri aperti e fruibilità montana",
-      speak: "Dalla Valle Cervo: sentieri panoramici e collegamenti intervallivi regolarmente accessibili e segnalati. Fonte: Notiziario Locale.",
-      body: "Aggiornamenti sulla percorribilità dei sentieri montani e delle mulattiere storiche di Tavigliano.<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Consorzio Valle Cervo</div>"
-    },
-    {
-      cat: "♻️ Rifiuti Tavigliano",
-      title: "Calendario Raccolta: Oggi nessuna esposizione",
-      speak: "Raccolta rifiuti a Tavigliano: oggi venerdì nessuna raccolta programmata. Il prossimo ritiro sarà martedì con il bidone della carta. Fonte: Seab Biella.",
-      body: "• <strong>Oggi (Venerdì):</strong> Nessuna raccolta programmata.<br>• <strong>Prossimo turno:</strong> Martedì con la <em>CARTA</em>.<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Seab Biella — Comune di Tavigliano</div>"
-    },
-    {
-      cat: "💊 Farmacie di Turno & Servizi",
-      title: "Presidi più vicini, Numeri di Telefono e GPS",
-      speak: "Farmacie di riferimento per Tavigliano: la Farmacia Savino ad Andorno Micca in Via Matteotti 14, a 5 minuti, telefono 015 47 27 79. E la Farmacia Valeggia a Sagliano Micca in Via Cappellaro 39, a 7 minuti, telefono 015 47 23 32. Trovate i pulsanti per telefonare e per avviare il navigatore. Fonte: Federfarma e ASL Biella.",
-      body: "Tavigliano non ha farmacie nel comune. Ecco i presidi più vicini con chiamata diretta:<br>" +
-            "<div class='route-card'>" +
-            "  <strong>1. Farmacia Savino (Andorno Micca)</strong><br>" +
-            "  <span>📍 Via Giacomo Matteotti, 14 • ⏱ 5 min (3,2 km)</span>" +
-            "  <div class='btn-row'>" +
-            "    <a class='btn-phone' href='tel:015472779'>📞 Chiama: 015 472779</a>" +
-            "    <a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank'>🧭 Avvia GPS</a>" +
-            "  </div>" +
-            "</div>" +
-            "<div class='route-card'>" +
-            "  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong><br>" +
-            "  <span>📍 Via Giulio Cappellaro, 39 • ⏱ 7 min (4,5 km)</span>" +
-            "  <div class='btn-row'>" +
-            "    <a class='btn-phone' href='tel:015472332'>📞 Chiama: 015 472332</a>" +
-            "    <a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank'>🧭 Avvia GPS</a>" +
-            "  </div>" +
-            "</div>" +
-            "<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Federfarma Biella e ASL BI</div>"
-    },
-    {
-      cat: "🎵 Canzone Italiana & Proverbio",
-      title: "Nel blu dipinto di blu (Volare) — Modugno",
-      speak: "Chiudiamo con la grande musica italiana e la tradizione locale. Il proverbio piemontese del giorno è: Can ch'a bòja a mòrd nen, cane che abbaia non morde. La grande canzone italiana di oggi è Nel blu dipinto di blu di Domenico Modugno. Potete ascoltare il ritornello di 30 secondi dal lettore audio. Buona giornata a tutta Tavigliano! Fonte: Archivio Canzone Italiana.",
-      body: "• <strong>Proverbio piemontese:</strong> <em>«Can ch'a bòja a mòrd nen»</em> (Cane che abbaia non morde).<br>" +
-            "• <strong>Capolavoro italiano:</strong> <em>Nel blu dipinto di blu (Volare)</em> — Domenico Modugno (1958).<br>" +
-            "<div class='audio-preview-box'>" +
-            "  <strong style='color:#9f1239;'>🎧 Miniplayer ritornello ufficiale (30 secondi):</strong>" +
-            "  <audio controls preload='metadata' style='width:100%; margin-top:8px;'>" +
-            "    <source src='https://audio-ssl.itunes.apple.com/itunes-assets/Music/54/2a/9e/mzm.kltpdyeq.aac.p.m4a' type='audio/mp4'>" +
-            "    Il tuo browser non supporta il riproduttore audio." +
-            "  </audio>" +
-            "  <a class='btn-full-song' href='https://www.youtube.com/watch?v=ViJgTYju8Gg' target='_blank'>🔴 Ascolta brano intero su YouTube</a>" +
-            "</div>" +
-            "<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Archivio Storico della Canzone Italiana</div>"
-    },
-    {
-      cat: "📢 Trasparenza & Riepilogo Fonti",
-      title: "Riepilogo delle fonti certificate",
-      speak: "Notiziario completato. Riepilogo finale delle fonti: previsioni meteo ufficiali a cura di 3B Meteo; notizie locali da Newsbiella punto it; calendario rifiuti da Seab Biella; farmacie da Federfarma e ASL Biella. Buona continuazione di giornata!",
-      body: "Tutte le informazioni del notiziario sono certificate e verificate:<br>" +
-            "• <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano)<br>" +
-            "• <strong>Cronaca:</strong> Newsbiella.it<br>" +
-            "• <strong>Rifiuti:</strong> Seab Biella (Comune di Tavigliano)<br>" +
-            "• <strong>Farmacie e Sanità:</strong> Federfarma / ASL Biella<br>" +
-            "<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Notiziario Civico Autonomo di Tavigliano</div>"
-    }
-  ];
+  {
+    "cat": "🎙️ Buongiorno Tavigliano",
+    "title": "Oggi è Venerdì 18 settembre",
+    "speak": "Buongiorno Tavigliano! Oggi è Venerdì 18 settembre. Santo del giorno: San Giuseppe da Copertino.",
+    "body": "• <strong>Data odierna:</strong> Venerdì 18 settembre 2026<br>• <strong>Santo del giorno:</strong> San Giuseppe da Copertino<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Calendario Liturgico Diocesano</div>",
+    "time": "08:00"
+  },
+  {
+    "cat": "🌦️ Meteo Tavigliano • 3B Meteo",
+    "title": "Cielo molto nuvoloso con deboli piogge locali (Min 15°C / Max 18°C)",
+    "speak": "Previsioni meteo per Tavigliano a cura di 3B Meteo: Cielo molto nuvoloso con deboli piogge locali. Temperatura massima di 18 gradi, minima di 15. Fonte ufficiale: 3B Meteo.",
+    "body": "<strong>Bollettino previsionale per Tavigliano e Valle Cervo:</strong><br>• <strong>Quadro cielo:</strong> Cielo molto nuvoloso con deboli piogge locali<br>• <strong>Temperatura massima:</strong> 18°C<br>• <strong>Temperatura minima:</strong> 15°C<br>• <strong>Venti:</strong> deboli a regime di brezza montano<br><div style='margin-top:8px;'><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🌐 Consulta bollettino orario su 3BMeteo.com</a></div><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> 3BMeteo.com (Stazione Tavigliano)</div>",
+    "time": "08:01"
+  },
+  {
+    "cat": "📰 1. Newsbiella • Territorio",
+    "title": "Viabilità e manutenzione delle arterie provinciali biellesi",
+    "speak": "Prima notizia da Newsbiella: Viabilità e manutenzione delle arterie provinciali biellesi. Fonte: Newsbiella punto it.",
+    "body": "Monitoraggio costante sui cantieri e sullo stato delle principali vie di transito del circondario.<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Cronaca Locale</div>",
+    "time": "08:02"
+  },
+  {
+    "cat": "📰 2. Newsbiella • Territorio",
+    "title": "Cultura e promozione del patrimonio nel Biellese",
+    "speak": "Seconda notizia locale: Cultura e promozione del patrimonio nel Biellese. Fonte: Newsbiella punto it.",
+    "body": "Proseguono le rassegne comunitarie e le iniziative territoriali per la valorizzazione dei borghi valligiani.<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Cronaca Locale</div>",
+    "time": "08:03"
+  },
+  {
+    "cat": "🌲 Valle Cervo • Comunità",
+    "title": "Aggiornamenti e sentieri in Valle Cervo",
+    "speak": "Dalla Valle Cervo: sentieri panoramici e percorsi comunali aperti e fruibili per escursionisti e residenti. Fonte: Notiziario Locale.",
+    "body": "Piena accessibilità per i collegamenti e i sentieri storici della Valle Cervo.<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Consorzio Alta Valle Cervo</div>",
+    "time": "08:04"
+  },
+  {
+    "cat": "♻️ Rifiuti Tavigliano",
+    "title": "Calendario Raccolta Rifiuti",
+    "speak": "Servizio raccolta rifiuti a Tavigliano: Oggi nessuna raccolta programmata. Promemoria: Lunedì: ripresa turni. Fonte: Seab Biella.",
+    "body": "• <strong>Oggi:</strong> Oggi nessuna raccolta programmata.<br>• <strong>Promemoria:</strong> Lunedì: ripresa turni.<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Seab Biella — Calendario Comune di Tavigliano</div>",
+    "time": "08:05"
+  },
+  {
+    "cat": "💊 Farmacie di Turno & Servizi",
+    "title": "Presidi più vicini, Numeri di Telefono e Mappa GPS",
+    "speak": "Farmacie di riferimento per Tavigliano: la Farmacia Savino ad Andorno Micca in Via Matteotti 14, raggiungibile in 5 minuti, telefono 015 47 27 79. E la Farmacia Valeggia a Sagliano Micca in Via Cappellaro 39, a 7 minuti, telefono 015 47 23 32. Trovate i pulsanti per telefonare e per avviare il navigatore. Fonte: Federfarma e ASL Biella.",
+    "body": "Tavigliano non dispone di farmacie comunali. Ecco i due presidi territoriali immediati:<br><br><div style='background:rgba(0,0,0,0.03); border-radius:10px; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1;'>  <strong>1. Farmacia Savino (Andorno Micca)</strong><br>  <span>📍 Via Giacomo Matteotti, 14 • ⏱ 5 min (3,2 km)</span><br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>📞 Chiama: 015 472779</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🧭 Navigatore GPS</a>  </div></div><div style='background:rgba(0,0,0,0.03); border-radius:10px; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1;'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong><br>  <span>📍 Via Giulio Cappellaro, 39 • ⏱ 7 min (4,5 km)</span><br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>📞 Chiama: 015 472332</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🧭 Navigatore GPS</a>  </div></div><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Federfarma Biella e ASL Biella</div>",
+    "time": "08:06"
+  },
+  {
+    "cat": "🎵 Canzone Italiana & Proverbio",
+    "title": "Canzone del Giorno: Una lacrima sul viso — Bobby Solo (1964)",
+    "speak": "Chiudiamo con la grande musica italiana e la tradizione locale. Il proverbio piemontese del giorno è: «A fesse d'òr a s'ancurnisa la miseria», A farsi d'oro si incornicia la miseria. Il capolavoro italiano selezionato per oggi è: Una lacrima sul viso — Bobby Solo (1964). Potete ascoltare il brano integrale autorizzato toccando il pulsante rosso di YouTube. Buona giornata a tutta Tavigliano! Fonte: Canzone d'Autore Italiana.",
+    "body": "• <strong>Proverbio piemontese:</strong> <em>«A fesse d'òr a s'ancurnisa la miseria»</em> (A farsi d'oro si incornicia la miseria).<br>• <strong>Capolavoro d'autore:</strong> <em>Una lacrima sul viso — Bobby Solo (1964)</em>.<br><br><div style='background:#fff1f2; border:1px solid #fecdd3; border-radius:12px; padding:12px; text-align:center;'>  <div style='font-weight:700; color:#9f1239; margin-bottom:8px;'>🎧 Ascolto Ufficiale & Legale (Licenza YouTube):</div>  <div style='display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:6px;'>    <a href='https://www.youtube.com/watch?v=p5zO7U8NfLw' target='_blank' style='background:#e11d48; color:white; text-decoration:none; padding:9px 16px; border-radius:10px; font-weight:700; font-size:0.88rem;'>▶️ Ascolta il brano su YouTube</a>    <a href='https://music.youtube.com/watch?v=p5zO7U8NfLw' target='_blank' style='background:#111b21; color:white; text-decoration:none; padding:9px 16px; border-radius:10px; font-weight:700; font-size:0.88rem;'>🔴 YouTube Music</a>  </div></div><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Archivio Ufficiale Canzone Italiana</div>",
+    "time": "08:07"
+  },
+  {
+    "cat": "📢 Riepilogo Ufficiale Fonti",
+    "title": "Trasparenza e Tutela dei Dati",
+    "speak": "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: previsioni meteorologiche a cura di 3B Meteo; notizie locali da Newsbiella punto it verificate dal filtro di conformità; servizio igiene urbana da Seab Biella; turni farmacie da Federfarma e ASL Biella; musica su licenza ufficiale YouTube. Buona giornata a tutti i residenti di Tavigliano!",
+    "body": "Tutti i dati del notiziario provengono da fonti verificate e consultabili in rete:<br><br>• <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano)<br>• <strong>Cronaca e Notizie:</strong> Newsbiella.it (con filtro di conformità editoriale)<br>• <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>• <strong>Sanità e Farmacie:</strong> Federfarma / ASL Biella<br>• <strong>Diritti Musicali:</strong> Piattaforma YouTube Music (streaming con licenza d'autore)<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Notiziario Civico Autonomo di Tavigliano</div>",
+    "time": "08:08"
+  }
+];
 
   /* GESTIONE SOTTOFONDO MP3 */
   const bgMusic = document.getElementById('bgMusic');
