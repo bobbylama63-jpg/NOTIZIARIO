@@ -1,12 +1,21 @@
 import datetime
+import glob
 import html
 import json
+import os
 import re
 import urllib.request
 import xml.etree.ElementTree as ET
 
 # ==============================================================================
-# 1. DATA E SANTI DEL GIORNO
+# 1. RILEVAZIONE AUTOMATICA DEL FILE MP3 (CARTELLA DIGITA O ROOT)
+# ==============================================================================
+candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glob("*.mp3")
+mp3_file = candidati_mp3[0].replace("\\", "/") if candidati_mp3 else "headlineupdate.mp3"
+print(f"File MP3 di sottofondo rilevato: {mp3_file}")
+
+# ==============================================================================
+# 2. DATA E SANTO DEL GIORNO
 # ==============================================================================
 MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", 
         "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
@@ -35,7 +44,7 @@ santo = SANTI_DEL_GIORNO.get(chiave_data, "San Patrono")
 data_estesa = f"{giorno_settimana} {today.day} {nome_mese} — {santo}"
 
 # ==============================================================================
-# 2. FILTRO DI CONFORMITÀ EDITORIALE (COMPLIANCE CHECK)
+# 3. FILTRO DI CONFORMITÀ EDITORIALE (COMPLIANCE)
 # ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
@@ -52,7 +61,7 @@ def controlla_conformita(titolo, testo):
     return True, "Conforme"
 
 # ==============================================================================
-# 3. METEO A CURA DI 3B METEO
+# 4. PREVISIONI METEO CON 3B METEO
 # ==============================================================================
 def get_meteo():
     try:
@@ -92,13 +101,11 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 4. SCRAPING DA NEWSBIELLA.IT/MOBILE.HTML
+# 5. SCRAPING NOTIZIE DA NEWSBIELLA.IT/MOBILE.HTML
 # ==============================================================================
 def get_newsbiella_mobile():
     trovate = []
     headers = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
-    
-    # Tentativo su newsbiella.it/mobile.html
     for target_url in ["https://www.newsbiella.it/mobile.html", "https://www.newsbiella.it/mobile"]:
         try:
             req = urllib.request.Request(target_url, headers=headers)
@@ -126,7 +133,6 @@ def get_newsbiella_mobile():
         if len(trovate) >= 2:
             break
 
-    # Fallback RSS se mobile.html è irraggiungibile
     if len(trovate) < 2:
         try:
             req = urllib.request.Request("https://www.newsbiella.it/rss.xml", headers=headers)
@@ -152,7 +158,7 @@ def get_newsbiella_mobile():
     return trovate[:2]
 
 # ==============================================================================
-# 5. RIFIUTI TAVIGLIANO
+# 6. CALENDARIO RIFIUTI TAVIGLIANO
 # ==============================================================================
 def get_rifiuti(weekday):
     giorni = {
@@ -170,7 +176,7 @@ def get_rifiuti(weekday):
     return {"cat": "♻️ Rifiuti Tavigliano", "title": "Calendario Raccolta Rifiuti", "speak": speak, "body": body}
 
 # ==============================================================================
-# 6. COMPOSIZIONE DATI
+# 7. COMPOSIZIONE DATI
 # ==============================================================================
 meteo_item = get_meteo()
 news = get_newsbiella_mobile()
@@ -207,14 +213,16 @@ news_data = [
     crea_card_news(news[0], 1),
     crea_card_news(news[1], 2),
     get_rifiuti(today.weekday()),
+    # FARMACIE: NUMERI NON LETTI A VOCE
     {
         "cat": "💊 Farmacie di Turno & Servizi",
         "title": "Turni CAP 13900 & Presidi di Zona",
         "speak": (
             "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, "
             "potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. "
-            "I presidi più vicini sono la Farmacia Savino ad Andorno Micca, telefono 015 47 27 79, "
-            "e la Farmacia Valeggia a Sagliano Micca, telefono 015 47 23 32."
+            "I presidi territoriali più vicini sono la Farmacia Savino ad Andorno Micca "
+            "e la Farmacia Valeggia a Sagliano Micca. "
+            "Nella scheda trovate i pulsanti diretti per avviare la telefonata e per aprire il navigatore."
         ),
         "body": (
             "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>"
@@ -228,14 +236,14 @@ news_data = [
             "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
             "  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>"
             "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
-            "    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 015 472779</a>"
+            "    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>"
             "    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>"
             "  </div>"
             "</div>"
             "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
             "  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>"
             "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
-            "    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 015 472332</a>"
+            "    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>"
             "    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>"
             "  </div>"
             "</div>"
@@ -247,6 +255,7 @@ news_data = [
         "speak": f"Prima del riepilogo, il proverbio piemontese di oggi: {proverbio[0]}, che significa: {proverbio[1]}.",
         "body": f"• <strong>In dialetto piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
     },
+    # RIEPILOGO UNICO DELLE FONTI NEL FINALE
     {
         "cat": "📢 Trasparenza & Riepilogo Fonti",
         "title": "Riepilogo Ufficiale Fonti del Notiziario",
@@ -270,7 +279,7 @@ news_data = [
 ]
 
 # ==============================================================================
-# 7. GENERAZIONE COMPLETA DI INDEX.HTML (EFFETTO WOW STUDIO RADIO INTEGRATO)
+# 8. GENERATORE HTML CON SOTTOFONDO MP3 INTEGRATO
 # ==============================================================================
 json_news = json.dumps(news_data, ensure_ascii=False, indent=2)
 
@@ -288,7 +297,6 @@ HTML_PAGE = f"""<!DOCTYPE html>
     --green-neon: #00a884;
     --green-light: #25d366;
     --text-main: #f1f5f9;
-    --text-muted: #94a3b8;
   }}
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
@@ -308,7 +316,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     padding-bottom: 90px;
   }}
 
-  /* EFFETTO WOW 1: BREAKING NEWS TICKER TG24 */
+  /* TICKER TG24 */
   .ticker-bar {{
     background: linear-gradient(90deg, #0284c7, #0369a1);
     color: #fff;
@@ -338,7 +346,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     100% {{ transform: translate(-100%, 0); }}
   }}
 
-  /* HEADER CON EFFETTO WOW 2: NEON ON AIR */
+  /* HEADER CON EFFETTO NEON ON AIR */
   header {{
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(10px);
@@ -386,7 +394,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     to {{ opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }}
   }}
 
-  /* LISTA NOTIZIE CON EFFETTO WOW 3: SPOTLIGHT ED EQUALIZZATORE */
+  /* NOTIZIE SPOTLIGHT */
   .news-stream {{
     padding: 14px 12px;
     display: flex;
@@ -426,7 +434,6 @@ HTML_PAGE = f"""<!DOCTYPE html>
     line-height: 1.5;
   }}
 
-  /* CONTROLLI AUDIO CARD ED EQUALIZZATORE DINAMICO */
   .audio-bar {{
     display: flex;
     align-items: center;
@@ -462,7 +469,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     100% {{ height: 18px; }}
   }}
 
-  /* BARRA FISSA IN BASSO */
+  /* BARRA FISSA DI CONTROLLO */
   .dock-bar {{
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 520px;
@@ -489,11 +496,16 @@ HTML_PAGE = f"""<!DOCTYPE html>
 </head>
 <body>
 
+<!-- ELEMENTO AUDIO MP3 DI SOTTOFONDO -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="{mp3_file}" type="audio/mpeg">
+</audio>
+
 <div class="app-container">
   <!-- TICKER ULTIM'ORA -->
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Dati meteo ufficiali 3B Meteo • Ultime notizie Newsbiella Mobile • Farmacie di Turno CAP 13900 • Raccolta Rifiuti Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni orarie 3B Meteo • Ultime notizie Newsbiella Mobile • Farmacie di Turno CAP 13900 • Raccolta Seab</div>
   </div>
 
   <header>
@@ -520,31 +532,7 @@ let currentTrack = -1;
 const newsStream = document.getElementById('newsStream');
 const onAirSign = document.getElementById('onAirSign');
 const btnMaster = document.getElementById('btnMasterPlay');
-
-// EFFETTO WOW 4: JINGLE SONORO A TRE TONI (CHIME TG)
-function playBroadcastJingle(callback) {{
-  try {{
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioContext();
-    const notes = [523.25, 659.25, 783.99]; // Accordo Maggiore C5, E5, G5
-    notes.forEach((freq, i) => {{
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + i * 0.12);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.12);
-      osc.stop(ctx.currentTime + i * 0.12 + 0.36);
-    }});
-    setTimeout(callback, 500);
-  }} catch (e) {{
-    callback();
-  }}
-}}
+const bgMusic = document.getElementById('bgMusic');
 
 function renderCards() {{
   newsStream.innerHTML = '';
@@ -569,13 +557,25 @@ function renderCards() {{
   }});
 }}
 
+function startBgMusic() {{
+  if (bgMusic) {{
+    bgMusic.volume = 0.22; // Volume di sottofondo calibrato per accompagnare la voce
+    bgMusic.play().catch(() => {{}});
+  }}
+}}
+
+function stopBgMusic() {{
+  if (bgMusic) {{
+    bgMusic.pause();
+  }}
+}}
+
 window.playSingleItem = function(index) {{
   if (currentTrack === index && synth.speaking) {{
     stopBroadcast();
   }} else {{
-    playBroadcastJingle(() => {{
-      startVoice(index, false);
-    }});
+    startBgMusic();
+    startVoice(index, false);
   }}
 }};
 
@@ -620,6 +620,7 @@ function stopVoiceOnly() {{
 
 function stopBroadcast() {{
   stopVoiceOnly();
+  stopBgMusic();
   currentTrack = -1;
   onAirSign.classList.remove('active');
   btnMaster.innerText = '▶️ AVVIA TRASMISSIONE COMPLETA';
@@ -630,9 +631,8 @@ window.toggleMasterBroadcast = function() {{
     stopBroadcast();
   }} else {{
     btnMaster.innerText = '⏸️ METTI IN PAUSA';
-    playBroadcastJingle(() => {{
-      startVoice(0, true);
-    }});
+    startBgMusic();
+    startVoice(0, true);
   }}
 }};
 
@@ -642,8 +642,8 @@ renderCards();
 </html>
 """
 
-# SCRITTURA DIRETTA E INTEGRALE DI INDEX.HTML
+# RISCRITTURA COMPLETA E DIRETTA DI INDEX.HTML
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano rigenerato con successo (Grafica Studio Radio & Effetti WOW): {data_estesa}")
+print(f"Notiziario Tavigliano rigenerato con successo (MP3 integrato da '{mp3_file}'): {data_estesa}")
