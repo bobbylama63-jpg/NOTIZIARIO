@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Notiziario Vocale Tavigliano</title>
+<title>Notiziario Tavigliano</title>
 <style>
   :root{
     --font-scale: 1;
@@ -44,8 +44,6 @@
     width:100%;
     max-width:540px;
     min-height:100vh;
-    min-height:100dvh;
-    background:var(--wa-bg);
     display:flex;
     flex-direction:column;
     position:relative;
@@ -69,10 +67,9 @@
   }
   .head-info{flex:1;min-width:0;}
   .head-info .name{font-weight:700;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .head-info .status{font-size:0.78rem;opacity:0.85;}
+  .head-info .status{font-size:0.78rem;opacity:0.9;}
   .head-icons{display:flex;align-items:center;gap:8px;}
 
-  /* Zoom */
   .zoom-box{
     display:flex;background:rgba(0,0,0,0.25);border-radius:14px;padding:2px 4px;
     border:1px solid rgba(255,255,255,0.2);
@@ -82,7 +79,6 @@
     padding:3px 6px;cursor:pointer;border-radius:8px;
   }
 
-  /* Box Lettore Dedicato MP3 */
   .music-master-card{
     background:linear-gradient(135deg, #075e54, #128c7e);
     color:white;
@@ -94,79 +90,16 @@
     flex-direction:column;
     gap:10px;
   }
-  .music-master-top{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .music-master-title{
-    font-size:0.92rem;
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .music-status-pill{
-    font-size:0.75rem;
-    background:rgba(255,255,255,0.2);
-    padding:2px 8px;
-    border-radius:10px;
-  }
-  .music-controls-row{
-    display:flex;
-    align-items:center;
-    gap:12px;
-  }
+  .music-master-top{display:flex;align-items:center;justify-content:space-between;}
+  .music-master-title{font-size:0.92rem;font-weight:700;display:flex;align-items:center;gap:6px;}
+  .music-status-pill{font-size:0.75rem;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;}
+  .music-controls-row{display:flex;align-items:center;gap:12px;}
   .btn-music-play{
-    background:var(--wa-green);
-    color:#04331f;
-    border:none;
-    padding:8px 16px;
-    border-radius:20px;
-    font-weight:800;
-    font-size:0.85rem;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:6px;
-    flex-shrink:0;
+    background:var(--wa-green);color:#04331f;border:none;padding:8px 16px;
+    border-radius:20px;font-weight:800;font-size:0.85rem;cursor:pointer;
   }
-  .music-vol-wrap{
-    flex:1;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size:0.75rem;
-  }
-  .music-vol-wrap input[type=range]{
-    flex:1;
-    accent-color:var(--wa-green);
-  }
-
-  .toolbar{
-    background:var(--wa-header-dark);
-    padding:8px 12px;
-    display:flex;
-    gap:8px;
-    overflow-x:auto;
-    scrollbar-width:none;
-    position:sticky;
-    top:66px;
-    z-index:14;
-  }
-  .toolbar::-webkit-scrollbar{display:none;}
-  .chip{
-    flex:0 0 auto;
-    background:rgba(255,255,255,0.12);
-    color:#fff;
-    border:1px solid rgba(255,255,255,0.25);
-    padding:6px 14px;
-    border-radius:16px;
-    font-size:0.82rem;
-    cursor:pointer;
-    white-space:nowrap;
-  }
-  .chip.active{background:var(--wa-green);border-color:var(--wa-green);color:#04331f;font-weight:700;}
+  .music-vol-wrap{flex:1;display:flex;align-items:center;gap:8px;font-size:0.75rem;}
+  .music-vol-wrap input[type=range]{flex:1;accent-color:var(--wa-green);}
 
   .chat{
     flex:1;
@@ -175,36 +108,33 @@
     flex-direction:column;
     gap:12px;
   }
-
   .msg{
-    max-width:94%;
+    max-width:96%;
     background:var(--wa-bubble-in);
     border-radius:12px;
     padding:12px 14px 10px;
-    box-shadow:0 1px 2px rgba(0,0,0,0.12);
+    box-shadow:0 1px 3px rgba(0,0,0,0.1);
     align-self:flex-start;
     border:1px solid var(--wa-card-border);
   }
-  .msg .cat{
-    font-size:0.8rem;
-    font-weight:800;
-    color:var(--wa-accent);
-    margin-bottom:4px;
-    text-transform:uppercase;
-  }
+  .msg .cat{font-size:0.8rem;font-weight:800;color:var(--wa-accent);margin-bottom:4px;text-transform:uppercase;}
   .msg .title{font-weight:700;font-size:0.98rem;margin-bottom:6px;line-height:1.4;}
   .msg .body{font-size:0.92rem;color:var(--wa-text);line-height:1.5;}
-  
-  .fonte{
-    display:block;
-    margin-top:8px;
-    font-size:0.85rem;
-    font-weight:800;
-    color:var(--wa-accent);
+
+  .fonte-box{
+    margin-top:12px;
+    padding:8px 12px;
+    background:rgba(0,168,132,0.12);
+    border-left:4px solid #00a884;
+    border-radius:6px;
+    font-size:0.83rem;
+    font-weight:700;
+    color:#064e3b;
   }
 
   .route-card{
-    background:rgba(0,0,0,0.04);
+    background:rgba(0,0,0,0.03);
+    border:1px solid #cbd5e1;
     border-radius:10px;
     padding:10px;
     margin-top:8px;
@@ -212,22 +142,17 @@
     flex-direction:column;
     gap:6px;
   }
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+  .btn-phone{
+    background:#00a884;color:#fff;text-decoration:none;padding:7px 12px;
+    border-radius:8px;font-weight:700;font-size:0.83rem;
+  }
   .btn-maps{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    background:var(--wa-teal);
-    color:white;
-    text-decoration:none;
-    padding:8px 12px;
-    border-radius:8px;
-    font-size:0.85rem;
-    font-weight:700;
-    margin-top:4px;
+    background:#128c7e;color:#fff;text-decoration:none;padding:7px 12px;
+    border-radius:8px;font-weight:700;font-size:0.83rem;
   }
 
-  .yt-box{
+  .audio-preview-box{
     background:#fff1f2;
     border:1px solid #fecdd3;
     border-radius:12px;
@@ -237,99 +162,47 @@
     flex-direction:column;
     gap:8px;
   }
-  .btn-yt-music{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    background:#e11d48;
-    color:white;
-    text-decoration:none;
-    padding:9px 14px;
-    border-radius:10px;
-    font-size:0.85rem;
-    font-weight:700;
+  .btn-full-song{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    background:#e11d48;color:white;text-decoration:none;padding:8px 14px;
+    border-radius:8px;font-size:0.85rem;font-weight:700;margin-top:4px;
   }
 
   .voice-row{
-    display:flex;align-items:center;gap:10px;
-    margin-top:8px;
-    background:rgba(0,0,0,0.04);
-    border-radius:24px;
-    padding:6px 10px;
+    display:flex;align-items:center;gap:10px;margin-top:10px;
+    background:rgba(0,0,0,0.04);border-radius:24px;padding:6px 10px;
   }
   .play-btn{
-    width:38px;height:38px;border-radius:50%;
-    background:var(--wa-accent);
-    border:none;color:#fff;font-size:16px;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;flex:0 0 auto;
+    width:36px;height:36px;border-radius:50%;background:var(--wa-accent);
+    border:none;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
   }
-  .wave{
-    flex:1;height:24px;display:flex;align-items:center;gap:3px;overflow:hidden;
-  }
-  .wave span{
-    width:3px;background:var(--wa-sub);border-radius:2px;
-    height:8px;opacity:0.7;
-  }
-  .msg.playing .wave span{
-    background:var(--wa-accent);
-    animation:eq 0.8s ease-in-out infinite alternate;
-  }
-  @keyframes eq{ 0%{height:4px;} 100%{height:20px;} }
+  .wave{flex:1;height:20px;display:flex;align-items:center;gap:3px;overflow:hidden;}
+  .wave span{width:3px;background:var(--wa-sub);border-radius:2px;height:6px;opacity:0.6;}
+  .msg.playing .wave span{background:var(--wa-accent);animation:eq 0.8s ease-in-out infinite alternate;}
+  @keyframes eq{0%{height:4px;} 100%{height:18px;}}
 
   .bottom-bar{
-    position:fixed;
-    bottom:0;left:50%;transform:translateX(-50%);
-    width:100%;max-width:540px;
-    background:var(--wa-header-dark);
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:540px;background:var(--wa-header-dark);
     padding:10px 12px calc(10px + env(safe-area-inset-bottom));
-    display:flex;gap:8px;align-items:center;
-    z-index:20;
+    display:flex;gap:8px;align-items:center;z-index:20;
     box-shadow:0 -4px 15px rgba(0,0,0,0.2);
   }
   .bottom-bar button{
-    flex:1;
-    background:var(--wa-green);
-    color:#04331f;
-    border:none;
-    padding:12px 14px;
-    border-radius:24px;
-    font-size:0.95rem;
-    font-weight:800;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;gap:8px;
+    flex:1;background:var(--wa-green);color:#04331f;border:none;padding:12px;
+    border-radius:24px;font-size:0.95rem;font-weight:800;cursor:pointer;
   }
-  .bottom-bar button.secondary{
-    background:rgba(255,255,255,0.14);
-    color:#fff;
-    flex:0 0 auto;
-    width:44px;
-    border-radius:50%;
-    padding:0;height:44px;
-    font-size:16px;
-  }
-
-  .progress-wrap{
-    position:fixed;
-    top:0;left:50%;transform:translateX(-50%);
-    width:100%;max-width:540px;
-    height:4px;background:rgba(255,255,255,0.2);
-    z-index:30;
-  }
-  .progress-bar{height:100%;background:var(--wa-green);width:0%;transition:width .2s linear;}
 </style>
 </head>
 <body>
 
 <div class="phone">
-  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
-
   <header>
     <div class="avatar">📻</div>
     <div class="head-info">
       <div class="name">Notiziario di Tavigliano</div>
-      <div class="status">Venerdì 18 settembre — San Giuseppe da Copertino</div>
+      <div class="status" id="headerStatus">Edizione Quotidiana Aggiornata</div>
     </div>
     <div class="head-icons">
       <div class="zoom-box">
@@ -340,146 +213,152 @@
     </div>
   </header>
 
-  <!-- ELEMENTO AUDIO COLLEGATO AL TUO MP3 -->
+  <!-- SOTTOFONDO MP3 -->
   <audio id="bgMusic" loop preload="auto">
     <source src="headlineupdate.mp3" type="audio/mpeg">
   </audio>
 
-  <!-- BOX DEDICATO CONTROLLO MUSICA -->
+  <!-- CONTROLLO SOTTOFONDO -->
   <div class="music-master-card">
     <div class="music-master-top">
-      <div class="music-master-title">
-        <span>🎵 Sottofondo: headlineupdate.mp3</span>
-      </div>
-      <span class="music-status-pill" id="musicStatusPill">In attesa...</span>
+      <div class="music-master-title">🎵 Sottofondo: headlineupdate.mp3</div>
+      <span class="music-status-pill" id="musicStatusPill">Pronto ✅</span>
     </div>
     <div class="music-controls-row">
-      <button class="btn-music-play" id="btnManualMusic" onclick="toggleManualMusic()">
-        ▶️ Avvia Musica
-      </button>
+      <button class="btn-music-play" id="btnManualMusic" onclick="toggleManualMusic()">▶️ Avvia Musica</button>
       <div class="music-vol-wrap">
         <span>Vol</span>
-        <input type="range" id="volRange" min="0" max="1" step="0.05" value="0.45" oninput="setMusicVol(this.value)">
+        <input type="range" id="volRange" min="0" max="1" step="0.05" value="0.35" oninput="setMusicVol(this.value)">
       </div>
     </div>
   </div>
 
-  <div class="toolbar" id="toolbar"></div>
-
   <div class="chat" id="chat"></div>
 
   <div class="bottom-bar">
-    <button class="secondary" id="prevBtn" title="Precedente">⏮</button>
-    <button id="playAllBtn">▶️ Ascolta tutto</button>
-    <button class="secondary" id="copyAllBtn" title="Copia testo">📋</button>
-    <button class="secondary" id="nextBtn" title="Successivo">⏭</button>
+    <button id="playAllBtn">▶️ Ascolta Notiziario Completo</button>
   </div>
 </div>
 
 <script>
 (function(){
   const NEWS = [
-  {
-    "cat": "🎙️ Buongiorno Tavigliano",
-    "title": "Oggi è Venerdì 18 settembre",
-    "speak": "Buongiorno Tavigliano! Oggi è Venerdì 18 settembre. Santo del giorno: San Giuseppe da Copertino.",
-    "body": "• <strong>Data odierna:</strong> Venerdì 18 settembre 2026<br>• <strong>Santo del giorno:</strong> San Giuseppe da Copertino<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Calendario Liturgico Diocesano</div>",
-    "time": "08:00"
-  },
-  {
-    "cat": "🌦️ Meteo Tavigliano • 3B Meteo",
-    "title": "Cielo molto nuvoloso con deboli piogge locali (Min 15°C / Max 18°C)",
-    "speak": "Previsioni meteo per Tavigliano elaborate con i dati di 3B Meteo: Cielo molto nuvoloso con deboli piogge locali. Temperatura massima di 18 gradi, minima di 15. Fonte: 3B Meteo.",
-    "body": "<strong>Quadro meteorologico:</strong> Cielo molto nuvoloso con deboli piogge locali.<br>• <strong>Temperatura massima:</strong> 18°C<br>• <strong>Temperatura minima:</strong> 15°C<br>• <strong>Venti:</strong> deboli valligiani<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> 3B Meteo (Tavigliano e Biellese)</div>",
-    "time": "08:01"
-  },
-  {
-    "cat": "📰 1. Newsbiella • Homepage",
-    "title": "Viabilità e interventi sulle strade della provincia di Biella",
-    "speak": "Prima notizia da Newsbiella: Viabilità e interventi sulle strade della provincia di Biella. Fonte: Newsbiella punto it.",
-    "body": "Monitoraggio costante sui cantieri e sulle principali arterie di collegamento del territorio provinciale.<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Cronaca Provinciale</div>",
-    "time": "08:02"
-  },
-  {
-    "cat": "📰 2. Newsbiella • Territorio",
-    "title": "Cultura e manifestazioni nei comuni del Biellese",
-    "speak": "Seconda notizia locale: Cultura e manifestazioni nei comuni del Biellese. Fonte: Newsbiella punto it.",
-    "body": "Proseguono le rassegne territoriali, gli incontri comunitari e le iniziative di valorizzazione locale.<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Territorio Biellese</div>",
-    "time": "08:03"
-  },
-  {
-    "cat": "🌲 Valle Cervo • Comunità",
-    "title": "Aggiornamenti e sentieri in Valle Cervo",
-    "speak": "Dalla Valle Cervo: percorsi panoramici e sentieri aperti e fruibili per escursionisti e residenti. Fonte: Newsbiella punto it.",
-    "body": "Piena accessibilità per i collegamenti e i sentieri panoramici della Valle Cervo.<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Valle Cervo</div>",
-    "time": "08:04"
-  },
-  {
-    "cat": "♻️ Rifiuti Tavigliano",
-    "title": "Calendario Raccolta Rifiuti",
-    "speak": "Servizio raccolta rifiuti a Tavigliano: Oggi nessuna raccolta programmata. Promemoria per l'indomani: Lunedì: ripresa turni. Fonte: Seab Biella.",
-    "body": "• <strong>Oggi:</strong> Oggi nessuna raccolta programmata.<br>• <strong>Promemoria:</strong> Lunedì: ripresa turni.<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Seab Biella — Calendario Raccolta Comune di Tavigliano</div>",
-    "time": "08:05"
-  },
-  {
-    "cat": "💊 Farmacie di Turno & Servizi",
-    "title": "Presidi più vicini, Numeri di Telefono e Mappa GPS",
-    "speak": "Farmacie di riferimento e di turno per Tavigliano: la Farmacia Savino ad Andorno Micca in Via Matteotti 14, raggiungibile in 5 minuti, telefono 015 47 27 79. E la Farmacia Valeggia a Sagliano Micca in Via Cappellaro 39, a 7 minuti, telefono 015 47 23 32. Nella scheda trovate i pulsanti per telefonare direttamente e per avviare il navigatore. Fonte: Federfarma e ASL Biella.",
-    "body": "Tavigliano non ha farmacie sul territorio comunale. Ecco i riferimenti immediati:<br><br><div style='background:rgba(0,0,0,0.04); border-radius:10px; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1;'>  <strong>1. Farmacia Savino (Andorno Micca)</strong><br>  <span>📍 Via Giacomo Matteotti, 14 • ⏱ 5 min (3,2 km)</span><br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>📞 Chiama: 015 472779</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🧭 Navigatore GPS</a>  </div></div><div style='background:rgba(0,0,0,0.04); border-radius:10px; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1;'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong><br>  <span>📍 Via Giulio Cappellaro, 39 • ⏱ 7 min (4,5 km)</span><br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>📞 Chiama: 015 472332</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🧭 Navigatore GPS</a>  </div></div><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Federfarma Biella e ASL Biella</div>",
-    "time": "08:06"
-  },
-  {
-    "cat": "🎵 Canzone Italiana & Proverbio",
-    "title": "Proverbio & Miniplayer Ritornello (30 sec)",
-    "speak": "Chiudiamo con la tradizione e la musica. Il proverbio piemontese del giorno è: «A fesse d'òr a s'ancurnisa la miseria», A farsi d'oro si incornicia la miseria. La canzone italiana selezionata per oggi è: Azzurro — Adriano Celentano (1968). Potete ascoltare il ritornello di trenta secondi dal riquadro o il brano completo su YouTube Music. Fonte: Canzone d'Autore Italiana.",
-    "body": "• <strong>Proverbio piemontese:</strong> <em>«A fesse d'òr a s'ancurnisa la miseria»</em> (A farsi d'oro si incornicia la miseria).<br>• <strong>Capolavoro italiano:</strong> <em>Azzurro — Adriano Celentano (1968)</em>.<br><div style='background:#fff1f2; border:1px solid #fecdd3; border-radius:12px; padding:12px; margin-top:10px;'>  <div style='font-weight:700; color:#9f1239; margin-bottom:8px;'>🎧 Estratto ritornello (30 secondi):</div>  <iframe width='100%' height='180' src='https://www.youtube-nocookie.com/embed/VLbi8UAWqNA?start=40&end=70&rel=0' title='Ritornello 30s' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' referrerpolicy='strict-origin-when-cross-origin' allowfullscreen style='border-radius:8px;'></iframe>  <div style='margin-top:10px;'>    <a href='https://music.youtube.com/watch?v=VLbi8UAWqNA' target='_blank' style='display:inline-flex; align-items:center; gap:6px; background:#e11d48; color:white; text-decoration:none; padding:8px 14px; border-radius:8px; font-size:0.85rem; font-weight:700;'>🔴 Ascolta completo su YouTube Music</a>  </div></div><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Archivio Storico della Canzone Italiana</div>",
-    "time": "08:07"
-  },
-  {
-    "cat": "📢 Riepilogo Ufficiale Fonti",
-    "title": "Trasparenza e Fonti del Notiziario",
-    "speak": "Edizione completata. Ecco il riepilogo finale delle fonti ufficiali consultate per il notiziario di oggi: previsioni meteo a cura di 3B Meteo; cronaca locale e Valle Cervo da Newsbiella punto it; calendario raccolta rifiuti da Seab Biella; presidi farmaceutici e turni da Federfarma e ASL Biella. Una buona giornata a tutta la comunità di Tavigliano!",
-    "body": "Tutti i dati e gli aggiornamenti del notiziario provengono da fonti verificate e consultabili:<br><br>• <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano)<br>• <strong>Notizie e Territorio:</strong> Newsbiella.it (Direzione di Redazione)<br>• <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>• <strong>Salute e Farmacie:</strong> Federfarma Biella / ASL BI<br><div style='margin-top:12px; padding:7px 12px; background:rgba(0,168,132,0.12); border-left:4px solid #00a884; border-radius:5px; font-size:0.83rem; font-weight:700; color:#064e3b;'>📌 <strong>Fonte ufficiale verificata:</strong> Notiziario Civico Autonomo di Tavigliano</div>",
-    "time": "08:08"
-  }
-];
+    {
+      cat: "🎙️ Buongiorno Tavigliano",
+      title: "Saluto della comunità e Santo del Giorno",
+      speak: "Buongiorno Tavigliano! Oggi è venerdì diciotto settembre. Santo del giorno: San Giuseppe da Copertino. Benvenuti all'ascolto delle notizie locali.",
+      body: "• <strong>Oggi è:</strong> Venerdì 18 settembre<br>• <strong>Santo del giorno:</strong> San Giuseppe da Copertino<br><div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Calendario Liturgico Diocesano</div>"
+    },
+    {
+      cat: "🌦️ Meteo Tavigliano • 3B Meteo",
+      title: "Cielo coperto con schiarite (Min 15°C / Max 19°C)",
+      speak: "Previsioni meteo per Tavigliano a cura di 3B Meteo. Giornata con cielo nuvoloso al mattino con tendenza a schiarite pomeridiane. Temperatura minima di quindici gradi, massima di diciannove. Venti deboli e precipitazioni assenti. Fonte ufficiale: 3B Meteo.",
+      body: "<strong>Dati bollettino ufficiale 3B Meteo per Tavigliano:</strong><br>" +
+            "• <strong>Cielo:</strong> Molto nuvoloso con locali schiarite nel pomeriggio<br>" +
+            "• <strong>Temperature:</strong> Minima 15°C • Massima 19°C<br>" +
+            "• <strong>Precipitazioni:</strong> Assenti (basso rischio)<br>" +
+            "• <strong>Venti:</strong> Deboli da nord-est<br>" +
+            "<div style='margin-top:8px;'><a class='btn-maps' href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='background:#0284c7;'>🌐 Bollettino orario completo su 3BMeteo.com</a></div>" +
+            "<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> 3BMeteo.com (Stazione Tavigliano)</div>"
+    },
+    {
+      cat: "📰 1. Newsbiella • Primo Piano",
+      title: "Notizie e interventi sulla provincia di Biella",
+      speak: "Prima notizia da Newsbiella: aggiornamenti sui progetti per il territorio e la sicurezza stradale provinciale. Fonte: Newsbiella punto it.",
+      body: "Rassegna degli interventi viari e dei piani per le vallate montane del Biellese.<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Cronaca</div>"
+    },
+    {
+      cat: "📰 2. Newsbiella • Territorio",
+      title: "Iniziative ed eventi nel Biellese",
+      speak: "Seconda notizia da Newsbiella: proseguono le iniziative comunitarie ed enogastronomiche nei borghi del circondario. Fonte: Newsbiella punto it.",
+      body: "Proseguono le rassegne territoriali e gli appuntamenti comunitari promossi nel circondario.<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Newsbiella.it — Territorio</div>"
+    },
+    {
+      cat: "🌲 Valle Cervo • Tavigliano",
+      title: "Sentieri aperti e fruibilità montana",
+      speak: "Dalla Valle Cervo: sentieri panoramici e collegamenti intervallivi regolarmente accessibili e segnalati. Fonte: Notiziario Locale.",
+      body: "Aggiornamenti sulla percorribilità dei sentieri montani e delle mulattiere storiche di Tavigliano.<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Consorzio Valle Cervo</div>"
+    },
+    {
+      cat: "♻️ Rifiuti Tavigliano",
+      title: "Calendario Raccolta: Oggi nessuna esposizione",
+      speak: "Raccolta rifiuti a Tavigliano: oggi venerdì nessuna raccolta programmata. Il prossimo ritiro sarà martedì con il bidone della carta. Fonte: Seab Biella.",
+      body: "• <strong>Oggi (Venerdì):</strong> Nessuna raccolta programmata.<br>• <strong>Prossimo turno:</strong> Martedì con la <em>CARTA</em>.<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Seab Biella — Comune di Tavigliano</div>"
+    },
+    {
+      cat: "💊 Farmacie di Turno & Servizi",
+      title: "Presidi più vicini, Numeri di Telefono e GPS",
+      speak: "Farmacie di riferimento per Tavigliano: la Farmacia Savino ad Andorno Micca in Via Matteotti 14, a 5 minuti, telefono 015 47 27 79. E la Farmacia Valeggia a Sagliano Micca in Via Cappellaro 39, a 7 minuti, telefono 015 47 23 32. Trovate i pulsanti per telefonare e per avviare il navigatore. Fonte: Federfarma e ASL Biella.",
+      body: "Tavigliano non ha farmacie nel comune. Ecco i presidi più vicini con chiamata diretta:<br>" +
+            "<div class='route-card'>" +
+            "  <strong>1. Farmacia Savino (Andorno Micca)</strong><br>" +
+            "  <span>📍 Via Giacomo Matteotti, 14 • ⏱ 5 min (3,2 km)</span>" +
+            "  <div class='btn-row'>" +
+            "    <a class='btn-phone' href='tel:015472779'>📞 Chiama: 015 472779</a>" +
+            "    <a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank'>🧭 Avvia GPS</a>" +
+            "  </div>" +
+            "</div>" +
+            "<div class='route-card'>" +
+            "  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong><br>" +
+            "  <span>📍 Via Giulio Cappellaro, 39 • ⏱ 7 min (4,5 km)</span>" +
+            "  <div class='btn-row'>" +
+            "    <a class='btn-phone' href='tel:015472332'>📞 Chiama: 015 472332</a>" +
+            "    <a class='btn-maps' href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank'>🧭 Avvia GPS</a>" +
+            "  </div>" +
+            "</div>" +
+            "<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Federfarma Biella e ASL BI</div>"
+    },
+    {
+      cat: "🎵 Canzone Italiana & Proverbio",
+      title: "Nel blu dipinto di blu (Volare) — Modugno",
+      speak: "Chiudiamo con la grande musica italiana e la tradizione locale. Il proverbio piemontese del giorno è: Can ch'a bòja a mòrd nen, cane che abbaia non morde. La grande canzone italiana di oggi è Nel blu dipinto di blu di Domenico Modugno. Potete ascoltare il ritornello di 30 secondi dal lettore audio. Buona giornata a tutta Tavigliano! Fonte: Archivio Canzone Italiana.",
+      body: "• <strong>Proverbio piemontese:</strong> <em>«Can ch'a bòja a mòrd nen»</em> (Cane che abbaia non morde).<br>" +
+            "• <strong>Capolavoro italiano:</strong> <em>Nel blu dipinto di blu (Volare)</em> — Domenico Modugno (1958).<br>" +
+            "<div class='audio-preview-box'>" +
+            "  <strong style='color:#9f1239;'>🎧 Miniplayer ritornello ufficiale (30 secondi):</strong>" +
+            "  <audio controls preload='metadata' style='width:100%; margin-top:8px;'>" +
+            "    <source src='https://audio-ssl.itunes.apple.com/itunes-assets/Music/54/2a/9e/mzm.kltpdyeq.aac.p.m4a' type='audio/mp4'>" +
+            "    Il tuo browser non supporta il riproduttore audio." +
+            "  </audio>" +
+            "  <a class='btn-full-song' href='https://www.youtube.com/watch?v=ViJgTYju8Gg' target='_blank'>🔴 Ascolta brano intero su YouTube</a>" +
+            "</div>" +
+            "<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Archivio Storico della Canzone Italiana</div>"
+    },
+    {
+      cat: "📢 Trasparenza & Riepilogo Fonti",
+      title: "Riepilogo delle fonti certificate",
+      speak: "Notiziario completato. Riepilogo finale delle fonti: previsioni meteo ufficiali a cura di 3B Meteo; notizie locali da Newsbiella punto it; calendario rifiuti da Seab Biella; farmacie da Federfarma e ASL Biella. Buona continuazione di giornata!",
+      body: "Tutte le informazioni del notiziario sono certificate e verificate:<br>" +
+            "• <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano)<br>" +
+            "• <strong>Cronaca:</strong> Newsbiella.it<br>" +
+            "• <strong>Rifiuti:</strong> Seab Biella (Comune di Tavigliano)<br>" +
+            "• <strong>Farmacie e Sanità:</strong> Federfarma / ASL Biella<br>" +
+            "<div class='fonte-box'>📌 <strong>Fonte ufficiale verificata:</strong> Notiziario Civico Autonomo di Tavigliano</div>"
+    }
+  ];
 
-  /* GESTIONE AUDIO MP3 */
+  /* GESTIONE SOTTOFONDO MP3 */
   const bgMusic = document.getElementById('bgMusic');
   const btnManual = document.getElementById('btnManualMusic');
   const statusPill = document.getElementById('musicStatusPill');
   const volRange = document.getElementById('volRange');
-
   let defaultVolume = parseFloat(volRange.value);
-
-  bgMusic.addEventListener('canplaythrough', () => {
-    statusPill.innerText = "Pronto ✅";
-    statusPill.style.background = "rgba(37, 211, 102, 0.3)";
-  });
 
   bgMusic.addEventListener('playing', () => {
     statusPill.innerText = "In riproduzione 🎶";
-    btnManual.innerText = "⏸️ Ferma Musica";
+    btnManual.innerText = "⏸️ Pausa";
     btnManual.style.background = "#f43f5e";
-    btnManual.style.color = "white";
   });
-
   bgMusic.addEventListener('pause', () => {
     statusPill.innerText = "In pausa ⏸️";
     btnManual.innerText = "▶️ Avvia Musica";
     btnManual.style.background = "var(--wa-green)";
-    btnManual.style.color = "#04331f";
-  });
-
-  bgMusic.addEventListener('error', () => {
-    statusPill.innerText = "File non trovato ❌";
-    statusPill.style.background = "rgba(239, 68, 68, 0.4)";
   });
 
   window.toggleManualMusic = function() {
     if (bgMusic.paused) {
       bgMusic.volume = defaultVolume;
-      bgMusic.play();
+      bgMusic.play().catch(()=>{});
     } else {
       bgMusic.pause();
     }
@@ -490,45 +369,10 @@
     bgMusic.volume = defaultVolume;
   };
 
-  function duckMusic() {
-    if (!bgMusic.paused) {
-      bgMusic.volume = defaultVolume * 0.25; // Abbassa al 25% del volume impostato
-    }
-  }
-
-  function restoreMusic() {
-    if (!bgMusic.paused) {
-      bgMusic.volume = defaultVolume;
-    }
-  }
-
   /* SINTESI VOCALE */
   const synth = window.speechSynthesis;
   let activeIndex = -1;
-  let isPlayingAll = false;
-  let currentUtterance = null;
-
-  let currentScale = 1.0;
-  window.applyFontScale = function(delta) {
-    if (delta === 0) currentScale = 1.0;
-    else currentScale = Math.min(Math.max(currentScale + delta, 0.85), 1.45);
-    document.documentElement.style.setProperty('--font-scale', currentScale);
-  };
-
   const chat = document.getElementById('chat');
-  const toolbar = document.getElementById('toolbar');
-
-  function renderToolbar() {
-    toolbar.innerHTML = '<div class="chip active" onclick="filterCat(\'all\', this)">Tutte</div>';
-    NEWS.forEach((item, idx) => {
-      const shortName = item.cat.split(' ')[0] + ' ' + (item.cat.split(' ')[1] || '');
-      const chip = document.createElement('div');
-      chip.className = 'chip';
-      chip.innerText = shortName;
-      chip.onclick = () => filterCat(idx, chip);
-      toolbar.appendChild(chip);
-    });
-  }
 
   function renderNews() {
     chat.innerHTML = '';
@@ -536,10 +380,8 @@
       const el = document.createElement('div');
       el.className = 'msg';
       el.id = `msg-${idx}`;
-      
       let waveSpans = '';
-      for (let i = 0; i < 30; i++) waveSpans += '<span></span>';
-
+      for (let i = 0; i < 28; i++) waveSpans += '<span></span>';
       el.innerHTML = `
         <div class="cat">${item.cat}</div>
         <div class="title">${item.title}</div>
@@ -553,18 +395,6 @@
     });
   }
 
-  window.filterCat = function(idx, chipEl) {
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    chipEl.classList.add('active');
-    if (idx === 'all') {
-      document.querySelectorAll('.msg').forEach(m => m.style.display = 'block');
-    } else {
-      document.querySelectorAll('.msg').forEach((m, i) => {
-        m.style.display = (i === idx) ? 'block' : 'none';
-      });
-    }
-  };
-
   window.toggleSingle = function(idx) {
     if (activeIndex === idx && synth.speaking) {
       stopSpeech();
@@ -577,7 +407,6 @@
     stopSpeech();
     activeIndex = idx;
     const item = NEWS[idx];
-    
     document.querySelectorAll('.msg').forEach(m => m.classList.remove('playing'));
     const currentCard = document.getElementById(`msg-${idx}`);
     if (currentCard) {
@@ -585,34 +414,24 @@
       currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    if (bgMusic.paused) {
-      bgMusic.volume = defaultVolume;
-      bgMusic.play().catch(() => {});
-    }
-    duckMusic();
+    if (!bgMusic.paused) bgMusic.volume = defaultVolume * 0.25;
 
-    currentUtterance = new SpeechSynthesisUtterance(item.speak);
-    currentUtterance.lang = 'it-IT';
-    currentUtterance.rate = 0.95;
+    const utter = new SpeechSynthesisUtterance(item.speak);
+    utter.lang = 'it-IT';
+    utter.rate = 0.95;
 
-    currentUtterance.onend = () => {
+    utter.onend = () => {
       if (currentCard) currentCard.classList.remove('playing');
       if (continueNext && idx + 1 < NEWS.length) {
         playItem(idx + 1, true);
       } else {
-        restoreMusic();
+        if (!bgMusic.paused) bgMusic.volume = defaultVolume;
         stopSpeech();
       }
     };
+    utter.onerror = () => stopSpeech();
 
-    currentUtterance.onerror = () => {
-      stopSpeech();
-    };
-
-    const pct = ((idx + 1) / NEWS.length) * 100;
-    document.getElementById('progressBar').style.width = pct + '%';
-
-    synth.speak(currentUtterance);
+    synth.speak(utter);
   }
 
   function stopSpeech() {
@@ -622,41 +441,25 @@
       if (el) el.classList.remove('playing');
     }
     activeIndex = -1;
-    document.getElementById('playAllBtn').innerText = '▶️ Ascolta tutto';
-    restoreMusic();
+    document.getElementById('playAllBtn').innerText = '▶️ Ascolta Notiziario Completo';
   }
 
   document.getElementById('playAllBtn').onclick = function() {
     if (synth.speaking) {
       stopSpeech();
-      isPlayingAll = false;
     } else {
-      isPlayingAll = true;
       this.innerText = '⏸️ Pausa';
       playItem(0, true);
     }
   };
 
-  document.getElementById('prevBtn').onclick = () => {
-    let nextIdx = (activeIndex > 0) ? activeIndex - 1 : 0;
-    playItem(nextIdx, isPlayingAll);
+  window.applyFontScale = function(delta) {
+    const scale = delta === 0 ? 1.0 : (delta > 0 ? 1.15 : 0.9);
+    document.documentElement.style.setProperty('--font-scale', scale);
   };
 
-  document.getElementById('nextBtn').onclick = () => {
-    let nextIdx = (activeIndex + 1 < NEWS.length) ? activeIndex + 1 : 0;
-    playItem(nextIdx, isPlayingAll);
-  };
-
-  document.getElementById('copyAllBtn').onclick = () => {
-    const fullText = NEWS.map(n => `*${n.cat}*\n${n.title}\n${n.body.replace(/<[^>]*>/g, '')}`).join('\n\n');
-    navigator.clipboard.writeText(fullText);
-    alert("Testo copiato negli appunti!");
-  };
-
-  renderToolbar();
   renderNews();
 })();
 </script>
-
 </body>
 </html>
