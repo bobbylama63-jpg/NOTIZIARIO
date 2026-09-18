@@ -12,7 +12,6 @@
     --green-neon: #00a884;
     --green-light: #25d366;
     --text-main: #f1f5f9;
-    --text-muted: #94a3b8;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -32,7 +31,7 @@
     padding-bottom: 90px;
   }
 
-  /* EFFETTO WOW 1: BREAKING NEWS TICKER TG24 */
+  /* TICKER TG24 */
   .ticker-bar {
     background: linear-gradient(90deg, #0284c7, #0369a1);
     color: #fff;
@@ -62,7 +61,7 @@
     100% { transform: translate(-100%, 0); }
   }
 
-  /* HEADER CON EFFETTO WOW 2: NEON ON AIR */
+  /* HEADER CON EFFETTO NEON ON AIR */
   header {
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(10px);
@@ -110,7 +109,7 @@
     to { opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }
   }
 
-  /* LISTA NOTIZIE CON EFFETTO WOW 3: SPOTLIGHT ED EQUALIZZATORE */
+  /* NOTIZIE SPOTLIGHT */
   .news-stream {
     padding: 14px 12px;
     display: flex;
@@ -150,7 +149,6 @@
     line-height: 1.5;
   }
 
-  /* CONTROLLI AUDIO CARD ED EQUALIZZATORE DINAMICO */
   .audio-bar {
     display: flex;
     align-items: center;
@@ -186,7 +184,7 @@
     100% { height: 18px; }
   }
 
-  /* BARRA FISSA IN BASSO */
+  /* BARRA FISSA DI CONTROLLO */
   .dock-bar {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 520px;
@@ -213,11 +211,16 @@
 </head>
 <body>
 
+<!-- ELEMENTO AUDIO MP3 DI SOTTOFONDO -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="headlineupdate.mp3" type="audio/mpeg">
+</audio>
+
 <div class="app-container">
   <!-- TICKER ULTIM'ORA -->
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Dati meteo ufficiali 3B Meteo • Ultime notizie Newsbiella Mobile • Farmacie di Turno CAP 13900 • Raccolta Rifiuti Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni orarie 3B Meteo • Ultime notizie Newsbiella Mobile • Farmacie di Turno CAP 13900 • Raccolta Seab</div>
   </div>
 
   <header>
@@ -271,8 +274,8 @@ const NEWS = [
   {
     "cat": "💊 Farmacie di Turno & Servizi",
     "title": "Turni CAP 13900 & Presidi di Zona",
-    "speak": "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. I presidi più vicini sono la Farmacia Savino ad Andorno Micca, telefono 015 47 27 79, e la Farmacia Valeggia a Sagliano Micca, telefono 015 47 23 32.",
-    "body": "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>  <div style='margin-top:8px;'>    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>  </div></div><strong>Presidi locali più vicini:</strong><br><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 015 472779</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 015 472332</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div>"
+    "speak": "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. I presidi territoriali più vicini sono la Farmacia Savino ad Andorno Micca e la Farmacia Valeggia a Sagliano Micca. Nella scheda trovate i pulsanti diretti per avviare la telefonata e per aprire il navigatore.",
+    "body": "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>  <div style='margin-top:8px;'>    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>  </div></div><strong>Presidi locali più vicini:</strong><br><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div>"
   },
   {
     "cat": "💡 Saggezza Tradizionale",
@@ -293,31 +296,7 @@ let currentTrack = -1;
 const newsStream = document.getElementById('newsStream');
 const onAirSign = document.getElementById('onAirSign');
 const btnMaster = document.getElementById('btnMasterPlay');
-
-// EFFETTO WOW 4: JINGLE SONORO A TRE TONI (CHIME TG)
-function playBroadcastJingle(callback) {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioContext();
-    const notes = [523.25, 659.25, 783.99]; // Accordo Maggiore C5, E5, G5
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + i * 0.12);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.12);
-      osc.stop(ctx.currentTime + i * 0.12 + 0.36);
-    });
-    setTimeout(callback, 500);
-  } catch (e) {
-    callback();
-  }
-}
+const bgMusic = document.getElementById('bgMusic');
 
 function renderCards() {
   newsStream.innerHTML = '';
@@ -342,13 +321,25 @@ function renderCards() {
   });
 }
 
+function startBgMusic() {
+  if (bgMusic) {
+    bgMusic.volume = 0.22; // Volume di sottofondo calibrato per accompagnare la voce
+    bgMusic.play().catch(() => {});
+  }
+}
+
+function stopBgMusic() {
+  if (bgMusic) {
+    bgMusic.pause();
+  }
+}
+
 window.playSingleItem = function(index) {
   if (currentTrack === index && synth.speaking) {
     stopBroadcast();
   } else {
-    playBroadcastJingle(() => {
-      startVoice(index, false);
-    });
+    startBgMusic();
+    startVoice(index, false);
   }
 };
 
@@ -393,6 +384,7 @@ function stopVoiceOnly() {
 
 function stopBroadcast() {
   stopVoiceOnly();
+  stopBgMusic();
   currentTrack = -1;
   onAirSign.classList.remove('active');
   btnMaster.innerText = '▶️ AVVIA TRASMISSIONE COMPLETA';
@@ -403,9 +395,8 @@ window.toggleMasterBroadcast = function() {
     stopBroadcast();
   } else {
     btnMaster.innerText = '⏸️ METTI IN PAUSA';
-    playBroadcastJingle(() => {
-      startVoice(0, true);
-    });
+    startBgMusic();
+    startVoice(0, true);
   }
 };
 
