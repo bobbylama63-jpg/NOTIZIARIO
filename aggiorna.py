@@ -321,61 +321,10 @@ if notizia_tav:
 for avviso in avvisi_bacheca:
     news_data.append(avviso)
 
-# SEZIONE TRASPORTI INTEGRATA: VOCE SEMPLIFICATA CON LINK INTERNI
-news_data.append({
-    "cat": "🚍 Mobilità & Trasporti",
-    "title": "Pullman ATAP, Treni FS, Taxi Biella e Aerei",
-    "speak": (
-        "Per quanto riguarda gli orari di pullman, treni, aerei e il servizio taxi, "
-        "all'interno della sezione premendo trovate i link per verificare tutto ciò che vi serve."
-    ),
-    "body": (
-        "<strong>Orari e Collegamenti del Territorio:</strong><br><br>"
-        "• <strong>Pullman ATAP:</strong> Linea 340 (Biella - Tavigliano - Piedicavallo).<br>"
-        "<div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>"
-        "  <a href='https://www.atapspa.it/linea/linea-340/' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📄 Orari Linea 340 Tavigliano</a>"
-        "  <a href='https://www.atapspa.it/orari/' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Tutte le Linee ATAP</a>"
-        "</div>"
-        "• <strong>Treni Ferrovie dello Stato:</strong> Stazione di Biella San Paolo.<br>"
-        "<div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>"
-        "  <a href='https://www.trenitalia.com/' target='_blank' style='background:#b91c1c; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🚆 Orari Treni Trenitalia</a>"
-        "  <a href='https://www.google.com/maps/dir/?api=1&destination=Stazione+Biella+San+Paolo' target='_blank' style='background:#1e293b; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Indicazioni Stazione</a>"
-        "</div>"
-        "• <strong>Consorzio Radio Taxi Biella:</strong> Corse urbane e provinciali.<br>"
-        "<div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>"
-        "  <a href='tel:01521234' style='background:#25d366; color:#042f2e; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:800; font-size:0.82rem;'>📞 Chiama Taxi: 015 21234</a>"
-        "  <a href='https://www.taxibiella.it' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Portale Taxi Biella</a>"
-        "</div>"
-        "• <strong>Aeroporti:</strong> Tabelloni partenze in tempo reale.<br>"
-        "<div style='margin: 6px 0 0; display: flex; gap: 8px; flex-wrap: wrap;'>"
-        "  <a href='https://www.milanomalpensa-airport.com/it/voli/partenze' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🛫 Milano Malpensa Live</a>"
-        "  <a href='https://www.aeroportoditorino.it/it/passeggeri-viaggi/voli/voli-in-tempo-reale' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🛫 Torino Caselle Live</a>"
-        "</div>"
-    )
-})
-
-# CARBURANTE PIÙ ECONOMICO NEL BIELLESE
-news_data.append({
-    "cat": "⛽ Carburanti nel Biellese",
-    "title": "Distributori Convenienti e Prezzi MIMIT",
-    "speak": (
-        "Nella scheda carburanti trovate le indicazioni per i distributori più economici "
-        "e il link per verificare i prezzi aggiornati dal Ministero."
-    ),
-    "body": (
-        "<strong>Monitoraggio Risparmio Carburanti Biella:</strong><br>"
-        "• <strong>Distributori consigliati:</strong> Pompe bianche e stazioni commerciali (direttrice Trossi e raccordo di Verrone / Candelo).<br>"
-        "• <strong>Osservaprezzi Ufficiale:</strong> Ministero delle Imprese e del Made in Italy.<br>"
-        "<div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>"
-        "  <a href='https://www.google.com/maps/search/distributori+carburante+economici+Biella/' target='_blank' style='background:#16a34a; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🧭 Indicazioni Stradali Distributori Biella</a>"
-        "  <a href='https://carburanti.mise.gov.it/ospzSearch/zona' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>📊 Osservaprezzi Ufficiale MIMIT</a>"
-        "</div>"
-    )
-})
-
+# CALENDARIO RIFIUTI
 news_data.append(get_rifiuti(today.weekday()))
 
-# FARMACIE: DICITURA RICHIESTA
+# FARMACIE: DICITURA SINTETICA
 news_data.append({
     "cat": "💊 Farmacie di Turno & Presidi",
     "title": "Presidi Vicini & Ricerca Turni CAP 13900",
@@ -409,6 +358,7 @@ news_data.append({
     )
 })
 
+# PROVERBIO PIEMONTESE
 news_data.append({
     "cat": "💡 Saggezza Tradizionale",
     "title": "Proverbio Piemontese del Giorno",
@@ -416,30 +366,21 @@ news_data.append({
     "body": f"• <strong>In dialetto piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
 })
 
+# RIEPILOGO FONTI: VOCE SEMPLIFICATA SENZA ELENCO
 news_data.append({
     "cat": "📢 Trasparenza & Riepilogo Fonti",
     "title": "Riepilogo Ufficiale Fonti del Notiziario",
     "speak": (
-        "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: "
-        "previsioni meteo da 3B Meteo; notizie dalla redazione di Newsbiella punto it; "
-        "comunicati ed eventi dalla Bacheca di Tavigliano; orari bus da ATAP Biella; "
-        "orari ferroviari da Trenitalia; servizio taxi da Consorzio Radio Taxi Biella; "
-        "voli da Milano Malpensa e Torino Caselle; prezzi carburanti da Osservaprezzi MIMIT; "
-        "raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. "
+        "Notiziario completato. Le fonti ufficiali consultate sono riepilogate in fondo al notiziario. "
         "Una buona giornata a tutta la comunità di Tavigliano!"
     ),
     "body": (
         "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
         "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Certificate:</div>"
         "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-        "  • <strong>Notizie Territoriali:</strong> Newsbiella.it<br>"
+        "  • <strong>Cronaca Locale:</strong> Newsbiella.it<br>"
         "  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>"
-        "  • <strong>Autobus & Pullman:</strong> ATAP S.p.A. (Linea 340 e rete provinciale)<br>"
-        "  • <strong>Treni:</strong> Trenitalia / Ferrovie dello Stato (Stazione Biella San Paolo)<br>"
-        "  • <strong>Radio Taxi:</strong> Consorzio Taxi Biella (taxibiella.it)<br>"
-        "  • <strong>Voli e Aeroporti:</strong> SEA Milano (Malpensa MXP) & SAGAT Torino (Caselle TRN)<br>"
-        "  • <strong>Carburanti:</strong> MIMIT — Osservaprezzi Carburanti Ministero Imprese e Made in Italy<br>"
-        "  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>"
+        "  • <strong>Igiene Urbana:</strong> Seab Biella (Raccolta Comune di Tavigliano)<br>"
         "  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>"
         "  • <strong>Calendario:</strong> Archivio Liturgico Diocesano"
         "</div>"
@@ -453,8 +394,7 @@ testo_condivisione = (
     f"📻 *NOTIZIARIO DI TAVIGLIANO*\n"
     f"📅 {data_estesa}\n\n"
     f"🌦️ Meteo: {meteo_item['title']}\n"
-    f"📰 Notizie: {prime_due[0]['title']}\n"
-    f"🚍 Mobilità (Bus, Treni, Taxi, Voli) & Benzina Risparmio\n\n"
+    f"📰 Primo piano: {prime_due[0]['title']}\n\n"
     f"▶️ Ascolta l'edizione aggiornata qui:\n"
     f"https://bobbylama63-jpg.github.io/NOTIZIARIO/"
 )
@@ -517,7 +457,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
   .ticker-marquee {{
     display: inline-block;
     padding-left: 100%;
-    animation: scorri 28s linear infinite;
+    animation: scorri 25s linear infinite;
   }}
   @keyframes scorri {{
     0% {{ transform: translate(0, 0); }}
@@ -666,7 +606,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     100% {{ height: 18px; }}
   }}
 
-  /* DOCK CONTROL BAR */
+  /* DOCK BAR */
   .dock-bar {{
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 520px;
@@ -700,7 +640,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
 <div class="app-container">
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • 3B Meteo • Newsbiella • Mobilità (Bus, Treni, Taxi, Voli) • Benzina Risparmio • Farmacie di Turno CAP 13900 • Raccolta Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Meteo 3B Meteo • Ultime notizie Newsbiella • Bacheca Tavigliano • Farmacie di Turno CAP 13900 • Raccolta Seab</div>
   </div>
 
   <header>
@@ -846,4 +786,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano rigenerato con successo: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato regolarmente: {data_estesa}")
