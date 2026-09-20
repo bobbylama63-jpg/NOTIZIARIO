@@ -1,21 +1,21 @@
+import csv
 import datetime
 import glob
 import html
+import io
 import json
 import re
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from zoneinfo import ZoneInfo
 
 # ==============================================================================
-# 1. RILEVAZIONE SOTTOFONDO MP3 (CARTELLA DIGITA O ROOT)
+# 1. FUSO ORARIO ITALIANO (ROMA)
 # ==============================================================================
-candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glob("*.mp3")
-mp3_file = candidati_mp3[0].replace("\\", "/") if candidati_mp3 else "headlineupdate.mp3"
-print(f"Sottofondo musicale impostato su: {mp3_file}")
+ora_italiana = datetime.datetime.now(ZoneInfo("Europe/Rome"))
+today = ora_italiana.date()
 
-# ==============================================================================
-# 2. DATA E SANTO DEL GIORNO
-# ==============================================================================
 MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", 
         "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 GIORNI = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
@@ -35,11 +35,6 @@ SANTI_DEL_GIORNO = {
     "12-08": "Immacolata Concezione", "12-13": "Santa Lucia", "12-25": "Natale del Signore", "12-26": "Santo Stefano"
 }
 
-from zoneinfo import ZoneInfo
-
-ora_italiana = datetime.datetime.now(ZoneInfo("Europe/Rome"))
-today = ora_italiana.date()
-
 giorno_settimana = GIORNI[today.weekday()]
 nome_mese = MESI[today.month - 1]
 chiave_data = today.strftime("%m-%d")
@@ -47,7 +42,13 @@ santo = SANTI_DEL_GIORNO.get(chiave_data, "San Patrono")
 data_estesa = f"{giorno_settimana} {today.day} {nome_mese} — {santo}"
 
 # ==============================================================================
-# 3. FILTRO DI CONFORMITÀ EDITORIALE (COMPLIANCE)
+# 2. RILEVAZIONE SOTTOFONDO MP3
+# ==============================================================================
+candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glob("*.mp3")
+mp3_file = candidati_mp3[0].replace("\\", "/") if candidati_mp3 else "headlineupdate.mp3"
+
+# ==============================================================================
+# 3. FILTRO DI CONFORMITÀ EDITORIALE
 # ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
@@ -59,12 +60,49 @@ def controlla_conformita(titolo, testo):
     for p in PAROLE_VIETATE:
         if p in stringa:
             return False, "Contenuto bloccato per tutela editoriale comunitaria"
-    if len(titolo.strip()) < 8:
-        return False, "Notizia priva di testo verificabile"
+    if len(titolo.strip()) < 5:
+        return False, "Testo troppo breve"
     return True, "Conforme"
 
 # ==============================================================================
-# 4. PREVISIONI 3B METEO (TAVIGLIANO)
+# 4. BACHECA GOOGLE FOGLI
+# ==============================================================================
+GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1sn5DAmkkZtzl5uINB8SPIHAIVfjfV7C---3rbbffEKE/export?format=csv"
+
+def get_bacheca_google_fogli():
+    notizie_bacheca = []
+    try:
+        req = urllib.request.Request(GOOGLE_SHEET_CSV, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=8) as res:
+            csv_raw = res.read().decode('utf-8', errors='ignore')
+            reader = csv.reader(io.StringIO(csv_raw))
+            righe = list(reader)
+            if len(righe) > 1:
+                for riga in righe[1:]:
+                    if not riga or len(riga) < 3:
+                        continue
+                    attivo = riga[0].strip().upper()
+                    if attivo not in ["SI", "SÌ", "YES", "TRUE", "1"]:
+                        continue
+                    cat = riga[1].strip() if len(riga) > 1 and riga[1].strip() else "📢 Avviso Locale"
+                    tit = riga[2].strip() if len(riga) > 2 else ""
+                    det = riga[3].strip() if len(riga) > 3 else ""
+                    if not tit and not det:
+                        continue
+                    valido, _ = controlla_conformita(tit, det)
+                    if valido:
+                        notizie_bacheca.append({
+                            "cat": cat,
+                            "title": tit,
+                            "speak": f"{tit}. {det}" if det else tit,
+                            "body": det if det else tit
+                        })
+    except Exception:
+        pass
+    return notizie_bacheca
+
+# ==============================================================================
+# 5. PREVISIONI METEO 3B METEO
 # ==============================================================================
 def get_meteo():
     try:
@@ -104,20 +142,18 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 5. ESTRAZIONE PRIME 2 NOTIZIE (APERTURA / CRONACA) SENZA ELENCHI
+# 6. PRIME DUE NOTIZIE DI CRONACA / TERRITORIO
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
 def get_prime_due_notizie():
     articoli = []
-    # Fonti primarie: versione mobile, cronaca e homepage
     sorgenti = [
         "https://www.newsbiella.it/mobile",
         "https://www.newsbiella.it/leggi-notizia/argomenti/cronaca-5.html",
         "https://www.newsbiella.it/sommario/argomenti/cronaca-5.html",
         "https://www.newsbiella.it/mobile.html"
     ]
-    
     for url in sorgenti:
         try:
             req = urllib.request.Request(url, headers=HEADERS)
@@ -147,7 +183,6 @@ def get_prime_due_notizie():
         if len(articoli) >= 2:
             break
 
-    # Se le pagine web non rispondono, estrazione di riserva da feed RSS
     if len(articoli) < 2:
         try:
             req = urllib.request.Request("https://www.newsbiella.it/rss.xml", headers=HEADERS)
@@ -168,16 +203,15 @@ def get_prime_due_notizie():
         except Exception:
             pass
 
-    # Salvaguardia istituzionale
     if len(articoli) < 2:
         articoli = [
-            {"title": "Interventi di manutenzione e sicurezza viaria nel Biellese", "desc": "Monitoraggio costante sui cantieri stradali e sui principali collegamenti provinciali."},
-            {"title": "Attività culturali e valorizzazione dei borghi del territorio", "desc": "Proseguono le rassegne comunitarie e gli incontri promossi nei comuni valligiani."}
+            {"title": "Interventi di manutenzione e viabilità nel Biellese", "desc": "Monitoraggio sui cantieri stradali e sui collegamenti provinciali."},
+            {"title": "Attività culturali e valorizzazione dei borghi del territorio", "desc": "Rassegne comunitarie e incontri promossi nei comuni valligiani."}
         ]
     return articoli[:2]
 
 # ==============================================================================
-# 6. ESTRAZIONE VALLE CERVO (SOLO ED ESCLUSIVAMENTE SE SI PARLA DI TAVIGLIANO)
+# 7. VALLE CERVO (SOLO SE CITA TAVIGLIANO)
 # ==============================================================================
 def get_notizia_tavigliano():
     sorgenti_valle = [
@@ -185,27 +219,23 @@ def get_notizia_tavigliano():
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
         "https://www.newsbiella.it/rss.xml"
     ]
-    
     for url in sorgenti_valle:
         try:
             req = urllib.request.Request(url, headers=HEADERS)
             with urllib.request.urlopen(req, timeout=7) as res:
                 raw_text = res.read().decode('utf-8', errors='ignore')
                 if "tavigliano" in raw_text.lower():
-                    # Se è un feed XML
                     if "rss" in url:
                         root = ET.fromstring(raw_text)
                         for item in root.findall('.//item'):
                             t = item.find('title').text.strip() if item.find('title') is not None else ""
                             d = item.find('description').text.strip() if item.find('description') is not None else ""
-                            blocco = f"{t} {d}".lower()
-                            if "tavigliano" in blocco:
+                            if "tavigliano" in f"{t} {d}".lower():
                                 clean_t = re.sub('<[^<]+?>', '', t).strip()
                                 clean_d = re.sub('<[^<]+?>', '', d)[:150].strip() + "..."
                                 valido, _ = controlla_conformita(clean_t, clean_d)
                                 if valido:
                                     return {"title": clean_t, "desc": clean_d}
-                    # Se è una pagina HTML
                     pattern = re.compile(r'<(?:h2|h3|a)[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
                     matches = pattern.findall(raw_text)
                     for m in matches:
@@ -217,14 +247,14 @@ def get_notizia_tavigliano():
                             if valido:
                                 return {
                                     "title": t,
-                                    "desc": "Notizia riguardante direttamente il territorio e la comunità di Tavigliano."
+                                    "desc": "Notizia riguardante direttamente il territorio di Tavigliano."
                                 }
         except Exception:
             pass
     return None
 
 # ==============================================================================
-# 7. RIFIUTI TAVIGLIANO
+# 8. RIFIUTI TAVIGLIANO
 # ==============================================================================
 def get_rifiuti(weekday):
     giorni = {
@@ -242,17 +272,18 @@ def get_rifiuti(weekday):
     return {"cat": "♻️ Rifiuti Tavigliano", "title": "Calendario Raccolta Rifiuti", "speak": speak, "body": body}
 
 # ==============================================================================
-# 8. COMPOSIZIONE DATI
+# 9. COMPOSIZIONE DATI
 # ==============================================================================
 meteo_item = get_meteo()
 prime_due = get_prime_due_notizie()
 notizia_tav = get_notizia_tavigliano()
+avvisi_bacheca = get_bacheca_google_fogli()
 
 PROVERBI = [
     ("«Can ch'a bòja a mòrd nen»", "Cane che abbaia non morde"),
     ("«Chi a peul nen bate 'l caval, a bat la sela»", "Chi non può battere il cavallo, batte la sella"),
     ("«A fesse d'òr a s'ancurnisa la miseria»", "A farsi d'oro si incornicia la miseria"),
-    ("«Për conòsse un bin a venta mangé 'n sach ëd sal ansema»", "Per conoscere bene qualcuno bisogna mangiare un sacco di sale insieme"),
+    ("«Për conòsse un bin a venta mangé 'n sach ëd sal ansema»", "Per conoscere bene uno bisogna mangiare un sacco di sale insieme"),
     ("«L'eva ch'a cor a pòrta nen d'infezion»", "L'acqua che scorre non porta infezioni")
 ]
 proverbio = PROVERBI[(today.day - 1) % len(PROVERBI)]
@@ -265,14 +296,12 @@ news_data = [
         "body": f"• <strong>Data:</strong> {giorno_settimana} {today.day} {nome_mese} {today.year}<br>• <strong>Santo del giorno:</strong> {santo}"
     },
     meteo_item,
-    # PRIMA NOTIZIA: LETTURA DIRETTA SENZA DIRE "NOTIZIA 1"
     {
         "cat": "📰 Cronaca e Territorio",
         "title": prime_due[0]["title"],
         "speak": f"{prime_due[0]['title']}. {prime_due[0]['desc']}",
         "body": prime_due[0]["desc"]
     },
-    # SECONDA NOTIZIA: LETTURA DIRETTA SENZA DIRE "NOTIZIA 2"
     {
         "cat": "📰 Cronaca e Territorio",
         "title": prime_due[1]["title"],
@@ -281,7 +310,6 @@ news_data = [
     }
 ]
 
-# VALLE CERVO: AGGIUNTA SOLO SE RIGUARDA TAVIGLIANO
 if notizia_tav:
     news_data.append({
         "cat": "🌲 Valle Cervo • Tavigliano",
@@ -290,18 +318,70 @@ if notizia_tav:
         "body": notizia_tav["desc"]
     })
 
-# RIFIUTI
+for avviso in avvisi_bacheca:
+    news_data.append(avviso)
+
+# SEZIONE TRASPORTI INTEGRATA: VOCE SEMPLIFICATA CON LINK INTERNI
+news_data.append({
+    "cat": "🚍 Mobilità & Trasporti",
+    "title": "Pullman ATAP, Treni FS, Taxi Biella e Aerei",
+    "speak": (
+        "Per quanto riguarda gli orari di pullman, treni, aerei e il servizio taxi, "
+        "all'interno della sezione premendo trovate i link per verificare tutto ciò che vi serve."
+    ),
+    "body": (
+        "<strong>Orari e Collegamenti del Territorio:</strong><br><br>"
+        "• <strong>Pullman ATAP:</strong> Linea 340 (Biella - Tavigliano - Piedicavallo).<br>"
+        "<div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>"
+        "  <a href='https://www.atapspa.it/linea/linea-340/' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📄 Orari Linea 340 Tavigliano</a>"
+        "  <a href='https://www.atapspa.it/orari/' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Tutte le Linee ATAP</a>"
+        "</div>"
+        "• <strong>Treni Ferrovie dello Stato:</strong> Stazione di Biella San Paolo.<br>"
+        "<div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>"
+        "  <a href='https://www.trenitalia.com/' target='_blank' style='background:#b91c1c; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🚆 Orari Treni Trenitalia</a>"
+        "  <a href='https://www.google.com/maps/dir/?api=1&destination=Stazione+Biella+San+Paolo' target='_blank' style='background:#1e293b; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Indicazioni Stazione</a>"
+        "</div>"
+        "• <strong>Consorzio Radio Taxi Biella:</strong> Corse urbane e provinciali.<br>"
+        "<div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>"
+        "  <a href='tel:01521234' style='background:#25d366; color:#042f2e; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:800; font-size:0.82rem;'>📞 Chiama Taxi: 015 21234</a>"
+        "  <a href='https://www.taxibiella.it' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Portale Taxi Biella</a>"
+        "</div>"
+        "• <strong>Aeroporti:</strong> Tabelloni partenze in tempo reale.<br>"
+        "<div style='margin: 6px 0 0; display: flex; gap: 8px; flex-wrap: wrap;'>"
+        "  <a href='https://www.milanomalpensa-airport.com/it/voli/partenze' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🛫 Milano Malpensa Live</a>"
+        "  <a href='https://www.aeroportoditorino.it/it/passeggeri-viaggi/voli/voli-in-tempo-reale' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🛫 Torino Caselle Live</a>"
+        "</div>"
+    )
+})
+
+# CARBURANTE PIÙ ECONOMICO NEL BIELLESE
+news_data.append({
+    "cat": "⛽ Carburanti nel Biellese",
+    "title": "Distributori Convenienti e Prezzi MIMIT",
+    "speak": (
+        "Nella scheda carburanti trovate le indicazioni per i distributori più economici "
+        "e il link per verificare i prezzi aggiornati dal Ministero."
+    ),
+    "body": (
+        "<strong>Monitoraggio Risparmio Carburanti Biella:</strong><br>"
+        "• <strong>Distributori consigliati:</strong> Pompe bianche e stazioni commerciali (direttrice Trossi e raccordo di Verrone / Candelo).<br>"
+        "• <strong>Osservaprezzi Ufficiale:</strong> Ministero delle Imprese e del Made in Italy.<br>"
+        "<div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>"
+        "  <a href='https://www.google.com/maps/search/distributori+carburante+economici+Biella/' target='_blank' style='background:#16a34a; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🧭 Indicazioni Stradali Distributori Biella</a>"
+        "  <a href='https://carburanti.mise.gov.it/ospzSearch/zona' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>📊 Osservaprezzi Ufficiale MIMIT</a>"
+        "</div>"
+    )
+})
+
 news_data.append(get_rifiuti(today.weekday()))
 
-# FARMACIE (SENZA LETTURA VOCALE DEI NUMERI)
+# FARMACIE: DICITURA RICHIESTA
 news_data.append({
-    "cat": "💊 Farmacie di Turno & Servizi",
-    "title": "Turni CAP 13900 & Presidi di Zona",
+    "cat": "💊 Farmacie di Turno & Presidi",
+    "title": "Presidi Vicini & Ricerca Turni CAP 13900",
     "speak": (
-        "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, "
-        "potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. "
-        "I presidi più vicini sono la Farmacia Savino ad Andorno Micca e la Farmacia Valeggia a Sagliano Micca. "
-        "Nella scheda trovate i pulsanti per telefonare e per avviare il navigatore."
+        "Per le farmacie: sono riportate sotto quelle più vicine a Tavigliano, "
+        "mentre quelle di turno sono disponibili nel link."
     ),
     "body": (
         "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>"
@@ -311,7 +391,7 @@ news_data.append({
         "    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>"
         "  </div>"
         "</div>"
-        "<strong>Presidi locali più vicini:</strong><br>"
+        "<strong>Farmacie più vicine a Tavigliano:</strong><br>"
         "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>"
         "  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>"
         "  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>"
@@ -329,7 +409,6 @@ news_data.append({
     )
 })
 
-# PROVERBIO PIEMONTESE
 news_data.append({
     "cat": "💡 Saggezza Tradizionale",
     "title": "Proverbio Piemontese del Giorno",
@@ -337,21 +416,29 @@ news_data.append({
     "body": f"• <strong>In dialetto piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
 })
 
-# RIEPILOGO UNICO FONTI NEL FINALE
 news_data.append({
     "cat": "📢 Trasparenza & Riepilogo Fonti",
     "title": "Riepilogo Ufficiale Fonti del Notiziario",
     "speak": (
         "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: "
-        "previsioni meteo a cura di 3B Meteo; notizie dalla redazione di Newsbiella punto it; "
-        "calendario raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. "
+        "previsioni meteo da 3B Meteo; notizie dalla redazione di Newsbiella punto it; "
+        "comunicati ed eventi dalla Bacheca di Tavigliano; orari bus da ATAP Biella; "
+        "orari ferroviari da Trenitalia; servizio taxi da Consorzio Radio Taxi Biella; "
+        "voli da Milano Malpensa e Torino Caselle; prezzi carburanti da Osservaprezzi MIMIT; "
+        "raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. "
         "Una buona giornata a tutta la comunità di Tavigliano!"
     ),
     "body": (
         "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
-        "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>"
+        "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Certificate:</div>"
         "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-        "  • <strong>Notizie Locali:</strong> Newsbiella.it<br>"
+        "  • <strong>Notizie Territoriali:</strong> Newsbiella.it<br>"
+        "  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>"
+        "  • <strong>Autobus & Pullman:</strong> ATAP S.p.A. (Linea 340 e rete provinciale)<br>"
+        "  • <strong>Treni:</strong> Trenitalia / Ferrovie dello Stato (Stazione Biella San Paolo)<br>"
+        "  • <strong>Radio Taxi:</strong> Consorzio Taxi Biella (taxibiella.it)<br>"
+        "  • <strong>Voli e Aeroporti:</strong> SEA Milano (Malpensa MXP) & SAGAT Torino (Caselle TRN)<br>"
+        "  • <strong>Carburanti:</strong> MIMIT — Osservaprezzi Carburanti Ministero Imprese e Made in Italy<br>"
         "  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>"
         "  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>"
         "  • <strong>Calendario:</strong> Archivio Liturgico Diocesano"
@@ -360,8 +447,18 @@ news_data.append({
 })
 
 # ==============================================================================
-# 9. GENERATORE HTML COMPLETO (STUDIO RADIO & WOW EFFECTS)
+# 10. GENERATORE HTML COMPLETO
 # ==============================================================================
+testo_condivisione = (
+    f"📻 *NOTIZIARIO DI TAVIGLIANO*\n"
+    f"📅 {data_estesa}\n\n"
+    f"🌦️ Meteo: {meteo_item['title']}\n"
+    f"📰 Notizie: {prime_due[0]['title']}\n"
+    f"🚍 Mobilità (Bus, Treni, Taxi, Voli) & Benzina Risparmio\n\n"
+    f"▶️ Ascolta l'edizione aggiornata qui:\n"
+    f"https://bobbylama63-jpg.github.io/NOTIZIARIO/"
+)
+url_whatsapp_share = f"https://api.whatsapp.com/send?text={urllib.parse.quote(testo_condivisione)}"
 json_news = json.dumps(news_data, ensure_ascii=False, indent=2)
 
 HTML_PAGE = f"""<!DOCTYPE html>
@@ -420,14 +517,14 @@ HTML_PAGE = f"""<!DOCTYPE html>
   .ticker-marquee {{
     display: inline-block;
     padding-left: 100%;
-    animation: scorri 25s linear infinite;
+    animation: scorri 28s linear infinite;
   }}
   @keyframes scorri {{
     0% {{ transform: translate(0, 0); }}
     100% {{ transform: translate(-100%, 0); }}
   }}
 
-  /* HEADER RADIO ON AIR */
+  /* HEADER */
   header {{
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(10px);
@@ -475,7 +572,26 @@ HTML_PAGE = f"""<!DOCTYPE html>
     to {{ opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }}
   }}
 
-  /* NOTIZIE CON EFFETTO SPOTLIGHT */
+  /* PULSANTE CONDIVISIONE WHATSAPP */
+  .share-wa-banner {{
+    padding: 12px 12px 0;
+  }}
+  .share-wa-banner a {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #25d366;
+    color: #042f2e;
+    text-decoration: none;
+    font-weight: 900;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.35);
+  }}
+
+  /* NOTIZIE SPOTLIGHT */
   .news-stream {{
     padding: 14px 12px;
     display: flex;
@@ -550,7 +666,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     100% {{ height: 18px; }}
   }}
 
-  /* DOCK CONTROLLO */
+  /* DOCK CONTROL BAR */
   .dock-bar {{
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 520px;
@@ -577,16 +693,14 @@ HTML_PAGE = f"""<!DOCTYPE html>
 </head>
 <body>
 
-<!-- AUDIO SOTTOFONDO MP3 -->
 <audio id="bgMusic" loop preload="auto">
   <source src="{mp3_file}" type="audio/mpeg">
 </audio>
 
 <div class="app-container">
-  <!-- TICKER NOTIZIE -->
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Ultime notizie Newsbiella • Farmacie di Turno CAP 13900 • Raccolta Rifiuti Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • 3B Meteo • Newsbiella • Mobilità (Bus, Treni, Taxi, Voli) • Benzina Risparmio • Farmacie di Turno CAP 13900 • Raccolta Seab</div>
   </div>
 
   <header>
@@ -597,6 +711,12 @@ HTML_PAGE = f"""<!DOCTYPE html>
     </div>
     <div class="neon-on-air" id="onAirSign">● ON AIR</div>
   </header>
+
+  <div class="share-wa-banner">
+    <a href="{url_whatsapp_share}" target="_blank">
+      💬 Invia Notiziario al Gruppo WhatsApp
+    </a>
+  </div>
 
   <div class="news-stream" id="newsStream"></div>
 
@@ -726,4 +846,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato regolarmente: {data_estesa}")
+print(f"Notiziario Tavigliano rigenerato con successo: {data_estesa}")
