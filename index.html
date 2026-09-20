@@ -54,14 +54,14 @@
   .ticker-marquee {
     display: inline-block;
     padding-left: 100%;
-    animation: scorri 25s linear infinite;
+    animation: scorri 28s linear infinite;
   }
   @keyframes scorri {
     0% { transform: translate(0, 0); }
     100% { transform: translate(-100%, 0); }
   }
 
-  /* HEADER RADIO ON AIR */
+  /* HEADER */
   header {
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(10px);
@@ -109,7 +109,26 @@
     to { opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }
   }
 
-  /* NOTIZIE CON EFFETTO SPOTLIGHT */
+  /* PULSANTE CONDIVISIONE WHATSAPP */
+  .share-wa-banner {
+    padding: 12px 12px 0;
+  }
+  .share-wa-banner a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #25d366;
+    color: #042f2e;
+    text-decoration: none;
+    font-weight: 900;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.35);
+  }
+
+  /* NOTIZIE SPOTLIGHT */
   .news-stream {
     padding: 14px 12px;
     display: flex;
@@ -184,7 +203,7 @@
     100% { height: 18px; }
   }
 
-  /* DOCK CONTROLLO */
+  /* DOCK CONTROL BAR */
   .dock-bar {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 520px;
@@ -211,16 +230,14 @@
 </head>
 <body>
 
-<!-- AUDIO SOTTOFONDO MP3 -->
 <audio id="bgMusic" loop preload="auto">
   <source src="headlineupdate.mp3" type="audio/mpeg">
 </audio>
 
 <div class="app-container">
-  <!-- TICKER NOTIZIE -->
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Ultime notizie Newsbiella • Farmacie di Turno CAP 13900 • Raccolta Rifiuti Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • 3B Meteo • Newsbiella • Mobilità (Bus, Treni, Taxi, Voli) • Benzina Risparmio • Farmacie di Turno CAP 13900 • Raccolta Seab</div>
   </div>
 
   <header>
@@ -231,6 +248,12 @@
     </div>
     <div class="neon-on-air" id="onAirSign">● ON AIR</div>
   </header>
+
+  <div class="share-wa-banner">
+    <a href="https://api.whatsapp.com/send?text=%F0%9F%93%BB%20%2ANOTIZIARIO%20DI%20TAVIGLIANO%2A%0A%F0%9F%93%85%20Luned%C3%AC%2021%20settembre%20%E2%80%94%20San%20Matteo%20Apostolo%20ed%20Evangelista%0A%0A%F0%9F%8C%A6%EF%B8%8F%20Meteo%3A%20Nubi%20sparse%20alternate%20ad%20ampie%20schiarite%20%2815%C2%B0C%20/%2024%C2%B0C%29%0A%F0%9F%93%B0%20Notizie%3A%20ATP%20Challenger%20Biella%2C%20Caniato%20conquista%20il%20primo%20titolo%20in%20carriera...%0A%F0%9F%9A%8D%20Mobilit%C3%A0%20%28Bus%2C%20Treni%2C%20Taxi%2C%20Voli%29%20%26%20Benzina%20Risparmio%0A%0A%E2%96%B6%EF%B8%8F%20Ascolta%20l%27edizione%20aggiornata%20qui%3A%0Ahttps%3A//bobbylama63-jpg.github.io/NOTIZIARIO/" target="_blank">
+      💬 Invia Notiziario al Gruppo WhatsApp
+    </a>
+  </div>
 
   <div class="news-stream" id="newsStream"></div>
 
@@ -268,8 +291,20 @@ const NEWS = [
   {
     "cat": "🌲 Valle Cervo • Tavigliano",
     "title": "Tavigliano, a frazione Sella l'arte è di casa FOTO",
-    "speak": "Tavigliano, a frazione Sella l'arte è di casa FOTO. Notizia riguardante direttamente il territorio e la comunità di Tavigliano.",
-    "body": "Notizia riguardante direttamente il territorio e la comunità di Tavigliano."
+    "speak": "Tavigliano, a frazione Sella l'arte è di casa FOTO. Notizia riguardante direttamente il territorio di Tavigliano.",
+    "body": "Notizia riguardante direttamente il territorio di Tavigliano."
+  },
+  {
+    "cat": "🚍 Mobilità & Trasporti",
+    "title": "Pullman ATAP, Treni FS, Taxi Biella e Aerei",
+    "speak": "Per quanto riguarda gli orari di pullman, treni, aerei e il servizio taxi, all'interno della sezione premendo trovate i link per verificare tutto ciò che vi serve.",
+    "body": "<strong>Orari e Collegamenti del Territorio:</strong><br><br>• <strong>Pullman ATAP:</strong> Linea 340 (Biella - Tavigliano - Piedicavallo).<br><div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>  <a href='https://www.atapspa.it/linea/linea-340/' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📄 Orari Linea 340 Tavigliano</a>  <a href='https://www.atapspa.it/orari/' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Tutte le Linee ATAP</a></div>• <strong>Treni Ferrovie dello Stato:</strong> Stazione di Biella San Paolo.<br><div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>  <a href='https://www.trenitalia.com/' target='_blank' style='background:#b91c1c; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🚆 Orari Treni Trenitalia</a>  <a href='https://www.google.com/maps/dir/?api=1&destination=Stazione+Biella+San+Paolo' target='_blank' style='background:#1e293b; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Indicazioni Stazione</a></div>• <strong>Consorzio Radio Taxi Biella:</strong> Corse urbane e provinciali.<br><div style='margin: 6px 0 10px; display: flex; gap: 8px; flex-wrap: wrap;'>  <a href='tel:01521234' style='background:#25d366; color:#042f2e; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:800; font-size:0.82rem;'>📞 Chiama Taxi: 015 21234</a>  <a href='https://www.taxibiella.it' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Portale Taxi Biella</a></div>• <strong>Aeroporti:</strong> Tabelloni partenze in tempo reale.<br><div style='margin: 6px 0 0; display: flex; gap: 8px; flex-wrap: wrap;'>  <a href='https://www.milanomalpensa-airport.com/it/voli/partenze' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🛫 Milano Malpensa Live</a>  <a href='https://www.aeroportoditorino.it/it/passeggeri-viaggi/voli/voli-in-tempo-reale' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🛫 Torino Caselle Live</a></div>"
+  },
+  {
+    "cat": "⛽ Carburanti nel Biellese",
+    "title": "Distributori Convenienti e Prezzi MIMIT",
+    "speak": "Nella scheda carburanti trovate le indicazioni per i distributori più economici e il link per verificare i prezzi aggiornati dal Ministero.",
+    "body": "<strong>Monitoraggio Risparmio Carburanti Biella:</strong><br>• <strong>Distributori consigliati:</strong> Pompe bianche e stazioni commerciali (direttrice Trossi e raccordo di Verrone / Candelo).<br>• <strong>Osservaprezzi Ufficiale:</strong> Ministero delle Imprese e del Made in Italy.<br><div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>  <a href='https://www.google.com/maps/search/distributori+carburante+economici+Biella/' target='_blank' style='background:#16a34a; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🧭 Indicazioni Stradali Distributori Biella</a>  <a href='https://carburanti.mise.gov.it/ospzSearch/zona' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>📊 Osservaprezzi Ufficiale MIMIT</a></div>"
   },
   {
     "cat": "♻️ Rifiuti Tavigliano",
@@ -278,10 +313,10 @@ const NEWS = [
     "body": "• <strong>Oggi:</strong> Oggi nessuna raccolta programmata.<br>• <strong>Promemoria:</strong> Domani: <em>CARTA</em>."
   },
   {
-    "cat": "💊 Farmacie di Turno & Servizi",
-    "title": "Turni CAP 13900 & Presidi di Zona",
-    "speak": "Capitolo farmacie: per consultare in tempo reale i turni notturni e festivi con codice postale 13900, potete toccare il pulsante verde del portale ufficiale Farmacie di Turno. I presidi più vicini sono la Farmacia Savino ad Andorno Micca e la Farmacia Valeggia a Sagliano Micca. Nella scheda trovate i pulsanti per telefonare e per avviare il navigatore.",
-    "body": "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>  <div style='margin-top:8px;'>    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>  </div></div><strong>Presidi locali più vicini:</strong><br><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div>"
+    "cat": "💊 Farmacie di Turno & Presidi",
+    "title": "Presidi Vicini & Ricerca Turni CAP 13900",
+    "speak": "Per le farmacie: sono riportate sotto quelle più vicine a Tavigliano, mentre quelle di turno sono disponibili nel link.",
+    "body": "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:12px; text-align:center;'>  <strong>🔍 Ricerca Turni Biellese (CAP 13900):</strong><br>  <span style='font-size:0.83rem; color:#86efac;'>Verifica farmacie aperte adesso, notturni e festivi</span><br>  <div style='margin-top:8px;'>    <a href='https://www.farmaciediturno.org/ricercaditurno.asp' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.85rem;'>🏥 Cerca Farmacia di Turno (CAP 13900)</a>  </div></div><strong>Farmacie più vicine a Tavigliano:</strong><br><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>1. Farmacia Savino (Andorno Micca)</strong> — ⏱ 5 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472779' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Olistica+Savino+Andorno+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div><div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-top:8px; border:1px solid rgba(255,255,255,0.1);'>  <strong>2. Farmacia Valeggia (Sagliano Micca)</strong> — ⏱ 7 min<br>  <div style='margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='tel:015472332' style='background:#00a884; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>📞 Chiama Farmacia</a>    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia+Valeggia+Sagliano+Micca' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore</a>  </div></div>"
   },
   {
     "cat": "💡 Saggezza Tradizionale",
@@ -292,8 +327,8 @@ const NEWS = [
   {
     "cat": "📢 Trasparenza & Riepilogo Fonti",
     "title": "Riepilogo Ufficiale Fonti del Notiziario",
-    "speak": "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: previsioni meteo a cura di 3B Meteo; notizie dalla redazione di Newsbiella punto it; calendario raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. Una buona giornata a tutta la comunità di Tavigliano!",
-    "body": "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Consultate:</div>  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>  • <strong>Notizie Locali:</strong> Newsbiella.it<br>  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>  • <strong>Calendario:</strong> Archivio Liturgico Diocesano</div>"
+    "speak": "Notiziario completato. Ecco il riepilogo finale delle fonti ufficiali: previsioni meteo da 3B Meteo; notizie dalla redazione di Newsbiella punto it; comunicati ed eventi dalla Bacheca di Tavigliano; orari bus da ATAP Biella; orari ferroviari da Trenitalia; servizio taxi da Consorzio Radio Taxi Biella; voli da Milano Malpensa e Torino Caselle; prezzi carburanti da Osservaprezzi MIMIT; raccolta rifiuti da Seab Biella; presidi sanitari da Farmacie di Turno punto org e Federfarma Biella. Una buona giornata a tutta la comunità di Tavigliano!",
+    "body": "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Certificate:</div>  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>  • <strong>Notizie Territoriali:</strong> Newsbiella.it<br>  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>  • <strong>Autobus & Pullman:</strong> ATAP S.p.A. (Linea 340 e rete provinciale)<br>  • <strong>Treni:</strong> Trenitalia / Ferrovie dello Stato (Stazione Biella San Paolo)<br>  • <strong>Radio Taxi:</strong> Consorzio Taxi Biella (taxibiella.it)<br>  • <strong>Voli e Aeroporti:</strong> SEA Milano (Malpensa MXP) & SAGAT Torino (Caselle TRN)<br>  • <strong>Carburanti:</strong> MIMIT — Osservaprezzi Carburanti Ministero Imprese e Made in Italy<br>  • <strong>Igiene Urbana:</strong> Seab Biella (Comune di Tavigliano)<br>  • <strong>Sanità e Turni:</strong> Farmaciediturno.org (CAP 13900) & Federfarma BI<br>  • <strong>Calendario:</strong> Archivio Liturgico Diocesano</div>"
   }
 ];
 
