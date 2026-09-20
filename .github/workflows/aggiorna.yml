@@ -2,14 +2,15 @@ name: Aggiornamento Quotidiano Notiziario
 
 on:
   schedule:
-    - cron: '0 5 * * *'
+    # Finestre orarie per coprire 07:00, 12:00, 17:00 e 22:00 italiane (sia con ora legale che solare)
+    - cron: '0 5,6,10,11,15,16,20,21 * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  update-news:
+  aggiorna-notiziario:
     runs-on: ubuntu-latest
     steps:
       - name: Scarica repository
@@ -20,14 +21,32 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Esegui aggiornamento
+      - name: Verifica orario italiano (Europe/Rome)
+        id: check_ora
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Avvio manuale: procedo subito."
+            echo "esegui=true" >> $GITHUB_OUTPUT
+          else
+            ORA_ROMA=$(TZ="Europe/Rome" date +%-H)
+            echo "Ora attuale in Italia: $ORA_ROMA"
+            if [ "$ORA_ROMA" = "7" ] || [ "$ORA_ROMA" = "12" ] || [ "$ORA_ROMA" = "17" ] || [ "$ORA_ROMA" = "22" ]; then
+              echo "Orario confermato: procedo con l'aggiornamento."
+              echo "esegui=true" >> $GITHUB_OUTPUT
+            else
+              echo "Ora italiana ($ORA_ROMA:00) non prevista per la trasmissione. Salto."
+              echo "esegui=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Esegui aggiornamento notiziario
+        if: steps.check_ora.outputs.esegui == 'true'
         run: python aggiorna.py
 
-      - name: Salva modifiche
+      - name: Salva e pubblica modifiche
+        if: steps.check_ora.outputs.esegui == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Aggiornamento automatico notiziario" || exit 0
-          git push
-
+          git diff --staged --quiet || (git commit -m "Notiziario aggiornato alle ore $(TZ='Europe/Rome' date '+%H:%M')" && git push)
