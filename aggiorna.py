@@ -35,7 +35,11 @@ SANTI_DEL_GIORNO = {
     "12-08": "Immacolata Concezione", "12-13": "Santa Lucia", "12-25": "Natale del Signore", "12-26": "Santo Stefano"
 }
 
-today = datetime.date.today()
+from zoneinfo import ZoneInfo
+
+ora_italiana = datetime.datetime.now(ZoneInfo("Europe/Rome"))
+today = ora_italiana.date()
+
 giorno_settimana = GIORNI[today.weekday()]
 nome_mese = MESI[today.month - 1]
 chiave_data = today.strftime("%m-%d")
