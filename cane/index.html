@@ -81,20 +81,25 @@
     .bar-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px}
     .bar .n{font-family:"Bricolage Grotesque",sans-serif;font-size:14px;color:var(--ink-soft);flex:1}
     .btn{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:16px;
-      background:var(--ink);color:var(--paper);border:0;border-radius:999px;padding:13px 24px;cursor:pointer}
+      background:var(--ink);color:var(--paper);border:0;border-radius:999px;padding:13px 24px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
     .btn[disabled]{opacity:.35;cursor:not-allowed}
     .btn.ghost{background:none;color:var(--ink);border:1px solid var(--line);padding:11px 18px;font-size:15px}
     .btn.wide{width:100%;margin-bottom:10px}
+    
+    /* Box video con Timer */
+    .cam-box{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;margin-bottom:14px;border:1px solid var(--line)}
+    .cam-box video{width:100%;height:320px;object-fit:cover;display:block}
+    .cam-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);color:#fff}
+    .cam-timer{font-family:"Bricolage Grotesque",sans-serif;font-size:58px;font-weight:800;text-shadow:0 2px 10px rgba(0,0,0,0.8)}
+    .cam-badge{position:absolute;top:12px;left:12px;background:rgba(227,130,113,0.9);color:#fff;font-family:"Bricolage Grotesque",sans-serif;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em}
+
     .verdict{background:var(--ink);color:var(--paper);border-radius:18px;padding:24px 20px;margin-bottom:16px}
     .verdict .lead{font-family:"Bricolage Grotesque",sans-serif;font-size:13px;opacity:.7;margin:0 0 4px;text-transform:uppercase}
     .verdict h2{font-size:clamp(26px,7vw,34px);line-height:1.05;font-weight:800;margin:0 0 10px}
     .verdict p{margin:0;font-size:16px;opacity:.95;max-width:48ch}
-    .also{margin:0 0 18px}
-    .also .row{display:grid;grid-template-columns:1fr 46px;gap:10px;align-items:center;margin-bottom:8px}
-    .also .nm{font-family:"Bricolage Grotesque",sans-serif;font-size:14.5px}
-    .also .track{grid-column:1/-1;height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:-4px}
-    .also .fill{height:100%;background:var(--accent);border-radius:3px}
-    .also .pc{font-size:13px;color:var(--ink-soft);text-align:right;font-family:"Bricolage Grotesque",sans-serif}
+    .breed-tag{display:inline-block;background:var(--accent);color:#fff;font-family:"Bricolage Grotesque",sans-serif;font-size:13.5px;font-weight:700;padding:4px 12px;border-radius:999px;margin-bottom:10px}
+    .voice-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .voice-text{font-size:14.5px;color:var(--ink-soft);font-style:italic;line-height:1.4}
     .advice{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:6px 18px 14px;margin-bottom:14px}
     .advice h3{font-size:15.5px;margin:14px 0 6px;font-weight:600}
     .advice ul{margin:0;padding-left:18px}
@@ -132,33 +137,43 @@
     <header>
       <div class="mark"><span class="dot"></span>Leggi il cane</div>
       <h1>Cosa sta dicendo il tuo cane adesso?</h1>
-      <p class="sub">Registra un video breve oppure seleziona manualmente i segnali che vedi.</p>
+      <p class="sub">Ripresa rapida di 6 secondi: Gemini analizza la razza e ti risponde a voce.</p>
     </header>
 
     <nav role="tablist">
-      <button role="tab" aria-selected="true" data-tab="video">Video automatico</button>
+      <button role="tab" aria-selected="true" data-tab="video">Video 6 secondi</button>
       <button role="tab" aria-selected="false" data-tab="osserva">Osserva a mano</button>
       <button role="tab" aria-selected="false" data-tab="diario">Diario</button>
       <button role="tab" aria-selected="false" data-tab="guida">Guida</button>
     </nav>
 
-    <!-- SCHEDA 1: VIDEO AUTOMATICO -->
+    <!-- SCHEDA 1: VIDEO 6 SECONDI CON VOCE -->
     <section id="video" class="panel">
       <!-- Gestione Chiave API locale -->
       <details class="key-box" id="keyDetails">
-        <summary style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14.5px;cursor:pointer">⚙️ Impostazioni Chiave API Gemini</summary>
-        <p style="font-size:13.5px;color:var(--ink-soft);margin:8px 0 4px">Inserisci la tua chiave gratuita di Google AI Studio. Viene memorizzata solo nel tuo smartphone.</p>
+        <summary style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14.5px;cursor:pointer">⚙️ Chiave API Gemini</summary>
+        <p style="font-size:13.5px;color:var(--ink-soft);margin:8px 0 4px">La chiave è memorizzata al sicuro solo nella memoria del tuo smartphone.</p>
         <input type="password" id="apiKeyInput" placeholder="Incolla qui la chiave API (es. AIzaSy...)">
         <button class="btn ghost wide" id="saveKeyBtn" type="button" style="padding:8px">Salva chiave</button>
       </details>
 
       <div id="camIntro">
-        <p class="status" id="camStatus">Tocca il pulsante: registra 3–5 secondi di video e Gemini lo interpreterà subito al termine.</p>
-        <input type="file" id="recInput" accept="video/*" capture="environment" hidden>
-        <button class="btn wide" id="recBtn" type="button">🎥 Registra video e interpreta</button>
+        <p class="status" id="camStatus">Inquadra il cane intero. Il video dura esattamente 6 secondi, poi Gemini parlerà a voce.</p>
         
-        <input type="file" id="fileInput" accept="video/*" hidden>
-        <button class="btn ghost wide" id="fileBtn" type="button">Carica un video dalla galleria</button>
+        <!-- Live Cam View con Countdown -->
+        <div id="liveWrapper" class="cam-box" hidden>
+          <span class="cam-badge">REC</span>
+          <video id="liveVideo" autoplay playsinline muted></video>
+          <div class="cam-overlay">
+            <div class="cam-timer" id="timerCount">6</div>
+            <span style="font-size:14px;font-family:'Bricolage Grotesque',sans-serif">Tieni fermo il telefono...</span>
+          </div>
+        </div>
+
+        <button class="btn wide" id="start6sBtn" type="button">🎥 Avvia ripresa (6 secondi)</button>
+        
+        <input type="file" id="fileFallback" accept="video/*" hidden>
+        <button class="btn ghost wide" id="fallbackBtn" type="button">Carica un video dalla galleria</button>
       </div>
 
       <div id="shotsContainer" class="shots" hidden></div>
@@ -189,16 +204,16 @@
     <section id="guida" class="panel" hidden>
       <div class="guide">
         <h2>Come interpretare i segnali</h2>
-        <p>I segnali vanno sempre letti insieme: una coda che si muove non indica necessariamente felicità se le labbra sono serrate e il corpo è rigido.</p>
+        <p>I segnali corporei vanno sempre letti nell'insieme: movimento della coda, tensione del corpo, posizione di orecchie e occhi.</p>
         <h2>I segnali calmanti</h2>
         <ul>
-          <li>Si lecca il tartufo (naso) senza cibo intorno.</li>
-          <li>Sbadiglia da sveglio per allentare la pressione.</li>
-          <li>Gira la testa di lato ed evita il contatto oculare diretto.</li>
-          <li>Si scrolla come da bagnato per "resettare" un momento di tensione.</li>
+          <li>Si lecca il tartufo (naso) senza cibo in vista.</li>
+          <li>Sbadiglia per abbassare la tensione.</li>
+          <li>Gira la testa lateralmente evitando lo sguardo diretto.</li>
+          <li>Scrollata completa a corpo asciutto (scarico di stress).</li>
         </ul>
-        <h2>Border Collie e conduzione</h2>
-        <p>Testa bassa, sguardo fisso a puntare e avanzata strisciante sono tipici schemi motori dei cani da pastore. Vanno indirizzati verso attività olfattive e giochi controllati per evitare fissazioni compulsive.</p>
+        <h2>Border Collie e cani da conduzione</h2>
+        <p>Testa bassa, sguardo fisso a puntare e avanzata strisciante sono tipici schemi di conduzione. Vanno reindirizzati verso attività olfattive e mentali.</p>
       </div>
     </section>
 
@@ -280,9 +295,33 @@
 
     const $ = s => document.querySelector(s);
     const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-    let sel = new Set(), ctx = new Set(), lastGeminiCodes = [];
+    let sel = new Set(), ctx = new Set(), lastGeminiCodes = [], lastVoiceText = "";
 
-    // Costruzione UI Osserva
+    // SINTESI VOCALE AUTOMATICA
+    function speakText(text){
+      if(!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'it-IT';
+      utter.rate = 1.0;
+      utter.pitch = 1.0;
+      
+      const voices = window.speechSynthesis.getVoices();
+      const itVoice = voices.find(v => v.lang.startsWith('it'));
+      if(itVoice) utter.voice = itVoice;
+
+      window.speechSynthesis.speak(utter);
+    }
+
+    // Inizializza audio per sbloccare l'asincronia sui dispositivi mobili
+    function unlockAudio(){
+      if('speechSynthesis' in window){
+        const silent = new SpeechSynthesisUtterance('');
+        window.speechSynthesis.speak(silent);
+      }
+    }
+
+    // Costruzione UI Osserva a mano
     $("#ctx").innerHTML = CTX.map((c,i)=>`<label class="chip"><input type="checkbox" data-ctx="${i}"><span>${c[1]}</span></label>`).join("");
     $("#groups").innerHTML = GROUPS.map((g,gi)=>`
       <details class="group"${gi===0?" open":""}>
@@ -332,30 +371,49 @@
       return Object.entries(s).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]);
     }
 
-    function verdictHTML(codes, nota = ""){
+    function verdictHTML(data){
+      const codes = data.codici || [];
       const r = score(codes);
-      if(!r.length) return `<div class="flag note"><b>Nessun segnale chiaro</b>Non ci sono abbastanza elementi per una lettura precisa.</div>`;
-      const tot = r.reduce((a,b)=>a+b[1],0), top = r[0], S = STATES[top[0]], others = r.slice(1,4);
-      const isWarn = top[0]==="avvertimento" || codes.includes("3.1") || codes.includes("4.2");
+      const top = r.length ? r[0] : null;
+      const S = top ? STATES[top[0]] : null;
+      const statoNome = data.stato_d_animo || (S ? S.nome : "Valutazione completata");
+      const razza = data.razza || "Cane";
 
-      let h = `<div class="verdict"><p class="lead">Interpretazione prevalente</p><h2>${S.nome}</h2><p>${S.desc}</p></div>`;
-      if(nota) h += `<div class="flag calm"><b>Dall'analisi visiva:</b>${esc(nota)}</div>`;
-      if(isWarn) h += `<div class="flag warn"><b>Attenzione: richiesta di distanza</b>Fermati e allontanati lentamente senza movimenti improvvisi.</div>`;
-      if(codes.includes("4.4")) h += `<div class="flag note"><b>Attenzione alle fissazioni</b>Interrompi l'inseguimento di luci o riflessi proponendo un gioco di fiuto.</div>`;
-      h += `<div class="advice"><h3>Consigli pratici</h3><ul>${S.fare.map(x=>`<li>${x}</li>`).join("")}</ul><h3>Cosa evitare</h3><ul>${S.evitare.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
-      
-      if(others.length){
-        h += `<div class="also">` + others.map(o=>{
-          const p = Math.round(o[1]/tot*100);
-          return `<div class="row"><span class="nm">${STATES[o[0]].nome}</span><span class="pc">${p}%</span><span class="track"><span class="fill" style="width:${p}%"></span></span></div>`;
-        }).join("") + `</div>`;
+      let h = `<div class="verdict">
+        <span class="breed-tag">🐾 Razza: ${esc(razza)}</span>
+        <p class="lead">Stato d'animo rilevato</p>
+        <h2>${esc(statoNome)}</h2>
+        <p>${esc(data.spiegazione || (S ? S.desc : ""))}</p>
+      </div>`;
+
+      if(data.testo_voce){
+        lastVoiceText = data.testo_voce;
+        h += `<div class="voice-box">
+          <div class="voice-text">🗣️ "${esc(data.testo_voce)}"</div>
+          <button class="btn ghost" id="replayVoiceBtn" type="button" style="flex:none;padding:8px 14px">🔊 Riascolta</button>
+        </div>`;
       }
-      h += `<div class="rowbtn"><button class="btn" data-save="${esc(S.nome)}" type="button">Salva nel diario</button><button class="btn ghost" id="clearAll" type="button">Nuova analisi</button></div>`;
+
+      if(data.soluzioni_agitazione){
+        h += `<div class="advice">
+          <h3>Soluzioni mirate per questa razza (${esc(razza)})</h3>
+          <p style="font-size:15.5px;margin:6px 0 0">${esc(data.soluzioni_agitazione)}</p>
+        </div>`;
+      }
+
+      if(S){
+        h += `<div class="advice"><h3>Consigli pratici generali</h3><ul>${S.fare.map(x=>`<li>${x}</li>`).join("")}</ul><h3>Cosa evitare</h3><ul>${S.evitare.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+      }
+
+      h += `<div class="rowbtn">
+        <button class="btn" data-save="${esc(statoNome)} (${esc(razza)})" type="button">Salva nel diario</button>
+        <button class="btn ghost" id="clearAll" type="button">Nuova analisi</button>
+      </div>`;
       return h;
     }
 
     $("#go").addEventListener("click", () => {
-      $("#out").innerHTML = verdictHTML([...sel]);
+      $("#out").innerHTML = verdictHTML({codici: [...sel]});
       $("#out").scrollIntoView({behavior:"smooth", block:"start"});
     });
 
@@ -364,6 +422,7 @@
       if(!b) return;
       if(b.dataset.save) saveEntry(b.dataset.save, b);
       if(b.id === "clearAll") doReset();
+      if(b.id === "replayVoiceBtn" && lastVoiceText) speakText(lastVoiceText);
     });
 
     function saveEntry(nome, btn){
@@ -404,11 +463,13 @@
     });
 
     function doReset(){
-      sel.clear(); ctx.clear(); lastGeminiCodes = [];
+      sel.clear(); ctx.clear(); lastGeminiCodes = []; lastVoiceText = "";
       document.querySelectorAll('#osserva input[type=checkbox]').forEach(c=>c.checked=false);
       $("#out").innerHTML = "";
       $("#camOut").innerHTML = "";
       $("#shotsContainer").hidden = true;
+      $("#liveWrapper").hidden = true;
+      $("#start6sBtn").style.display = "inline-flex";
       refresh();
       window.scrollTo({top:0,behavior:"smooth"});
     }
@@ -432,70 +493,103 @@
       if(!k) return alert("Inserisci una chiave valida.");
       localStorage.setItem("gemini_cane_key", k);
       $("#keyDetails").open = false;
-      alert("Chiave API salvata nel dispositivo.");
+      alert("Chiave salvata correttamente!");
     });
 
-    // ESTRAZIONE FRAME E INVIO AUTOMATICO
-    $("#recBtn").addEventListener("click", () => triggerUpload("#recInput"));
-    $("#fileBtn").addEventListener("click", () => triggerUpload("#fileInput"));
-
-    function triggerUpload(id){
+    // REGISTRAZIONE AUTOMATICA 6 SECONDI
+    let streamTrack = null;
+    $("#start6sBtn").addEventListener("click", async () => {
       const key = localStorage.getItem("gemini_cane_key") || $("#apiKeyInput").value.trim();
       if(!key){
         $("#keyDetails").open = true;
-        alert("Prima di iniziare, inserisci la tua chiave gratuita API di Gemini nelle impostazioni qui sopra.");
+        alert("Inserisci prima la tua chiave API di Gemini nelle impostazioni in alto.");
         return;
       }
-      $(id).click();
-    }
 
-    $("#recInput").addEventListener("change", e => handleVideoFile(e.target.files[0]));
-    $("#fileInput").addEventListener("change", e => handleVideoFile(e.target.files[0]));
+      unlockAudio(); // Abilita sintesi vocale
 
-    async function handleVideoFile(file){
-      if(!file) return;
-      const statusEl = $("#camStatus");
       $("#camOut").innerHTML = "";
       $("#shotsContainer").hidden = true;
-      statusEl.innerHTML = `<span class="loader"></span>Estrazione fotogrammi dal video...`;
+      $("#camStatus").textContent = "Avvio videocamera...";
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
+          audio: false
+        });
+        
+        streamTrack = stream.getVideoTracks()[0];
+        const v = $("#liveVideo");
+        v.srcObject = stream;
+        await v.play();
+
+        $("#liveWrapper").hidden = false;
+        $("#start6sBtn").style.display = "none";
+        
+        // Timer di 6 secondi con cattura progressiva di 4 fotogrammi
+        const capturedFrames = [];
+        let secLeft = 6;
+        $("#timerCount").textContent = secLeft;
+
+        const countdownInterval = setInterval(async () => {
+          secLeft--;
+          $("#timerCount").textContent = secLeft;
+          
+          // Cattura fotogramma a 4.5s, 3s, 1.5s e 0s
+          if([4, 3, 2, 0].includes(secLeft)){
+            capturedFrames.push(getCanvasFrame(v));
+          }
+
+          if(secLeft <= 0){
+            clearInterval(countdownInterval);
+            // Ferma videocamera
+            if(streamTrack) streamTrack.stop();
+            $("#liveWrapper").hidden = true;
+            $("#start6sBtn").style.display = "inline-flex";
+
+            renderThumbnails(capturedFrames);
+            $("#camStatus").innerHTML = `<span class="loader"></span>Gemini sta elaborando razza, stato d'animo e risposta vocale...`;
+
+            try {
+              await callGeminiInterpretation(capturedFrames);
+              $("#camStatus").textContent = "Analisi completata!";
+            } catch(err) {
+              $("#camStatus").textContent = "Errore durante l'elaborazione.";
+              $("#camOut").innerHTML = `<div class="flag warn"><b>Attenzione</b>${esc(err.message)}</div>`;
+            }
+          }
+        }, 1000);
+
+      } catch(err) {
+        $("#camStatus").textContent = "Impossibile aprire la diretta: usa il caricamento video qui sotto.";
+        alert("Permesso fotocamera non concesso o non supportato nel browser.");
+      }
+    });
+
+    // Fallback caricamento video da galleria
+    $("#fallbackBtn").addEventListener("click", () => {
+      unlockAudio();
+      $("#fileFallback").click();
+    });
+
+    $("#fileFallback").addEventListener("change", async e => {
+      const f = e.target.files && e.target.files[0];
+      if(!f) return;
+      $("#camOut").innerHTML = "";
+      $("#shotsContainer").hidden = true;
+      $("#camStatus").innerHTML = `<span class="loader"></span>Estrazione fotogrammi dal video...`;
 
       try {
-        const frames = await extractFrames(file, 4);
+        const frames = await extractFrames(f, 4);
         renderThumbnails(frames);
-        statusEl.innerHTML = `<span class="loader"></span>Gemini sta traducendo il comportamento...`;
+        $("#camStatus").innerHTML = `<span class="loader"></span>Gemini sta elaborando razza e voce...`;
         await callGeminiInterpretation(frames);
-        statusEl.textContent = "Analisi completata con successo!";
+        $("#camStatus").textContent = "Analisi completata!";
       } catch(err) {
-        statusEl.textContent = "Errore durante l'elaborazione.";
+        $("#camStatus").textContent = "Errore durante l'elaborazione.";
         $("#camOut").innerHTML = `<div class="flag warn"><b>Attenzione</b>${esc(err.message)}</div>`;
       }
-    }
-
-    function extractFrames(file, count){
-      return new Promise((resolve, reject)=>{
-        const v = document.createElement("video");
-        v.muted = true;
-        v.playsInline = true;
-        v.preload = "auto";
-        const url = URL.createObjectURL(file);
-        v.src = url;
-
-        v.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Formato video non leggibile dal dispositivo.")); };
-        v.onloadedmetadata = async () => {
-          try {
-            const dur = (isFinite(v.duration) && v.duration > 0) ? v.duration : 2.5;
-            const times = Array.from({length: count}, (_, i) => Math.min(dur - 0.05, dur * (i + 0.5) / count));
-            const frames = [];
-            for(const t of times){
-              await new Promise(r => { v.onseeked = r; v.currentTime = t; });
-              frames.push(getCanvasFrame(v));
-            }
-            URL.revokeObjectURL(url);
-            resolve(frames);
-          } catch(e) { reject(e); }
-        };
-      });
-    }
+    });
 
     function getCanvasFrame(video){
       const maxDim = 800;
@@ -509,15 +603,42 @@
       return canvas.toDataURL("image/jpeg", 0.85);
     }
 
+    function extractFrames(file, count){
+      return new Promise((resolve, reject)=>{
+        const v = document.createElement("video");
+        v.muted = true;
+        v.playsInline = true;
+        v.preload = "auto";
+        const url = URL.createObjectURL(file);
+        v.src = url;
+
+        v.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Video non valido")); };
+        v.onloadedmetadata = async () => {
+          try {
+            const dur = (isFinite(v.duration) && v.duration > 0) ? v.duration : 3;
+            const times = Array.from({length: count}, (_, i) => Math.min(dur - 0.05, dur * (i + 0.5) / count));
+            const frames = [];
+            for(const t of times){
+              await new Promise(r => { v.onseeked = r; v.currentTime = t; });
+              frames.push(getCanvasFrame(v));
+            }
+            URL.revokeObjectURL(url);
+            resolve(frames);
+          } catch(e) { reject(e); }
+        };
+      });
+    }
+
     function renderThumbnails(frames){
       const box = $("#shotsContainer");
       box.hidden = false;
       box.innerHTML = frames.map(f => `<img src="${f}" alt="Fotogramma">`).join("");
     }
 
+    // CHIAMATA A GEMINI 3.6 FLASH
     async function callGeminiInterpretation(dataUrls){
       const key = localStorage.getItem("gemini_cane_key") || $("#apiKeyInput").value.trim();
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`;
 
       const catalogDesc = GROUPS.flatMap((g, gi) => 
         g[1].map((it, ii) => `[${gi}.${ii}] ${g[0]}: ${it[0]}`)
@@ -530,15 +651,24 @@
         }
       }));
 
-      const prompt = `Sei un esperto etologo canino. Analizza questa sequenza cronologica di fotogrammi tratti da un video amatoriale del cane.\n\n` +
-        `CATALOGO DEI SEGNALI DISPONIBILI:\n${catalogDesc}\n\n` +
-        `COMPITO:\n` +
-        `1. Determina se c'è un cane visibile.\n` +
-        `2. Riconosci quali tra i segnali del catalogo sono presenti con chiarezza nelle immagini.\n` +
-        `3. Scrivi una nota riassuntiva di 2 frasi in italiano.\n\n` +
-        `Rispondi ESCLUSIVAMENTE in formato JSON con questo schema:\n` +
-        `{\n  "cane": true,\n  "codici": ["0.0", "2.0"],\n  "nota": "Spiegazione breve"\n}\n` +
-        `Se non c'è un cane, metti "cane": false e "codici": [].`;
+      const prompt = `Sei un etologo cinofilo professionista di massimo livello. Analizza con estrema precisione questi fotogrammi estratti da un video di 6 secondi.\n\n` +
+        `CATALOGO SEGNALI:\n${catalogDesc}\n\n` +
+        `OBIETTIVI:\n` +
+        `1. Identifica con la massima precisione possibile la RAZZA del cane (es. Border Collie, Pastore Tedesco, Labrador, Jack Russell, Meticcio...).\n` +
+        `2. Diagnostica lo STATO D'ANIMO (es. Rilassato, Attento, In allerta/Pastore, Stressato, Agitato, Spaventato, Giocoso).\n` +
+        `3. Riconosci i codici del catalogo presenti.\n` +
+        `4. Se il cane è AGITATO, STRESSATO o IPER-ECCITATO, fornisci soluzioni immediate e pratiche calibrate SPECIFICATAMENTE sulle caratteristiche e bisogni della sua razza.\n` +
+        `5. Prepara un TESTO VOCALE (testo_voce): un messaggio in italiano chiaro, naturale, amichevole e diretto, ideale per essere letto dalla sintesi vocale ad alta voce. Es: "Ho riconosciuto un Border Collie. Sembra molto agitato e concentrato su un movimento. Per calmarlo subito, reindirizza la sua attenzione su un gioco di fiuto evitando di farlo correre."\n\n` +
+        `Rispondi ESCLUSIVAMENTE in formato JSON valido con questa struttura:\n` +
+        `{\n` +
+        `  "cane": true,\n` +
+        `  "razza": "Nome della razza",\n` +
+        `  "stato_d_animo": "Stato d'animo principale",\n` +
+        `  "codici": ["0.0", "2.1"],\n` +
+        `  "spiegazione": "Descrizione visiva dei segnali notati nel corpo e nello sguardo.",\n` +
+        `  "soluzioni_agitazione": "Consigli comportamentali specifici per questa razza in caso di agitazione.",\n` +
+        `  "testo_voce": "Testo naturale da far leggere alla sintesi vocale."\n` +
+        `}`;
 
       parts.push({ text: prompt });
 
@@ -553,7 +683,7 @@
 
       if(!res.ok){
         const errData = await res.json().catch(()=>({}));
-        throw new Error(errData.error?.message || `Errore API Gemini: ${res.status}`);
+        throw new Error(errData.error?.message || `Errore Gemini: ${res.status}`);
       }
 
       const jsonResp = await res.json();
@@ -561,13 +691,18 @@
       const parsed = JSON.parse(rawText);
 
       if(!parsed.cane){
-        $("#camOut").innerHTML = `<div class="flag note"><b>Nessun cane identificato</b>Assicurati che il cane sia ben inquadrato e riprova.</div>`;
+        $("#camOut").innerHTML = `<div class="flag note"><b>Nessun cane identificato</b>Assicurati che il cane sia visibile e riprova.</div>`;
         return;
       }
 
       lastGeminiCodes = parsed.codici || [];
-      $("#camOut").innerHTML = verdictHTML(lastGeminiCodes, parsed.nota || "");
+      $("#camOut").innerHTML = verdictHTML(parsed);
       $("#camOut").scrollIntoView({behavior:"smooth", block:"start"});
+
+      // AVVIO DELLA VOCE AUTOMATICA
+      if(parsed.testo_voce){
+        speakText(parsed.testo_voce);
+      }
     }
 
     renderDiary();
