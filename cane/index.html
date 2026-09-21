@@ -5,13 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Leggi il cane</title>
   
-  <!-- Configurazione PWA & Mobile -->
   <meta name="theme-color" content="#14181A">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LeggiCane">
   
-  <!-- Icona SVG incorporata -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%232F6B7C'/><circle cx='38' cy='42' r='6' fill='%23F4F5F1'/><circle cx='62' cy='42' r='6' fill='%23F4F5F1'/><ellipse cx='50' cy='58' rx='9' ry='6' fill='%23F4F5F1'/></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%232F6B7C'/><circle cx='38' cy='42' r='6' fill='%23F4F5F1'/><circle cx='62' cy='42' r='6' fill='%23F4F5F1'/><ellipse cx='50' cy='58' rx='9' ry='6' fill='%23F4F5F1'/></svg>">
 
@@ -38,92 +36,94 @@
     *,*::before,*::after{box-sizing:inherit}
     html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--paper);-webkit-text-size-adjust:100%}
     body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);
-      font-family:"Source Serif 4",Georgia,"Times New Roman",serif;font-size:17px;line-height:1.55;
+      font-family:"Source Serif 4",Georgia,serif;font-size:17px;line-height:1.55;
       -webkit-font-smoothing:antialiased}
     .wrap{max-width:640px;margin:0 auto;padding:0 18px 150px}
-    h1,h2,h3{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif}
+    h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif}
     header{padding:26px 0 14px}
-    .mark{display:flex;align-items:center;gap:9px;font-family:"Bricolage Grotesque",Arial,sans-serif;font-weight:600;font-size:14px;color:var(--ink-soft)}
+    .mark{display:flex;align-items:center;gap:9px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:14px;color:var(--ink-soft)}
     .mark .dot{width:11px;height:11px;border-radius:50%;background:var(--ink);position:relative;flex:none}
     .mark .dot::after{content:"";position:absolute;inset:0 0 0 50%;background:var(--paper);border-radius:0 50% 50% 0}
-    h1{font-size:clamp(30px,8.5vw,42px);line-height:1.04;font-weight:800;letter-spacing:-.025em;margin:16px 0 10px;max-width:15ch}
+    h1{font-size:clamp(28px,8vw,40px);line-height:1.05;font-weight:800;letter-spacing:-.025em;margin:16px 0 10px;max-width:16ch}
     .sub{color:var(--ink-soft);font-size:16px;margin:0;max-width:52ch}
-    nav{display:flex;gap:2px;margin:22px 0 4px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:10}
-    nav button{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:15px;font-weight:600;
+    nav{display:flex;gap:2px;margin:20px 0 4px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:10}
+    nav button{font-family:"Bricolage Grotesque",sans-serif;font-size:15px;font-weight:600;
       background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;
       padding:11px 12px;color:var(--ink-soft);cursor:pointer}
     nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
     section[hidden]{display:none}
-    .panel{padding-top:22px}
-    .q{margin:0 0 26px}
-    .q > h2{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 3px}
+    .panel{padding-top:20px}
+    .q{margin:0 0 24px}
+    .q > h2{font-size:19px;font-weight:600;margin:0 0 4px}
     .q > p{margin:0 0 12px;color:var(--ink-soft);font-size:15px}
     .chips{display:flex;flex-wrap:wrap;gap:8px}
     .chip{position:relative}
     .chip input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
     .chip span{display:block;padding:8px 14px;border:1px solid var(--line);border-radius:999px;
-      background:var(--surface);font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:14.5px}
+      background:var(--surface);font-family:"Bricolage Grotesque",sans-serif;font-size:14.5px}
     .chip input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--paper)}
     .group{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin-bottom:10px;overflow:hidden}
     .group > summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;
-      font-family:"Bricolage Grotesque",Arial,sans-serif;font-weight:600;font-size:16px}
+      font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:16px}
     .group > summary::-webkit-details-marker{display:none}
     .group .count{font-size:13px;font-weight:600;color:var(--ink-soft)}
     .group .count.on{color:var(--accent)}
-    .group > summary::after{content:"+";font-size:19px;color:var(--ink-soft);line-height:1}
+    .group > summary::after{content:"+";font-size:19px;color:var(--ink-soft)}
     .group[open] > summary::after{content:"–"}
     .items{padding:2px 16px 12px}
     label.item{display:flex;gap:11px;padding:9px 0;border-top:1px solid var(--line);cursor:pointer;align-items:flex-start}
     .items label.item:first-child{border-top:0}
     label.item input{margin:4px 0 0;width:19px;height:19px;flex:none;accent-color:var(--accent)}
-    label.item b{font-weight:600;font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:15.5px;display:block;line-height:1.35}
-    label.item i{font-style:normal;color:var(--ink-soft);font-size:14px;display:block;line-height:1.4;margin-top:1px}
+    label.item b{font-weight:600;font-family:"Bricolage Grotesque",sans-serif;font-size:15.5px;display:block}
+    label.item i{font-style:normal;color:var(--ink-soft);font-size:14px;display:block;margin-top:1px}
     .bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
       padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));z-index:20}
     .bar-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px}
-    .bar .n{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:14px;color:var(--ink-soft);flex:1}
-    .btn{font-family:"Bricolage Grotesque",Arial,sans-serif;font-weight:600;font-size:16px;
+    .bar .n{font-family:"Bricolage Grotesque",sans-serif;font-size:14px;color:var(--ink-soft);flex:1}
+    .btn{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:16px;
       background:var(--ink);color:var(--paper);border:0;border-radius:999px;padding:13px 24px;cursor:pointer}
     .btn[disabled]{opacity:.35;cursor:not-allowed}
     .btn.ghost{background:none;color:var(--ink);border:1px solid var(--line);padding:11px 18px;font-size:15px}
-    .btn.wide{width:100%;margin-bottom:9px}
-    .verdict{background:var(--ink);color:var(--paper);border-radius:18px;padding:24px 20px 22px;margin-bottom:16px}
-    .verdict .lead{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:13.5px;opacity:.65;margin:0 0 6px}
-    .verdict h2{font-size:clamp(28px,8vw,38px);line-height:1.02;letter-spacing:-.03em;font-weight:800;margin:0 0 12px}
-    .verdict p{margin:0;font-size:16.5px;line-height:1.5;opacity:.92;max-width:46ch}
+    .btn.wide{width:100%;margin-bottom:10px}
+    .verdict{background:var(--ink);color:var(--paper);border-radius:18px;padding:24px 20px;margin-bottom:16px}
+    .verdict .lead{font-family:"Bricolage Grotesque",sans-serif;font-size:13px;opacity:.7;margin:0 0 4px;text-transform:uppercase}
+    .verdict h2{font-size:clamp(26px,7vw,34px);line-height:1.05;font-weight:800;margin:0 0 10px}
+    .verdict p{margin:0;font-size:16px;opacity:.95;max-width:48ch}
     .also{margin:0 0 18px}
-    .also .row{display:grid;grid-template-columns:1fr 46px;gap:10px;align-items:center;margin-bottom:9px}
-    .also .nm{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:14.5px}
+    .also .row{display:grid;grid-template-columns:1fr 46px;gap:10px;align-items:center;margin-bottom:8px}
+    .also .nm{font-family:"Bricolage Grotesque",sans-serif;font-size:14.5px}
     .also .track{grid-column:1/-1;height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:-4px}
     .also .fill{height:100%;background:var(--accent);border-radius:3px}
-    .also .pc{font-size:13px;color:var(--ink-soft);text-align:right;font-family:"Bricolage Grotesque",Arial,sans-serif}
-    .advice{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:4px 16px 14px;margin-bottom:14px}
-    .advice h3{font-size:15px;margin:16px 0 6px;font-weight:600}
+    .also .pc{font-size:13px;color:var(--ink-soft);text-align:right;font-family:"Bricolage Grotesque",sans-serif}
+    .advice{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:6px 18px 14px;margin-bottom:14px}
+    .advice h3{font-size:15.5px;margin:14px 0 6px;font-weight:600}
     .advice ul{margin:0;padding-left:18px}
-    .advice li{margin:5px 0;font-size:16px}
-    .flag{border-radius:var(--radius);padding:15px 16px;margin-bottom:14px;font-size:16px;border:1px solid}
+    .advice li{margin:5px 0;font-size:15.5px}
+    .flag{border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;font-size:15.5px;border:1px solid}
     .flag.warn{background:var(--alert-soft);border-color:var(--alert)}
     .flag.note{background:var(--tan-soft);border-color:var(--tan)}
     .flag.calm{background:var(--accent-soft);border-color:var(--accent)}
-    .flag b{font-family:"Bricolage Grotesque",Arial,sans-serif;display:block;margin-bottom:3px}
-    .rowbtn{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:26px}
-    .stage{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden;margin-bottom:14px}
-    .stage video{display:block;width:100%;max-height:52vh;object-fit:cover;background:#000}
-    .shots{display:flex;gap:6px;padding:10px;overflow-x:auto}
-    .shots img{width:76px;height:76px;object-fit:cover;border-radius:8px;flex:none}
-    .status{font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:15px;color:var(--ink-soft);margin:0 0 12px;min-height:22px}
+    .flag b{font-family:"Bricolage Grotesque",sans-serif;display:block;margin-bottom:3px}
+    .rowbtn{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0 24px}
+    .shots{display:flex;gap:8px;padding:10px;overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin-bottom:14px}
+    .shots img{width:80px;height:80px;object-fit:cover;border-radius:8px;flex:none}
+    .status{font-family:"Bricolage Grotesque",sans-serif;font-size:15px;color:var(--ink-soft);margin:0 0 14px;min-height:22px}
+    .loader{display:inline-block;width:16px;height:16px;border:2px solid var(--ink-soft);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
     .entry{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px 16px;margin-bottom:10px}
     .entry .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
     .entry h3{margin:0;font-size:17px;font-weight:600}
-    .entry time{font-size:13px;color:var(--ink-soft);font-family:"Bricolage Grotesque",Arial,sans-serif;white-space:nowrap}
+    .entry time{font-size:13px;color:var(--ink-soft);font-family:"Bricolage Grotesque",sans-serif}
     .entry p{margin:6px 0 0;font-size:14.5px;color:var(--ink-soft)}
-    .entry button{background:none;border:0;color:var(--alert);font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:13.5px;padding:8px 0 0;cursor:pointer}
+    .entry button{background:none;border:0;color:var(--alert);font-family:"Bricolage Grotesque",sans-serif;font-size:13.5px;padding:8px 0 0;cursor:pointer}
     .empty{border:1px dashed var(--line);border-radius:var(--radius);padding:26px 18px;text-align:center;color:var(--ink-soft)}
-    .guide h2{font-size:21px;letter-spacing:-.015em;margin:28px 0 8px}
+    .guide h2{font-size:20px;margin:26px 0 8px}
     .guide h2:first-child{margin-top:4px}
-    .guide p{margin:0 0 12px;max-width:62ch}
+    .guide p{margin:0 0 12px}
     .guide ul{padding-left:19px;margin:0 0 14px}
     .guide li{margin:6px 0}
+    .key-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+    .key-box input{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;box-sizing:border-box;margin:8px 0;background:var(--paper);color:var(--ink)}
     footer{border-top:1px solid var(--line);margin-top:30px;padding:18px 0 0;color:var(--ink-soft);font-size:14px}
   </style>
 </head>
@@ -132,57 +132,52 @@
     <header>
       <div class="mark"><span class="dot"></span>Leggi il cane</div>
       <h1>Cosa sta dicendo il tuo cane adesso?</h1>
-      <p class="sub">Segna quello che vedi o cattura foto e video del momento.</p>
+      <p class="sub">Registra un video breve oppure seleziona manualmente i segnali che vedi.</p>
     </header>
 
     <nav role="tablist">
-      <button role="tab" aria-selected="true" data-tab="osserva">Osserva</button>
-      <button role="tab" aria-selected="false" data-tab="video">Cattura</button>
+      <button role="tab" aria-selected="true" data-tab="video">Video automatico</button>
+      <button role="tab" aria-selected="false" data-tab="osserva">Osserva a mano</button>
       <button role="tab" aria-selected="false" data-tab="diario">Diario</button>
       <button role="tab" aria-selected="false" data-tab="guida">Guida</button>
     </nav>
 
-    <!-- SCHEDA 1: OSSERVA -->
-    <section id="osserva" class="panel">
+    <!-- SCHEDA 1: VIDEO AUTOMATICO -->
+    <section id="video" class="panel">
+      <!-- Gestione Chiave API locale -->
+      <details class="key-box" id="keyDetails">
+        <summary style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14.5px;cursor:pointer">⚙️ Impostazioni Chiave API Gemini</summary>
+        <p style="font-size:13.5px;color:var(--ink-soft);margin:8px 0 4px">Inserisci la tua chiave gratuita di Google AI Studio. Viene memorizzata solo nel tuo smartphone.</p>
+        <input type="password" id="apiKeyInput" placeholder="Incolla qui la chiave API (es. AIzaSy...)">
+        <button class="btn ghost wide" id="saveKeyBtn" type="button" style="padding:8px">Salva chiave</button>
+      </details>
+
+      <div id="camIntro">
+        <p class="status" id="camStatus">Tocca il pulsante: registra 3–5 secondi di video e Gemini lo interpreterà subito al termine.</p>
+        <input type="file" id="recInput" accept="video/*" capture="environment" hidden>
+        <button class="btn wide" id="recBtn" type="button">🎥 Registra video e interpreta</button>
+        
+        <input type="file" id="fileInput" accept="video/*" hidden>
+        <button class="btn ghost wide" id="fileBtn" type="button">Carica un video dalla galleria</button>
+      </div>
+
+      <div id="shotsContainer" class="shots" hidden></div>
+      <div id="camOut"></div>
+    </section>
+
+    <!-- SCHEDA 2: OSSERVA A MANO -->
+    <section id="osserva" class="panel" hidden>
       <div class="q">
         <h2>Dove siete?</h2>
-        <p>Il contesto cambia il significato degli stessi segnali.</p>
+        <p>Il contesto cambia il significato dei comportamenti.</p>
         <div class="chips" id="ctx"></div>
       </div>
       <div class="q">
-        <h2>Cosa vedi</h2>
-        <p>Apri le sezioni e segna tutto quello che noti.</p>
+        <h2>Cosa noti</h2>
+        <p>Spunta i dettagli corporei visibili.</p>
         <div id="groups"></div>
       </div>
       <div id="out"></div>
-    </section>
-
-    <!-- SCHEDA 2: CATTURA / VIDEO -->
-    <section id="video" class="panel" hidden>
-      <div id="camIntro">
-        <p class="status" id="camStatus">Scatta fino a 4 foto consecutive o avvia la fotocamera.</p>
-        <input type="file" id="shot" accept="image/*" capture="environment" hidden>
-        <button class="btn wide" id="shotBtn" type="button">Scatta foto dal vivo</button>
-        
-        <div id="buf" class="stage" hidden></div>
-        <button class="btn wide" id="useShots" type="button" hidden>Porta all'osservazione guidata</button>
-        <button class="btn ghost wide" id="clearShots" type="button" hidden>Cancella scatti</button>
-
-        <details class="group" id="more" style="margin-top:16px">
-          <summary><span>Modalità fotocamera continua</span><span class="count"></span></summary>
-          <div class="items" style="padding-top:12px">
-            <button class="btn ghost wide" id="camOn" type="button">Avvia anteprima live</button>
-            <div id="camLive" hidden>
-              <div class="stage"><video id="cam" playsinline muted></video></div>
-              <button class="btn wide" id="grab" type="button">Cattura 4 fotogrammi</button>
-              <button class="btn ghost wide" id="flip" type="button">Inverti fotocamera</button>
-              <button class="btn ghost wide" id="camOff" type="button" style="color:var(--alert)">Spegni fotocamera</button>
-            </div>
-          </div>
-        </details>
-      </div>
-      <div id="shots" class="stage" hidden></div>
-      <div id="camOut"></div>
     </section>
 
     <!-- SCHEDA 3: DIARIO -->
@@ -193,25 +188,25 @@
     <!-- SCHEDA 4: GUIDA -->
     <section id="guida" class="panel" hidden>
       <div class="guide">
-        <h2>Come usarla</h2>
-        <p>Osserva il cane per una decina di secondi prima di segnare qualcosa. I segnali vanno letti insieme: una coda che scodinzola non vuol dire sempre "felice" se il corpo è rigido e lo sguardo è fisso.</p>
-        <h2>I segnali che quasi nessuno nota</h2>
+        <h2>Come interpretare i segnali</h2>
+        <p>I segnali vanno sempre letti insieme: una coda che si muove non indica necessariamente felicità se le labbra sono serrate e il corpo è rigido.</p>
+        <h2>I segnali calmanti</h2>
         <ul>
-          <li>Si lecca il naso senza cibo nelle vicinanze.</li>
-          <li>Sbadiglia pur essendo sveglio e reattivo.</li>
-          <li>Gira la testa ed evita lo sguardo diretto.</li>
-          <li>Si scrolla come se fosse bagnato quando è completamente asciutto (scarico di tensione).</li>
+          <li>Si lecca il tartufo (naso) senza cibo intorno.</li>
+          <li>Sbadiglia da sveglio per allentare la pressione.</li>
+          <li>Gira la testa di lato ed evita il contatto oculare diretto.</li>
+          <li>Si scrolla come da bagnato per "resettare" un momento di tensione.</li>
         </ul>
-        <h2>Border Collie e cani da conduzione</h2>
-        <p>Alcune posture (come testa bassa, sguardo puntato e bloccato, avanzata felina o inseguimento di movimenti rapidi) derivano dall'istinto selettivo del lavoro sul gregge. È importante canalizzarli con attività mentali e olfattive regolari.</p>
+        <h2>Border Collie e conduzione</h2>
+        <p>Testa bassa, sguardo fisso a puntare e avanzata strisciante sono tipici schemi motori dei cani da pastore. Vanno indirizzati verso attività olfattive e giochi controllati per evitare fissazioni compulsive.</p>
       </div>
     </section>
 
-    <footer>Strumento informativo a supporto della relazione con il tuo cane. I dati salvati rimangono sul tuo dispositivo.</footer>
+    <footer>Strumento informativo a supporto del benessere cinofilo. Non sostituisce il parere di un veterinario comportamentalista.</footer>
   </div>
 
-  <!-- Barra inferiore d'azione -->
-  <div class="bar">
+  <!-- Barra inferiore per la scheda Osserva -->
+  <div class="bar" hidden>
     <div class="bar-in">
       <span class="n" id="count">Nessun segnale selezionato</span>
       <button class="btn ghost" id="reset" type="button">Azzera</button>
@@ -220,78 +215,74 @@
   </div>
 
   <script>
-    // Database segnali e stati
     const STATES = {
-      rilassato:{nome:"Rilassato",desc:"Il corpo è morbido e sereno. È un cane che sta bene dov'è.",fare:["Goditi la calma: il riposo fa parte dell'equilibrio.","Se cerca contatto, rispondi con carezze lente."],evitare:["Iper-stimolarlo se sta riposando."]},
-      attento:{nome:"Attento",desc:"Ha notato uno stimolo e sta raccogliendo informazioni.",fare:["Controlla cosa sta guardando per capire il motivo.","Richiama con voce tranquilla e premia se ti guarda."],evitare:["Tirare il guinzaglio con forza verso lo stimolo."]},
-      gioco:{nome:"Voglia di giocare",desc:"Invito al gioco chiaro: movimenti ampi, elastici, esagerati.",fare:["Interagisci a turni prevedendo pause di sosta."],evitare:["Sessioni concitate senza momenti di calma."]},
-      eccitazione:{nome:"Troppo su di giri",desc:"Livello di arousal molto alto. Fatica ad ascoltare.",fare:["Abbassa i toni, allontanati dallo stimolo e proponi calma o ricerca olfattiva."],evitare:["Urlare o corrergli dietro."]},
-      stress:{nome:"A disagio",desc:"Comunica segnali calmanti per ridurre la pressione.",fare:["Aumenta lo spazio di fuga e dagli tempo."],evitare:["Costringere al contatto o bloccarlo fisicamente."]},
-      paura:{nome:"Spaventato",desc:"Cerca di rimpicciolirsi o fuggire.",fare:["Allontanalo con calma dal pericolo percepito."],evitare:["Bloccarlo o forzare l'avvicinamento a ciò che teme."]},
-      avvertimento:{nome:"Ti sta avvertendo",desc:"Comunica in modo netto di fermarsi. Evita un'escalation.",fare:["Fermati e allontanati lentamente senza movimenti bruschi."],evitare:["Punire il ringhio: è un campanello d'allarme vitale."]},
-      pastore:{nome:"Istinto da pastore attivo",desc:"Postura tipica di conduzione e fissazione dello stimolo.",fare:["Reindirizza l'attenzione su giochi di fiuto o riporto strutturato."],evitare:["Permettere l'inseguimento compulsivo di luci, ombre o ruote."]}
+      rilassato: {nome: "Rilassato", desc: "Corpo morbido e sereno. Il cane sta bene ed è a suo agio.", fare: ["Goditi la calma: il riposo fa parte dell'equilibrio.", "Se cerca contatto, rispondi con carezze lente."], evitare: ["Iper-stimolarlo mentre riposa."]},
+      attento: {nome: "Attento", desc: "Ha notato qualcosa e sta raccogliendo informazioni.", fare: ["Guarda dove punta la sua attenzione per capire lo stimolo.", "Richiama con tono calmo e premialo se si gira."], evitare: ["Tirare bruscamente il guinzaglio verso l'oggetto del suo interesse."]},
+      gioco: {nome: "Voglia di giocare", desc: "Invito al gioco chiaro: movimenti sciolti, ampi ed esagerati.", fare: ["Gioca a turni inserendo pause di decompressione."], evitare: ["Sessioni troppo concitate che fanno schizzare l'eccitazione."]},
+      eccitazione: {nome: "Troppo su di giri", desc: "Arousal elevato: in questo stato fatica a sentire e comprendere i comandi.", fare: ["Allontanati dallo stimolo e proponi attività lente (es. fiuto nell'erba)."], evitare: ["Urlare o rincorrerlo."]},
+      stress: {nome: "A disagio", desc: "Sta comunicando segnali calmanti per ridurre la pressione dell'ambiente.", fare: ["Aumenta la distanza da ciò che lo turba e lasciagli una via d'uscita."], evitare: ["Insistere con carezze forzate o comandi ripetuti."]},
+      paura: {nome: "Spaventato", desc: "Tende a farsi piccolo o cerca rifugio. Se costretto, potrebbe difendersi.", fare: ["Portalo via con calma senza fare movimenti bruschi."], evitare: ["Bloccarlo o forzarlo ad avvicinarsi a ciò che teme."]},
+      avvertimento: {nome: "Ti sta avvertendo", desc: "Comunica nel modo più chiaro di fermarsi. Evita un'escalation.", fare: ["Fermati e allontanati lentamente senza voltargli la schiena di colpo."], evitare: ["Punire il ringhio: è il suo campanello di sicurezza."]},
+      pastore: {nome: "Istinto da pastore attivo", desc: "Postura tipica di conduzione (fissazione, postura acquattata, inseguimento).", fare: ["Interrompi prima che sia troppo concentrato e offri un'alternativa di fiuto o riporto."], evitare: ["Lasciarlo inseguire ombre, luci o ruote in modo compulsivo."]}
     };
 
     const CTX = [
       ["casa","A casa, tranquillo",{rilassato:1}],
       ["passeggiata","In passeggiata",{attento:1}],
       ["cani","Con altri cani",{gioco:1,stress:1}],
-      ["estranei","Con persone che non conosce",{stress:1,attento:1}],
+      ["estranei","Con persone sconosciute",{stress:1,attento:1}],
       ["gioco","Durante il gioco",{gioco:1.5,eccitazione:1}],
       ["nuovo","Posto nuovo o veterinario",{stress:1.5,paura:1}],
-      ["rumori","Rumori forti",{paura:1.5,stress:1}],
       ["movimento","Qualcosa si muove veloce",{pastore:1.5,attento:1}]
     ];
 
     const GROUPS = [
-      ["Coda",[
-        ["Morbida, a mezz'altezza, ondeggia larga","Tutto il posteriore segue il movimento",{rilassato:3,gioco:1}],
-        ["Ferma e dritta, orizzontale","Attenzione focalizzata",{attento:3}],
-        ["Alta e rigida, vibra a scatti","Forte tensione o allerta",{avvertimento:3,attento:1}],
-        ["Bassa, sotto la linea dorsale","",{stress:2,paura:1}],
-        ["Infilata stretta tra le zampe","",{paura:3,stress:2}]
+      ["Coda", [
+        ["Morbida, ondeggia larga a mezz'altezza", "Il movimento coinvolge il bacino", {rilassato:3,gioco:1}],
+        ["Ferma, dritta e orizzontale", "Come un'antenna attenta", {attento:3}],
+        ["Alta e rigida, vibra a scatti", "Tensione palpabile", {avvertimento:3,attento:1}],
+        ["Bassa sotto la linea dorsale", "", {stress:2,paura:1}],
+        ["Infilata stretta tra le zampe", "", {paura:3,stress:2}]
       ]],
-      ["Orecchie",[
-        ["In posizione naturale e rilassata","",{rilassato:3}],
-        ["Puntate decise in avanti","",{attento:3,avvertimento:1}],
-        ["Appiattite indietro contro la testa","",{paura:3,stress:2}],
-        ["Mobili e inquiete in continuazione","",{stress:2,attento:1}]
+      ["Orecchie", [
+        ["In posizione naturale e morbida", "", {rilassato:3}],
+        ["Puntate in avanti verso uno stimolo", "", {attento:3,avvertimento:1}],
+        ["Schiacciate indietro contro il cranio", "", {paura:3,stress:2}],
+        ["Mobili e inquiete in continuo cambio", "", {stress:2,attento:1}]
       ]],
-      ["Occhi e muso",[
-        ["Occhi morbidi, sguardo calmo","",{rilassato:3}],
-        ["Sguardo fisso e bloccato","",{avvertimento:3,attento:2}],
-        ["Occhio cerchiato di bianco (whale eye)","Evita lo sguardo o ruota gli occhi",{stress:3,paura:2}],
-        ["Pupille molto dilatate","",{stress:2,paura:2,eccitazione:1}],
-        ["Bocca semiaperta e rilassata","",{rilassato:3,gioco:1}],
-        ["Labbra tirate indietro, bocca serrata","",{stress:3,paura:1}],
-        ["Denti scoperti o labbro arricciato","",{avvertimento:4}],
-        ["Si lecca il naso ripetutamente","Fuori dal momento del pasto",{stress:3}],
-        ["Sbadiglio fuori contesto","",{stress:3}],
-        ["Respiro ansimante senza calura né sforzo","",{stress:3,paura:1}]
+      ["Occhi e muso", [
+        ["Occhi morbidi, palpebre distese", "", {rilassato:3}],
+        ["Sguardo fisso e bloccato (senza batter ciglio)", "", {avvertimento:3,attento:2}],
+        ["Whale eye (si vede il bianco dell'occhio a mezzaluna)", "", {stress:3,paura:2}],
+        ["Bocca semiaperta e lingua distesa", "", {rilassato:3,gioco:1}],
+        ["Labbra tese indietro, bocca chiusa di colpo", "", {stress:3,paura:1}],
+        ["Labbro arricciato o denti scoperti", "", {avvertimento:4}],
+        ["Si lecca il naso ripetutamente", "", {stress:3}],
+        ["Sbadiglio fuori contesto", "", {stress:3}],
+        ["Respiro ansimante senza calura né corsa", "", {stress:3,paura:1}]
       ]],
-      ["Corpo e postura",[
-        ["Muscolatura distesa, movimenti curvilinei","",{rilassato:3}],
-        ["Corpo improvvisamente immobile / congelato","",{avvertimento:3,stress:1}],
-        ["Baricentro basso, schiacciato a terra","",{paura:3}],
-        ["Peso sbilanciato in avanti","",{avvertimento:2,attento:2}],
-        ["Inchino con zampe anteriori a terra","Invito al gioco",{gioco:4}],
-        ["Scrollata completa (come da bagnato)","Scarica la tensione",{stress:2,rilassato:1}]
+      ["Corpo e postura", [
+        ["Corpo morbido che si muove fluido", "", {rilassato:3}],
+        ["Improvvisamente rigido e congelato (freeze)", "", {avvertimento:3,stress:1}],
+        ["Baricentro basso, rannicchiato a terra", "", {paura:3}],
+        ["Peso in avanti, proteso", "", {avvertimento:2,attento:2}],
+        ["Inchino (zampe davanti basse, sedere in alto)", "", {gioco:4}],
+        ["Scrollata completa da asciutto", "Scarico di tensione", {stress:2,rilassato:1}]
       ]],
-      ["Comportamento e vocalizzi",[
-        ["Volta la testa lateralmente evitando il contatto","",{stress:3}],
-        ["Annusa il suolo all'improvviso in modo distolto","",{stress:3}],
-        ["Ringhio sommesso o sordo","",{avvertimento:4}],
-        ["Abbaio squillante con scatti giocosi","",{gioco:2,eccitazione:3}],
-        ["Abbaio profondo e cadenzato","",{avvertimento:3}],
-        ["Fissa accucciato e avanza lento a passi felpati","Postura da pastore",{pastore:4,attento:2}],
-        ["Punta o insegue ombre, riflessi o ruote","",{pastore:4,stress:2}]
+      ["Comportamento", [
+        ["Gira la testa lateralmente ed evita lo sguardo", "", {stress:3}],
+        ["Annusa il terreno all'improvviso (finta indifferenza)", "", {stress:3}],
+        ["Ringhia", "", {avvertimento:4}],
+        ["Fissa accovacciato e avanza lentissimo", "Punta o guida da pastore", {pastore:4,attento:2}],
+        ["Punta o rincorre ombre, luci o ruote", "", {pastore:4,stress:2}]
       ]]
     ];
 
     const $ = s => document.querySelector(s);
     const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-    let sel = new Set(), ctx = new Set();
+    let sel = new Set(), ctx = new Set(), lastGeminiCodes = [];
 
+    // Costruzione UI Osserva
     $("#ctx").innerHTML = CTX.map((c,i)=>`<label class="chip"><input type="checkbox" data-ctx="${i}"><span>${c[1]}</span></label>`).join("");
     $("#groups").innerHTML = GROUPS.map((g,gi)=>`
       <details class="group"${gi===0?" open":""}>
@@ -311,7 +302,7 @@
       GROUPS.forEach((g,gi)=>{
         const n = [...sel].filter(k=>k.startsWith(gi+".")).length;
         const el = $(`[data-c="${gi}"]`);
-        el.textContent = n ? n + " selezionat" + (n===1?"o":"i") : "";
+        el.textContent = n ? `${n} segnati` : "";
         el.classList.toggle("on", n>0);
       });
       const n = sel.size;
@@ -329,8 +320,10 @@
       for(const k in STATES) s[k] = 0;
       codes.forEach(k=>{
         const [g,i] = k.split(".").map(Number);
-        const w = GROUPS[g][1][i][2];
-        for(const st in w) s[st] += w[st];
+        if(GROUPS[g] && GROUPS[g][1][i]){
+          const w = GROUPS[g][1][i][2];
+          for(const st in w) s[st] += w[st];
+        }
       });
       ctx.forEach(i=>{
         const w = CTX[i][2];
@@ -339,16 +332,18 @@
       return Object.entries(s).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]);
     }
 
-    function verdictHTML(codes){
+    function verdictHTML(codes, nota = ""){
       const r = score(codes);
-      if(!r.length) return `<div class="flag note"><b>Nessun risultato</b>Segna almeno un comportamento per avviare la lettura.</div>`;
+      if(!r.length) return `<div class="flag note"><b>Nessun segnale chiaro</b>Non ci sono abbastanza elementi per una lettura precisa.</div>`;
       const tot = r.reduce((a,b)=>a+b[1],0), top = r[0], S = STATES[top[0]], others = r.slice(1,4);
       const isWarn = top[0]==="avvertimento" || codes.includes("3.1") || codes.includes("4.2");
 
-      let h = `<div class="verdict"><p class="lead">Valutazione prevalente</p><h2>${S.nome}</h2><p>${S.desc}</p></div>`;
-      if(isWarn) h += `<div class="flag warn"><b>Attenzione allo spazio</b>Il cane richiede distanza e rispetto. Non avvicinarti di scatto e lascialo sbollire.</div>`;
-      if(codes.includes("4.6")) h += `<div class="flag note"><b>Fissazione / Riflessi</b>Nei cani da lavoro l'inseguimento di luci/ombre va interrotto subito per evitare condotte ossessive.</div>`;
-      h += `<div class="advice"><h3>Consigli pratici</h3><ul>${S.fare.map(x=>`<li>${x}</li>`).join("")}</ul><h3>Cosa non fare</h3><ul>${S.evitare.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+      let h = `<div class="verdict"><p class="lead">Interpretazione prevalente</p><h2>${S.nome}</h2><p>${S.desc}</p></div>`;
+      if(nota) h += `<div class="flag calm"><b>Dall'analisi visiva:</b>${esc(nota)}</div>`;
+      if(isWarn) h += `<div class="flag warn"><b>Attenzione: richiesta di distanza</b>Fermati e allontanati lentamente senza movimenti improvvisi.</div>`;
+      if(codes.includes("4.4")) h += `<div class="flag note"><b>Attenzione alle fissazioni</b>Interrompi l'inseguimento di luci o riflessi proponendo un gioco di fiuto.</div>`;
+      h += `<div class="advice"><h3>Consigli pratici</h3><ul>${S.fare.map(x=>`<li>${x}</li>`).join("")}</ul><h3>Cosa evitare</h3><ul>${S.evitare.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+      
       if(others.length){
         h += `<div class="also">` + others.map(o=>{
           const p = Math.round(o[1]/tot*100);
@@ -372,11 +367,12 @@
     });
 
     function saveEntry(nome, btn){
+      const codes = (lastGeminiCodes && lastGeminiCodes.length) ? lastGeminiCodes : [...sel];
       const all = JSON.parse(localStorage.getItem("leggi-cane-db") || "[]");
       all.unshift({
         d: Date.now(),
         nome,
-        segnali: [...sel].map(label).filter(Boolean),
+        segnali: codes.map(label).filter(Boolean),
         ctx: [...ctx].map(i=>CTX[i][1])
       });
       localStorage.setItem("leggi-cane-db", JSON.stringify(all.slice(0, 100)));
@@ -395,7 +391,7 @@
           </div>
           <p>${esc((e.ctx.length?e.ctx.join(", ")+" — ":"")+e.segnali.join(" · "))}</p>
           <button type="button" data-del="${i}">Rimuovi</button>
-        </div>`).join("") : `<div class="empty">Nessuna osservazione salvata finora.</div>`;
+        </div>`).join("") : `<div class="empty">Nessuna osservazione memorizzata.</div>`;
     }
 
     $("#entries").addEventListener("click", e => {
@@ -408,108 +404,174 @@
     });
 
     function doReset(){
-      sel.clear(); ctx.clear();
+      sel.clear(); ctx.clear(); lastGeminiCodes = [];
       document.querySelectorAll('#osserva input[type=checkbox]').forEach(c=>c.checked=false);
-      $("#out").innerHTML="";
+      $("#out").innerHTML = "";
+      $("#camOut").innerHTML = "";
+      $("#shotsContainer").hidden = true;
       refresh();
       window.scrollTo({top:0,behavior:"smooth"});
     }
     $("#reset").addEventListener("click", doReset);
 
-    // Navigazione schede
+    // Schede Nav
     document.querySelectorAll('nav button').forEach(b=>b.addEventListener("click", ()=>{
       document.querySelectorAll('nav button').forEach(x=>x.setAttribute("aria-selected", x===b));
-      ["osserva","video","diario","guida"].forEach(id=>$("#"+id).hidden = (id!==b.dataset.tab));
+      ["video","osserva","diario","guida"].forEach(id=>$("#"+id).hidden = (id!==b.dataset.tab));
       $(".bar").hidden = (b.dataset.tab !== "osserva");
-      if(b.dataset.tab !== "video") stopStream();
       window.scrollTo({top:0});
     }));
 
-    // Gestione Fotocamera
-    let shots = [], stream = null, facing = "environment";
-    $("#shotBtn").addEventListener("click", () => $("#shot").click());
-    $("#shot").addEventListener("change", e => {
-      const f = e.target.files && e.target.files[0];
-      if(!f) return;
-      shots.push(f);
-      if(shots.length > 4) shots = shots.slice(-4);
-      updateShotsUI();
+    // GESTIONE CHIAVE API
+    const savedKey = localStorage.getItem("gemini_cane_key") || "";
+    if(savedKey) $("#apiKeyInput").value = savedKey;
+    else $("#keyDetails").open = true;
+
+    $("#saveKeyBtn").addEventListener("click", () => {
+      const k = $("#apiKeyInput").value.trim();
+      if(!k) return alert("Inserisci una chiave valida.");
+      localStorage.setItem("gemini_cane_key", k);
+      $("#keyDetails").open = false;
+      alert("Chiave API salvata nel dispositivo.");
     });
 
-    function updateShotsUI(){
-      const b = $("#buf");
-      b.hidden = !shots.length;
-      b.innerHTML = `<div class="shots">${shots.map(x=>`<img src="${URL.createObjectURL(x)}" alt="">`).join("")}</div>`;
-      $("#useShots").hidden = !shots.length;
-      $("#clearShots").hidden = !shots.length;
-      $("#camStatus").textContent = shots.length ? `${shots.length} foto acquisite.` : "Scatta fino a 4 foto consecutive.";
+    // ESTRAZIONE FRAME E INVIO AUTOMATICO
+    $("#recBtn").addEventListener("click", () => triggerUpload("#recInput"));
+    $("#fileBtn").addEventListener("click", () => triggerUpload("#fileInput"));
+
+    function triggerUpload(id){
+      const key = localStorage.getItem("gemini_cane_key") || $("#apiKeyInput").value.trim();
+      if(!key){
+        $("#keyDetails").open = true;
+        alert("Prima di iniziare, inserisci la tua chiave gratuita API di Gemini nelle impostazioni qui sopra.");
+        return;
+      }
+      $(id).click();
     }
 
-    $("#clearShots").addEventListener("click", () => {
-      shots = [];
-      updateShotsUI();
-    });
+    $("#recInput").addEventListener("change", e => handleVideoFile(e.target.files[0]));
+    $("#fileInput").addEventListener("change", e => handleVideoFile(e.target.files[0]));
 
-    $("#useShots").addEventListener("click", () => {
-      document.querySelector('button[data-tab="osserva"]').click();
-      alert("Foto salvate nella sessione. Seleziona ora i comportamenti che hai riscontrato per calcolare l'indice di stato.");
-    });
+    async function handleVideoFile(file){
+      if(!file) return;
+      const statusEl = $("#camStatus");
+      $("#camOut").innerHTML = "";
+      $("#shotsContainer").hidden = true;
+      statusEl.innerHTML = `<span class="loader"></span>Estrazione fotogrammi dal video...`;
 
-    async function startStream(){
       try {
-        if(stream) stream.getTracks().forEach(t=>t.stop());
-        stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing}}, audio:false});
-        $("#cam").srcObject = stream;
-        await $("#cam").play();
-        $("#camLive").hidden = false;
-        $("#camOn").hidden = true;
-      } catch(err){
-        alert("Impossibile accedere alla fotocamera. Verifica i permessi del dispositivo.");
+        const frames = await extractFrames(file, 4);
+        renderThumbnails(frames);
+        statusEl.innerHTML = `<span class="loader"></span>Gemini sta traducendo il comportamento...`;
+        await callGeminiInterpretation(frames);
+        statusEl.textContent = "Analisi completata con successo!";
+      } catch(err) {
+        statusEl.textContent = "Errore durante l'elaborazione.";
+        $("#camOut").innerHTML = `<div class="flag warn"><b>Attenzione</b>${esc(err.message)}</div>`;
       }
     }
-    function stopStream(){
-      if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
-      $("#camLive").hidden = true;
-      $("#camOn").hidden = false;
-    }
-    $("#camOn").addEventListener("click", startStream);
-    $("#camOff").addEventListener("click", stopStream);
-    $("#flip").addEventListener("click", () => {
-      facing = (facing === "environment" ? "user" : "environment");
-      startStream();
-    });
 
-    // Inizializzazione
+    function extractFrames(file, count){
+      return new Promise((resolve, reject)=>{
+        const v = document.createElement("video");
+        v.muted = true;
+        v.playsInline = true;
+        v.preload = "auto";
+        const url = URL.createObjectURL(file);
+        v.src = url;
+
+        v.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Formato video non leggibile dal dispositivo.")); };
+        v.onloadedmetadata = async () => {
+          try {
+            const dur = (isFinite(v.duration) && v.duration > 0) ? v.duration : 2.5;
+            const times = Array.from({length: count}, (_, i) => Math.min(dur - 0.05, dur * (i + 0.5) / count));
+            const frames = [];
+            for(const t of times){
+              await new Promise(r => { v.onseeked = r; v.currentTime = t; });
+              frames.push(getCanvasFrame(v));
+            }
+            URL.revokeObjectURL(url);
+            resolve(frames);
+          } catch(e) { reject(e); }
+        };
+      });
+    }
+
+    function getCanvasFrame(video){
+      const maxDim = 800;
+      const scale = Math.min(1, maxDim / Math.max(video.videoWidth, video.videoHeight));
+      const w = Math.round(video.videoWidth * scale);
+      const h = Math.round(video.videoHeight * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(video, 0, 0, w, h);
+      return canvas.toDataURL("image/jpeg", 0.85);
+    }
+
+    function renderThumbnails(frames){
+      const box = $("#shotsContainer");
+      box.hidden = false;
+      box.innerHTML = frames.map(f => `<img src="${f}" alt="Fotogramma">`).join("");
+    }
+
+    async function callGeminiInterpretation(dataUrls){
+      const key = localStorage.getItem("gemini_cane_key") || $("#apiKeyInput").value.trim();
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+
+      const catalogDesc = GROUPS.flatMap((g, gi) => 
+        g[1].map((it, ii) => `[${gi}.${ii}] ${g[0]}: ${it[0]}`)
+      ).join("\n");
+
+      const parts = dataUrls.map(u => ({
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: u.replace(/^data:image\/jpeg;base64,/, "")
+        }
+      }));
+
+      const prompt = `Sei un esperto etologo canino. Analizza questa sequenza cronologica di fotogrammi tratti da un video amatoriale del cane.\n\n` +
+        `CATALOGO DEI SEGNALI DISPONIBILI:\n${catalogDesc}\n\n` +
+        `COMPITO:\n` +
+        `1. Determina se c'è un cane visibile.\n` +
+        `2. Riconosci quali tra i segnali del catalogo sono presenti con chiarezza nelle immagini.\n` +
+        `3. Scrivi una nota riassuntiva di 2 frasi in italiano.\n\n` +
+        `Rispondi ESCLUSIVAMENTE in formato JSON con questo schema:\n` +
+        `{\n  "cane": true,\n  "codici": ["0.0", "2.0"],\n  "nota": "Spiegazione breve"\n}\n` +
+        `Se non c'è un cane, metti "cane": false e "codici": [].`;
+
+      parts.push({ text: prompt });
+
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          contents: [{ parts }],
+          generationConfig: { responseMimeType: "application/json" }
+        })
+      });
+
+      if(!res.ok){
+        const errData = await res.json().catch(()=>({}));
+        throw new Error(errData.error?.message || `Errore API Gemini: ${res.status}`);
+      }
+
+      const jsonResp = await res.json();
+      const rawText = jsonResp.candidates?.[0]?.content?.parts?.[0]?.text;
+      const parsed = JSON.parse(rawText);
+
+      if(!parsed.cane){
+        $("#camOut").innerHTML = `<div class="flag note"><b>Nessun cane identificato</b>Assicurati che il cane sia ben inquadrato e riprova.</div>`;
+        return;
+      }
+
+      lastGeminiCodes = parsed.codici || [];
+      $("#camOut").innerHTML = verdictHTML(lastGeminiCodes, parsed.nota || "");
+      $("#camOut").scrollIntoView({behavior:"smooth", block:"start"});
+    }
+
     renderDiary();
     refresh();
-
-    // Registrazione automatica PWA Manifest & Service Worker
-    (function registerPWA(){
-      const manifest = {
-        name: "Leggi il cane",
-        short_name: "LeggiCane",
-        start_url: "./",
-        display: "standalone",
-        background_color: "#14181A",
-        theme_color: "#14181A",
-        icons: [{
-          src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%232F6B7C'/><circle cx='38' cy='42' r='6' fill='%23F4F5F1'/><circle cx='62' cy='42' r='6' fill='%23F4F5F1'/><ellipse cx='50' cy='58' rx='9' ry='6' fill='%23F4F5F1'/></svg>",
-          sizes: "192x192 512x512",
-          type: "image/svg+xml"
-        }]
-      };
-      const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = URL.createObjectURL(manifestBlob);
-      document.head.appendChild(link);
-
-      if('serviceWorker' in navigator){
-        const swCode = `self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));`;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
-      }
-    })();
   </script>
 </body>
 </html>
