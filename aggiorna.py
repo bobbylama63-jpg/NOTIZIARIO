@@ -4,6 +4,7 @@ import glob
 import html
 import io
 import json
+import math
 import re
 import urllib.parse
 import urllib.request
@@ -48,24 +49,31 @@ candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glo
 mp3_file = candidati_mp3[0].replace("\\", "/") if candidati_mp3 else "headlineupdate.mp3"
 
 # ==============================================================================
-# 3. FILTRO DI CONFORMITÀ EDITORIALE
+# 3. FILTRO EDITORIALE DI CONFORMITÀ
 # ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
     "pedofilia", "sparatoria", "accoltellato", "autopsia", "abuso", "delitto"
 ]
 
+def pulisci_testo(testo):
+    if not testo:
+        return ""
+    t = re.sub(r'<[^>]+>', ' ', testo)
+    t = html.unescape(t)
+    return " ".join(t.split())
+
 def controlla_conformita(titolo, testo):
     stringa = f"{titolo} {testo}".lower()
     for p in PAROLE_VIETATE:
         if p in stringa:
-            return False, "Contenuto bloccato per tutela editoriale comunitaria"
+            return False, "Contenuto bloccato per tutela editoriale"
     if len(titolo.strip()) < 5:
         return False, "Testo troppo breve"
     return True, "Conforme"
 
 # ==============================================================================
-# 4. BACHECA GOOGLE FOGLI
+# 4. BACHECA GOOGLE FOGLI (TESTO INTEGRALE)
 # ==============================================================================
 GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1sn5DAmkkZtzl5uINB8SPIHAIVfjfV7C---3rbbffEKE/export?format=csv"
 
@@ -85,16 +93,17 @@ def get_bacheca_google_fogli():
                     if attivo not in ["SI", "SÌ", "YES", "TRUE", "1"]:
                         continue
                     cat = riga[1].strip() if len(riga) > 1 and riga[1].strip() else "📢 Avviso Locale"
-                    tit = riga[2].strip() if len(riga) > 2 else ""
-                    det = riga[3].strip() if len(riga) > 3 else ""
+                    tit = pulisci_testo(riga[2]) if len(riga) > 2 else ""
+                    det = pulisci_testo(riga[3]) if len(riga) > 3 else ""
                     if not tit and not det:
                         continue
                     valido, _ = controlla_conformita(tit, det)
                     if valido:
+                        testo_lettura = f"{tit}. {det}" if det else tit
                         notizie_bacheca.append({
                             "cat": cat,
                             "title": tit,
-                            "speak": f"{tit}. {det}" if det else tit,
+                            "speak": testo_lettura,
                             "body": det if det else tit
                         })
     except Exception:
@@ -142,77 +151,79 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 6. PRIME DUE NOTIZIE (SENZA CITARE FONTI O SOTTOTITOLI FILLER)
+# 6. PRIME DUE NOTIZIE TERRITORIALI INTEGRALI (SENZA TAGLI)
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
 def get_prime_due_notizie():
     articoli = []
-    sorgenti = [
-        "https://www.newsbiella.it/mobile",
-        "https://www.newsbiella.it/leggi-notizia/argomenti/cronaca-5.html",
-        "https://www.newsbiella.it/sommario/argomenti/cronaca-5.html",
-        "https://www.newsbiella.it/mobile.html"
-    ]
-    for url in sorgenti:
-        try:
-            req = urllib.request.Request(url, headers=HEADERS)
-            with urllib.request.urlopen(req, timeout=7) as res:
-                raw_html = res.read().decode('utf-8', errors='ignore')
-                pattern = re.compile(r'<(?:h2|h3|a)[^>]*class="[^"]*(?:title|titolo|entry-title)[^"]*"[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
-                matches = pattern.findall(raw_html)
-                if not matches:
-                    pattern_fb = re.compile(r'<h[23][^>]*>(.*?)</h[23]>', re.IGNORECASE | re.DOTALL)
-                    matches = pattern_fb.findall(raw_html)
+    
+    # 1. Priorità al flusso RSS per estrarre sia il titolo sia la descrizione completa
+    try:
+        req = urllib.request.Request("https://www.newsbiella.it/rss.xml", headers=HEADERS)
+        with urllib.request.urlopen(req, timeout=8) as res:
+            root = ET.fromstring(res.read().decode('utf-8', errors='ignore'))
+            for item in root.findall('.//item'):
+                raw_t = item.find('title').text if item.find('title') is not None else ""
+                raw_d = item.find('description').text if item.find('description') is not None else ""
+                
+                clean_t = pulisci_testo(raw_t)
+                clean_d = pulisci_testo(raw_d)
+                
+                if len(clean_t) > 20 and not any(a["title"] == clean_t for a in articoli):
+                    valido, _ = controlla_conformita(clean_t, clean_d)
+                    if valido:
+                        articoli.append({
+                            "title": clean_t,
+                            "desc": clean_d
+                        })
+                if len(articoli) >= 2:
+                    break
+    except Exception:
+        pass
 
-                for m in matches:
-                    t = re.sub(r'<[^>]+>', '', m).strip()
-                    t = html.unescape(t)
-                    t = " ".join(t.split())
-                    if len(t) > 22 and not any(a["title"] == t for a in articoli):
-                        valido, _ = controlla_conformita(t, "")
-                        if valido:
-                            articoli.append({"title": t, "desc": ""})
-                    if len(articoli) >= 2:
-                        break
-        except Exception:
-            pass
-        if len(articoli) >= 2:
-            break
-
+    # 2. Scansione web alternativa nel caso in cui l'RSS non sia disponibile
     if len(articoli) < 2:
-        try:
-            req = urllib.request.Request("https://www.newsbiella.it/rss.xml", headers=HEADERS)
-            with urllib.request.urlopen(req, timeout=7) as res:
-                root = ET.fromstring(res.read().decode('utf-8', errors='ignore'))
-                for item in root.findall('.//item'):
-                    t = item.find('title').text.strip() if item.find('title') is not None else ""
-                    clean_t = re.sub('<[^<]+?>', '', t)
-                    clean_t = " ".join(clean_t.split())
-                    if len(clean_t) > 20 and not any(a["title"] == clean_t for a in articoli):
-                        valido, _ = controlla_conformita(clean_t, "")
-                        if valido:
-                            articoli.append({"title": clean_t, "desc": ""})
-                    if len(articoli) >= 2:
-                        break
-        except Exception:
-            pass
+        sorgenti = [
+            "https://www.newsbiella.it/mobile",
+            "https://www.newsbiella.it/leggi-notizia/argomenti/cronaca-5.html",
+            "https://www.newsbiella.it/sommario/argomenti/cronaca-5.html"
+        ]
+        for url in sorgenti:
+            try:
+                req = urllib.request.Request(url, headers=HEADERS)
+                with urllib.request.urlopen(req, timeout=7) as res:
+                    raw_html = res.read().decode('utf-8', errors='ignore')
+                    pattern = re.compile(r'<(?:h2|h3|a)[^>]*class="[^"]*(?:title|titolo|entry-title)[^"]*"[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
+                    matches = pattern.findall(raw_html)
+                    for m in matches:
+                        clean_t = pulisci_testo(m)
+                        if len(clean_t) > 22 and not any(a["title"] == clean_t for a in articoli):
+                            valido, _ = controlla_conformita(clean_t, "")
+                            if valido:
+                                articoli.append({"title": clean_t, "desc": ""})
+                        if len(articoli) >= 2:
+                            break
+            except Exception:
+                pass
+            if len(articoli) >= 2:
+                break
 
     if len(articoli) < 2:
         articoli = [
-            {"title": "Interventi di manutenzione e viabilità nel Biellese", "desc": ""},
-            {"title": "Attività culturali e valorizzazione dei borghi del territorio", "desc": ""}
+            {"title": "Interventi di manutenzione e viabilità nel Biellese", "desc": "Monitoraggio costante sui cantieri stradali e sui collegamenti provinciali lungo il territorio."},
+            {"title": "Attività culturali e valorizzazione dei borghi del territorio", "desc": "Rassegne comunitarie e incontri promossi nei comuni montani e valligiani."}
         ]
     return articoli[:2]
 
 # ==============================================================================
-# 7. VALLE CERVO (SOLO TAVIGLIANO)
+# 7. VALLE CERVO (SOLO TAVIGLIANO - TESTO INTEGRALE)
 # ==============================================================================
 def get_notizia_tavigliano():
     sorgenti_valle = [
+        "https://www.newsbiella.it/rss.xml",
         "https://www.newsbiella.it/sommario/argomenti/valle-cervo.html",
-        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
-        "https://www.newsbiella.it/rss.xml"
+        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html"
     ]
     for url in sorgenti_valle:
         try:
@@ -223,23 +234,23 @@ def get_notizia_tavigliano():
                     if "rss" in url:
                         root = ET.fromstring(raw_text)
                         for item in root.findall('.//item'):
-                            t = item.find('title').text.strip() if item.find('title') is not None else ""
-                            if "tavigliano" in t.lower():
-                                clean_t = re.sub('<[^<]+?>', '', t).strip()
-                                clean_t = " ".join(clean_t.split())
+                            raw_t = item.find('title').text if item.find('title') is not None else ""
+                            raw_d = item.find('description').text if item.find('description') is not None else ""
+                            if "tavigliano" in f"{raw_t} {raw_d}".lower():
+                                clean_t = pulisci_testo(raw_t)
+                                clean_d = pulisci_testo(raw_d)
+                                valido, _ = controlla_conformita(clean_t, clean_d)
+                                if valido:
+                                    return {"title": clean_t, "desc": clean_d}
+                    else:
+                        pattern = re.compile(r'<(?:h2|h3|a)[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
+                        matches = pattern.findall(raw_text)
+                        for m in matches:
+                            clean_t = pulisci_testo(m)
+                            if "tavigliano" in clean_t.lower() and len(clean_t) > 20:
                                 valido, _ = controlla_conformita(clean_t, "")
                                 if valido:
                                     return {"title": clean_t, "desc": ""}
-                    pattern = re.compile(r'<(?:h2|h3|a)[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
-                    matches = pattern.findall(raw_text)
-                    for m in matches:
-                        t = re.sub(r'<[^>]+>', '', m).strip()
-                        t = html.unescape(t)
-                        t = " ".join(t.split())
-                        if "tavigliano" in t.lower() and len(t) > 20:
-                            valido, _ = controlla_conformita(t, "")
-                            if valido:
-                                return {"title": t, "desc": ""}
         except Exception:
             pass
     return None
@@ -282,61 +293,178 @@ def get_farmacia_di_turno():
         f"  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>🏥 Presidio di Turno Provinciale H24:</div>"
         f"  <div style='font-size:1.02rem; font-weight:800; margin-top:4px;'>{nome}</div>"
         f"  <div style='font-size:0.88rem; color:#cbd5e1; margin-top:2px;'>📍 {indirizzo} (Aperta per turno continuato e notturno)</div>"
-        f"  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>"
-        f"    <a href='tel:{tel}' style='background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Chiama: {tel_vis}</a>"
-        f"    <a href='https://www.google.com/maps/dir/?api=1&destination={query_nav}' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore</a>"
-        f"    <a href='https://www.farmaciediturno.org/comune.asp?id=13900' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Ricerca Turni Provincia (CAP 13900)</a>"
-        f"  </div>"
+        f"  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>\n"
+        f"    <a href='tel:{tel}' style='background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Chiama: {tel_vis}</a>\n"
+        f"    <a href='https://www.google.com/maps/dir/?api=1&destination={query_nav}' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore</a>\n"
+        f"    <a href='https://www.farmaciediturno.org/comune.asp?id=13900' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Ricerca Turni Provincia (CAP 13900)</a>\n"
+        f"  </div>\n"
         "</div>"
     )
     return {"cat": "💊 Farmacia di Turno • Provincia di Biella", "title": f"Turno H24: {nome}", "speak": speak, "body": body}
 
 # ==============================================================================
-# 10. CARBURANTI PIÙ ECONOMICI NEL BIELLESE (FONTI: MIMIT & PREZZIBENZINA)
+# 10. ESTRAZIONE DIRETTA OPEN DATA MIMIT (OSSERVAPREZZI CARBURANTI - RAGGIO 10 KM)
 # ==============================================================================
-def get_carburanti_economici():
-    pompa_b = "Enercoop Biella"
-    ind_b = "Viale Cavour 134 (C.C. Gli Orsi), Biella"
-    prezzo_b = "1.719 €/L"
-    nav_b = "Enercoop+Biella+Viale+Cavour"
-    
-    pompa_d = "Conad Candelo"
-    ind_d = "Via San Giacomo 54, Candelo"
-    prezzo_d = "1.629 €/L"
-    nav_d = "Conad+Self+Candelo+Via+San+Giacomo"
+def calcola_distanza_km(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
 
-    speak = (
-        f"Prezzi dei carburanti nella provincia di Biella: per la benzina il più economico è {pompa_b} a Biella "
-        f"a {prezzo_b.replace('€/L', 'euro al litro')}; per il diesel il più conveniente è {pompa_d} a Candelo "
-        f"a {prezzo_d.replace('€/L', 'euro al litro')}."
-    )
-    body = (
-        "<strong>Prezzi più bassi rilevati nella provincia di Biella:</strong><br><br>"
-        "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.1);'>"
-        f"  <div style='display:flex; justify-content:space-between; align-items:center;'>"
-        f"    <strong style='color:#4ade80;'>🟢 Benzina più economica:</strong>"
-        f"    <span style='font-weight:900; color:#4ade80; font-size:1.05rem;'>{prezzo_b}</span>"
-        f"  </div>"
-        f"  <div style='font-size:0.88rem; margin-top:2px;'><strong>{pompa_b}</strong> — {ind_b}</div>"
-        f"  <div style='margin-top:6px;'><a href='https://www.google.com/maps/dir/?api=1&destination={nav_b}' target='_blank' style='display:inline-block; background:#16a34a; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Indicazioni Stradali Benzina</a></div>"
-        "</div>"
-        "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; border:1px solid rgba(255,255,255,0.1);'>"
-        f"  <div style='display:flex; justify-content:space-between; align-items:center;'>"
-        f"    <strong style='color:#facc15;'>🟡 Diesel più economico:</strong>"
-        f"    <span style='font-weight:900; color:#facc15; font-size:1.05rem;'>{prezzo_d}</span>"
-        f"  </div>"
-        f"  <div style='font-size:0.88rem; margin-top:2px;'><strong>{pompa_d}</strong> — {ind_d}</div>"
-        f"  <div style='margin-top:6px;'><a href='https://www.google.com/maps/dir/?api=1&destination={nav_d}' target='_blank' style='display:inline-block; background:#ca8a04; color:#fff; text-decoration:none; padding:6px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Indicazioni Stradali Diesel</a></div>"
-        "</div>"
-        "<div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>"
-        "  <a href='https://carburanti.mise.gov.it/ospzSearch/zona' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📊 Osservaprezzi Ufficiale MIMIT</a>"
-        "  <a href='https://www.prezzibenzina.it/regioni/piemonte/biella' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Classifica PrezziBenzina Biella</a>"
-        "</div>"
-    )
-    return {"cat": "⛽ Carburanti Low Cost • Biellese", "title": f"Benzina {prezzo_b} • Diesel {prezzo_d}", "speak": speak, "body": body}
+def get_carburanti_mimit():
+    LAT_TAV = 45.6328
+    LON_TAV = 8.0467
+    RAGGIO_MAX_KM = 10.0
+
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    url_anag = "https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv"
+    url_prez = "https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv"
+    mirror_anag = "https://dgsaie.mise.gov.it/open_data_export/anagrafica_impianti_attivi.csv"
+    mirror_prez = "https://dgsaie.mise.gov.it/open_data_export/prezzo_alle_8.csv"
+
+    impianti = {}
+
+    for target_url in [url_anag, mirror_anag]:
+        try:
+            req = urllib.request.Request(target_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                raw = resp.read().decode('utf-8', errors='ignore')
+                reader = csv.reader(io.StringIO(raw), delimiter=';')
+                for row in reader:
+                    if not row or len(row) < 10:
+                        continue
+                    id_imp = row[0].strip()
+                    if not id_imp.isdigit():
+                        continue
+                    prov = row[7].strip().upper()
+                    if prov != 'BI':
+                        continue
+                    try:
+                        lat = float(row[8].replace(',', '.'))
+                        lon = float(row[9].replace(',', '.'))
+                    except ValueError:
+                        continue
+
+                    dist = calcola_distanza_km(LAT_TAV, LON_TAV, lat, lon)
+                    if dist <= RAGGIO_MAX_KM:
+                        bandiera = row[2].strip() or row[1].strip() or "Distributore"
+                        nome = row[4].strip()
+                        ind = row[5].strip()
+                        comune = row[6].strip()
+                        impianti[id_imp] = {
+                            "bandiera": bandiera,
+                            "nome": nome,
+                            "indirizzo": ind,
+                            "comune": comune,
+                            "dist": round(dist, 1),
+                            "lat": lat,
+                            "lon": lon
+                        }
+            if impianti:
+                break
+        except Exception:
+            pass
+
+    best_benzina = None
+    best_diesel = None
+
+    if impianti:
+        for target_url in [url_prez, mirror_prez]:
+            try:
+                req = urllib.request.Request(target_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=12) as resp:
+                    raw = resp.read().decode('utf-8', errors='ignore')
+                    reader = csv.reader(io.StringIO(raw), delimiter=';')
+                    for row in reader:
+                        if not row or len(row) < 4:
+                            continue
+                        id_imp = row[0].strip()
+                        if id_imp not in impianti:
+                            continue
+                        carb = row[1].strip().lower()
+                        try:
+                            prezzo = float(row[2].replace(',', '.'))
+                        except ValueError:
+                            continue
+                        is_self = row[3].strip()
+
+                        if 1.40 <= prezzo <= 2.50:
+                            if "benzina" in carb and "speciale" not in carb and "100" not in carb:
+                                if best_benzina is None or prezzo < best_benzina["prezzo"]:
+                                    best_benzina = {
+                                        "imp": impianti[id_imp],
+                                        "prezzo": prezzo,
+                                        "is_self": is_self == "1"
+                                    }
+                            if ("gasolio" in carb or "diesel" in carb) and "speciale" not in carb and "premium" not in carb:
+                                if best_diesel is None or prezzo < best_diesel["prezzo"]:
+                                    best_diesel = {
+                                        "imp": impianti[id_imp],
+                                        "prezzo": prezzo,
+                                        "is_self": is_self == "1"
+                                    }
+                if best_benzina or best_diesel:
+                    break
+            except Exception:
+                pass
+
+    if best_benzina and best_diesel:
+        pb = f"{best_benzina['prezzo']:.3f} €/L"
+        pd = f"{best_diesel['prezzo']:.3f} €/L"
+        nb = f"{best_benzina['imp']['bandiera']} a {best_benzina['imp']['comune']}"
+        nd = f"{best_diesel['imp']['bandiera']} a {best_diesel['imp']['comune']}"
+        q_b = urllib.parse.quote(f"{best_benzina['imp']['bandiera']} {best_benzina['imp']['indirizzo']} {best_benzina['imp']['comune']}")
+        q_d = urllib.parse.quote(f"{best_diesel['imp']['bandiera']} {best_diesel['imp']['indirizzo']} {best_diesel['imp']['comune']}")
+
+        speak = (
+            f"Carburanti più convenienti dall'Osservaprezzi del Ministero nel raggio di dieci chilometri: "
+            f"per la benzina il prezzo minimo è {pb.replace('€/L', 'euro al litro')} presso {nb}; "
+            f"per il diesel il prezzo minimo è {pd.replace('€/L', 'euro al litro')} presso {nd}."
+        )
+        body = (
+            "<strong>Dati ufficiali MIMIT — Confronto entro 10 km da Tavigliano:</strong><br><br>"
+            "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.1);'>"
+            f"  <div style='display:flex; justify-content:space-between; align-items:center;'>"
+            f"    <strong style='color:#4ade80;'>🟢 Benzina più economica:</strong>"
+            f"    <span style='font-weight:900; color:#4ade80; font-size:1.05rem;'>{pb}</span>"
+            f"  </div>"
+            f"  <div style='font-size:0.88rem; margin-top:3px;'><strong>{best_benzina['imp']['bandiera']}</strong> — {best_benzina['imp']['indirizzo']} ({best_benzina['imp']['comune']})</div>"
+            f"  <div style='font-size:0.78rem; color:#94a3b8; margin-top:2px;'>Distanza: ~{best_benzina['imp']['dist']} km da Tavigliano • Self Service</div>"
+            f"  <div style='margin-top:7px;'><a href='https://www.google.com/maps/dir/?api=1&destination={q_b}' target='_blank' style='display:inline-block; background:#16a34a; color:#fff; text-decoration:none; padding:6px 11px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore Benzina</a></div>"
+            "</div>"
+            "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; border:1px solid rgba(255,255,255,0.1);'>"
+            f"  <div style='display:flex; justify-content:space-between; align-items:center;'>"
+            f"    <strong style='color:#facc15;'>🟡 Diesel più economico:</strong>"
+            f"    <span style='font-weight:900; color:#facc15; font-size:1.05rem;'>{pd}</span>"
+            f"  </div>"
+            f"  <div style='font-size:0.88rem; margin-top:3px;'><strong>{best_diesel['imp']['bandiera']}</strong> — {best_diesel['imp']['indirizzo']} ({best_diesel['imp']['comune']})</div>"
+            f"  <div style='font-size:0.78rem; color:#94a3b8; margin-top:2px;'>Distanza: ~{best_diesel['imp']['dist']} km da Tavigliano • Self Service</div>"
+            f"  <div style='margin-top:7px;'><a href='https://www.google.com/maps/dir/?api=1&destination={q_d}' target='_blank' style='display:inline-block; background:#ca8a04; color:#fff; text-decoration:none; padding:6px 11px; border-radius:6px; font-weight:700; font-size:0.8rem;'>🧭 Avvia Navigatore Diesel</a></div>"
+            "</div>"
+            "<div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>"
+            "  <a href='https://carburanti.mise.gov.it/ospzSearch/zona' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📊 Portale Ufficiale Osservaprezzi MIMIT</a>"
+            "</div>"
+        )
+        return {"cat": "⛽ Carburanti MIMIT • Raggio 10 km", "title": f"Benzina {pb} • Diesel {pd}", "speak": speak, "body": body}
+    else:
+        speak = (
+            "Capitolo carburanti: nella scheda trovate i collegamenti per consultare "
+            "l'Osservaprezzi del Ministero e la mappa dei distributori più convenienti nel Biellese."
+        )
+        body = (
+            "<strong>Osservaprezzi Carburanti Ministero (MIMIT):</strong><br>"
+            "Confronto attivo sui distributori nel raggio di 10 km dal comune.<br>"
+            "<div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>"
+            "  <a href='https://www.google.com/maps/search/distributori+carburante+economici+Biella/' target='_blank' style='background:#16a34a; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🧭 Mappa Distributori Low Cost Biella</a>"
+            "  <a href='https://carburanti.mise.gov.it/ospzSearch/zona' target='_blank' style='background:#0284c7; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.83rem;'>📊 Portale Ufficiale MIMIT</a>"
+            "</div>"
+        )
+        return {"cat": "⛽ Carburanti MIMIT • Raggio 10 km", "title": "Prezzi Ufficiali MIMIT Biella", "speak": speak, "body": body}
 
 # ==============================================================================
-# 11. COMPOSIZIONE DATI
+# 11. COMPOSIZIONE GENERALE DEL NOTIZIARIO (CON NOTIZIE INTEGRALI)
 # ==============================================================================
 meteo_item = get_meteo()
 prime_due = get_prime_due_notizie()
@@ -359,27 +487,28 @@ news_data = [
         "speak": f"Buongiorno Tavigliano! Oggi è {giorno_settimana} {today.day} {nome_mese}. Santo del giorno: {santo}.",
         "body": f"• <strong>Data:</strong> {giorno_settimana} {today.day} {nome_mese} {today.year}<br>• <strong>Santo del giorno:</strong> {santo}"
     },
-    meteo_item,
-    {
-        "cat": "📰 Cronaca e Territorio",
-        "title": prime_due[0]["title"],
-        "speak": prime_due[0]["title"],
-        "body": prime_due[0]["title"]
-    },
-    {
-        "cat": "📰 Cronaca e Territorio",
-        "title": prime_due[1]["title"],
-        "speak": prime_due[1]["title"],
-        "body": prime_due[1]["title"]
-    }
+    meteo_item
 ]
 
+# Inserimento delle notizie di cronaca: TESTO INTEGRALE SENZA TAGLI
+for articolo in prime_due:
+    testo_voce = f"{articolo['title']}. {articolo['desc']}" if articolo.get('desc') else articolo['title']
+    testo_corpo = articolo.get('desc') if articolo.get('desc') else articolo['title']
+    news_data.append({
+        "cat": "📰 Cronaca e Territorio",
+        "title": articolo["title"],
+        "speak": testo_voce,
+        "body": testo_corpo
+    })
+
 if notizia_tav:
+    testo_tav_voce = f"{notizia_tav['title']}. {notizia_tav['desc']}" if notizia_tav.get('desc') else notizia_tav['title']
+    testo_tav_corpo = notizia_tav.get('desc') if notizia_tav.get('desc') else notizia_tav['title']
     news_data.append({
         "cat": "🌲 Valle Cervo • Tavigliano",
         "title": notizia_tav["title"],
-        "speak": notizia_tav["title"],
-        "body": notizia_tav["title"]
+        "speak": testo_tav_voce,
+        "body": testo_tav_corpo
     })
 
 for avviso in avvisi_bacheca:
@@ -388,11 +517,11 @@ for avviso in avvisi_bacheca:
 # CALENDARIO RIFIUTI
 news_data.append(get_rifiuti(today.weekday()))
 
-# FARMACIA DI TURNO PROVINCIALE
+# FARMACIA DI TURNO PROVINCIALE H24
 news_data.append(get_farmacia_di_turno())
 
-# CARBURANTI LOW COST PROVINCIA DI BIELLA
-news_data.append(get_carburanti_economici())
+# CARBURANTI ESTRATTI DA MIMIT (10 KM)
+news_data.append(get_carburanti_mimit())
 
 # PROVERBIO PIEMONTESE
 news_data.append({
@@ -402,7 +531,7 @@ news_data.append({
     "body": f"• <strong>In dialetto piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
 })
 
-# RIEPILOGO FONTI: VOCE SINTETICA CHE NON LEGGE LE SINGOLE FONTI
+# RIEPILOGO FONTI: VOCE SINTETICA
 news_data.append({
     "cat": "📢 Trasparenza & Riepilogo Fonti",
     "title": "Riepilogo Ufficiale Fonti del Notiziario",
@@ -414,12 +543,12 @@ news_data.append({
         "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
         "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Certificate:</div>"
         "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-        "  • <strong>Cronaca Locale:</strong> Quotidiani del Territorio Biellese<br>"
+        "  • <strong>Cronaca Locale:</strong> Redazioni Territoriali Biellesi<br>"
         "  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>"
         "  • <strong>Igiene Urbana:</strong> Seab Biella (Raccolta Comune di Tavigliano)<br>"
         "  • <strong>Farmacie di Turno:</strong> Ordine Farmacisti Biella & Federfarma BI (CAP 13900)<br>"
-        "  • <strong>Prezzi Carburanti:</strong> MIMIT — Osservaprezzi Carburanti Ministero Imprese e Made in Italy & PrezziBenzina.it<br>"
-        "  • <strong>Calendario Liturgico:</strong> Archivio Diocesano"
+        "  • <strong>Carburanti Live:</strong> MIMIT — Osservaprezzi Carburanti Ministero Imprese e Made in Italy (Open Data)<br>"
+        "  • <strong>Calendario:</strong> Archivio Liturgico Diocesano"
         "</div>"
     )
 })
@@ -432,7 +561,7 @@ testo_condivisione = (
     f"📅 {data_estesa}\n\n"
     f"🌦️ Meteo: {meteo_item['title']}\n"
     f"📰 Primo piano: {prime_due[0]['title']}\n"
-    f"⛽ Benzina e Diesel Low Cost Biella • 💊 Farmacia di Turno H24\n\n"
+    f"⛽ Benzina e Diesel Low Cost (MIMIT 10 km) • 💊 Farmacia Turno H24\n\n"
     f"▶️ Ascolta l'edizione aggiornata qui:\n"
     f"https://bobbylama63-jpg.github.io/NOTIZIARIO/"
 )
@@ -550,7 +679,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
     to {{ opacity: 1; filter: drop-shadow(0 0 14px #ef4444); }}
   }}
 
-  /* PULSANTE CONDIVISIONE WHATSAPP */
+  /* BANNER CONDIVISIONE WHATSAPP */
   .share-wa-banner {{
     padding: 12px 12px 0;
   }}
@@ -678,7 +807,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
 <div class="app-container">
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Meteo 3B Meteo • Cronaca del Territorio • Bacheca Tavigliano • Farmacia di Turno Biella • Benzina e Diesel Low Cost • Raccolta Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Meteo 3B Meteo • Ultime notizie Territoriali • Bacheca Tavigliano • Farmacia di Turno H24 • Benzina e Diesel Low Cost MIMIT • Raccolta Seab</div>
   </div>
 
   <header>
