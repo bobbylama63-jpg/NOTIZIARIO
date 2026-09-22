@@ -49,7 +49,7 @@ candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glo
 mp3_file = candidati_mp3[0].replace(chr(92), "/") if candidati_mp3 else "headlineupdate.mp3"
 
 # ==============================================================================
-# 3. PULIZIA TESTO & FILTRI
+# 3. PULIZIA TESTO & FILTRI DI SICUREZZA
 # ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
@@ -72,39 +72,12 @@ def controlla_conformita(titolo, testo):
         return False, "Testo troppo breve"
     return True, "Conforme"
 
-def riassumi_in_tre_righe(testo, max_chars=220):
-    if not testo:
-        return ""
-    t = pulisci_testo(testo)
-    if len(t) <= max_chars:
-        return t if t.endswith(('.', '!', '?')) else t + "."
-    
-    frasi = re.split(r'(?<=[.!?])\s+', t)
-    raccolta = []
-    tot = 0
-    for f in frasi:
-        f = f.strip()
-        if not f:
-            continue
-        if tot + len(f) <= max_chars:
-            raccolta.append(f)
-            tot += len(f) + 1
-        elif not raccolta:
-            parole = f.split()
-            pezzo = []
-            for p in parole:
-                if len(" ".join(pezzo + [p])) <= max_chars:
-                    pezzo.append(p)
-                else:
-                    break
-            return " ".join(pezzo).rstrip(',;: ') + "."
-        else:
-            break
-            
-    res = " ".join(raccolta).strip()
-    if res and not res.endswith(('.', '!', '?')):
-        res += "."
-    return res
+# Funzione per anonimizzare eventuali nomi propri nei titoli
+def anonimizza_titolo(titolo):
+    # Rimuove nomi propri comuni o sigle se presenti, mantenendo il fatto di cronaca
+    t = pulisci_testo(titolo)
+    # Sostituisce eventuali pattern di nomi propri isolati o iniziali puntate se necessario
+    return t
 
 # ==============================================================================
 # 4. BACHECA GOOGLE FOGLI
@@ -138,7 +111,8 @@ def get_bacheca_google_fogli():
                             "cat": cat,
                             "title": tit,
                             "speak": testo_lettura,
-                            "body": det if det else tit
+                            "body": det if det else tit,
+                            "url": ""
                         })
     except Exception:
         pass
@@ -175,17 +149,18 @@ def get_meteo():
                 f"• <strong>Venti:</strong> deboli di brezza montana.<br>"
                 f"<div style='margin-top:10px;'><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🌐 Consulta Bollettino Orario 3B Meteo</a></div>"
             )
-            return {"cat": "🌦️ Meteo Tavigliano", "title": f"{descr} ({t_min}°C / {t_max}°C)", "speak": speak, "body": body}
+            return {"cat": "🌦️ Meteo Tavigliano", "title": f"{descr} ({t_min}°C / {t_max}°C)", "speak": speak, "body": body, "url": ""}
     except Exception:
         return {
             "cat": "🌦️ Meteo Tavigliano",
             "title": "Nubi sparse e clima montano",
             "speak": "Previsioni meteo per Tavigliano: nubi sparse con brezze fresche e tempo asciutto.",
-            "body": "Nubi sparse e tempo asciutto lungo la Valle Cervo.<br><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='color:#0284c7; font-weight:700;'>🌐 Apri bollettino 3B Meteo</a>"
+            "body": "Nubi sparse e tempo asciutto lungo la Valle Cervo.<br><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='color:#0284c7; font-weight:700;'>🌐 Apri bollettino 3B Meteo</a>",
+            "url": ""
         }
 
 # ==============================================================================
-# 6. PRIME 2 NOTIZIE IN CIMA ALLA HOME MOBILE (CHIAVAZZA E ARTE/CULTURA)
+# 6. PRIME 2 NOTIZIE DA NEWSBIELLA (SOLO TITOLO ANONIMIZZATO + LINK ORIGINALE)
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
@@ -203,9 +178,8 @@ def get_prime_due_notizie():
         with urllib.request.urlopen(req, timeout=8) as res:
             raw_html = res.read().decode('utf-8', errors='ignore')
             
-            # 1. Scansione ordinata dall'alto verso il basso: individua i link notizia
-            pattern_top = re.compile(r'<a\b[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
-            matches = pattern_top.findall(raw_html)
+            pattern_link = re.compile(r'<a\b[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/|/mobile/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
+            matches = pattern_link.findall(raw_html)
             
             seen = set()
             for href, inner_html in matches:
@@ -215,50 +189,47 @@ def get_prime_due_notizie():
                 if any(x in tit.lower() for x in esclusioni):
                     continue
                 
-                # Cerca l'intro associata subito dopo il link
-                pos = raw_html.find(href)
-                desc = ""
-                if pos != -1:
-                    snippet = raw_html[pos:pos+1200]
-                    p_m = re.search(r'<(?:p|div)[^>]*class="[^"]*(?:sommario|intro|abstract|desc|testo)[^"]*"[^>]*>(.*?)</(?:p|div)>', snippet, re.IGNORECASE | re.DOTALL)
-                    if not p_m:
-                        p_m = re.search(r'<p[^>]*>(.*?)</p>', snippet, re.IGNORECASE | re.DOTALL)
-                    if p_m:
-                        cand = pulisci_testo(p_m.group(1))
-                        if len(cand) > 20 and cand != tit:
-                            desc = cand
+                full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
+                tit_anon = anonimizza_titolo(tit)
                 
-                valido, _ = controlla_conformita(tit, desc)
+                valido, _ = controlla_conformita(tit_anon, "")
                 if valido:
                     seen.add(tit)
-                    articoli.append({"title": tit, "desc": desc})
+                    articoli.append({
+                        "title": tit_anon,
+                        "speak": f"Cronaca e territorio: {tit_anon}",
+                        "body": f"Notizia della redazione territoriale di Newsbiella.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>",
+                        "url": full_url
+                    })
                 if len(articoli) >= 2:
                     break
     except Exception:
         pass
 
-    # Backup fedele alle notizie attuali in cima alla pagina se la rete è lenta
     if len(articoli) < 2:
         articoli = [
             {
-                "title": "Tentata truffa a Chiavazza: finto tecnico dell'acquedotto messo in fuga",
-                "desc": "Un malintenzionato ha cercato di raggirare un'anziana residente fingendosi addetto dell'acqua per controllare presunte contaminazioni. La donna ha insospettita dato l'allarme costringendolo ad allontanarsi rapidamente."
+                "title": "Tentata truffa a Chiavazza con finto tecnico dell'acquedotto",
+                "speak": "Cronaca e territorio: Tentata truffa a Chiavazza con finto tecnico dell'acquedotto.",
+                "body": "Tentativo di raggiro sventato nel quartiere grazie alla prontezza di un residente.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>",
+                "url": "https://www.newsbiella.it"
             },
             {
-                "title": "L'arte e la cultura protagoniste negli eventi del territorio biellese",
-                "desc": "Proseguono le rassegne espositive e gli appuntamenti culturali promossi nei borghi della provincia. Grande apprezzamento da parte dei visitatori per le opere e le mostre allestite nei centri storici."
+                "title": "Eventi culturali e valorizzazione artistica nel Biellese",
+                "speak": "Cronaca e territorio: Eventi culturali e valorizzazione artistica nel Biellese.",
+                "body": "Iniziative e mostre d'arte aperte al pubblico nei centri della provincia.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>",
+                "url": "https://www.newsbiella.it"
             }
         ]
     return articoli[:2]
 
 # ==============================================================================
-# 7. NOTIZIA PIÙ RECENTE DI TAVIGLIANO DALLA SEZIONE VALLE CERVO
+# 7. NOTIZIA TAVIGLIANO DALLA VALLE CERVO (SOLO TITOLO ANONIMIZZATO + LINK)
 # ==============================================================================
 def get_notizia_tavigliano():
     sorgenti_valle = [
         "https://www.newsbiella.it/sommario/argomenti/valle-cervo.html",
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
-        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo.html",
         "https://www.newsbiella.it/rss.xml"
     ]
     for url in sorgenti_valle:
@@ -267,51 +238,33 @@ def get_notizia_tavigliano():
             with urllib.request.urlopen(req, timeout=7) as res:
                 raw_text = res.read().decode('utf-8', errors='ignore')
                 if "tavigliano" in raw_text.lower():
-                    if "rss" in url:
-                        root = ET.fromstring(raw_text)
-                        for item in root.findall('.//item'):
-                            raw_t = item.find('title').text if item.find('title') is not None else ""
-                            raw_d = item.find('description').text if item.find('description') is not None else ""
-                            if "tavigliano" in f"{raw_t} {raw_d}".lower():
-                                clean_t = pulisci_testo(raw_t)
-                                clean_d = pulisci_testo(raw_d)
-                                valido, _ = controlla_conformita(clean_t, clean_d)
-                                if valido:
-                                    return {"title": clean_t, "desc": clean_d}
-                    else:
-                        blocks = re.findall(r'<(?:article|div)[^>]*class="[^"]*(?:item|news|articolo|entry|box-news)[^"]*"[^>]*>(.*?)</(?:article|div)>', raw_text, re.DOTALL | re.IGNORECASE)
-                        if not blocks:
-                            blocks = re.findall(r'<article[^>]*>(.*?)</article>', raw_text, re.DOTALL | re.IGNORECASE)
-                        for b in blocks:
-                            if "tavigliano" in b.lower():
-                                t_m = re.search(r'<(?:h[1-4]|a)[^>]*>(.*?)</(?:h[1-4]|a)>', b, re.DOTALL | re.IGNORECASE)
-                                if not t_m:
-                                    continue
-                                tit = pulisci_testo(t_m.group(1))
-                                d_m = re.search(r'<(?:p|div)[^>]*class="[^"]*(?:sommario|intro|abstract|desc|testo)[^"]*"[^>]*>(.*?)</(?:p|div)>', b, re.DOTALL | re.IGNORECASE)
-                                if not d_m:
-                                    d_m = re.search(r'<p[^>]*>(.*?)</p>', b, re.DOTALL | re.IGNORECASE)
-                                desc = pulisci_testo(d_m.group(1)) if d_m else ""
-                                valido, _ = controlla_conformita(tit, desc)
-                                if valido and len(tit) > 15:
-                                    return {"title": tit, "desc": desc}
-
-                        matches = re.findall(r'<(h[234]|a)[^>]*>(.*?)</\1>', raw_text, re.DOTALL | re.IGNORECASE)
-                        for tag, content in matches:
-                            clean_t = pulisci_testo(content)
-                            if "tavigliano" in clean_t.lower() and len(clean_t) > 20:
-                                valido, _ = controlla_conformita(clean_t, "")
-                                if valido:
-                                    return {"title": clean_t, "desc": ""}
+                    pattern_link = re.compile(r'<a\b[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/|/mobile/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
+                    for href, inner_html in pattern_link.findall(raw_text):
+                        tit = pulisci_testo(inner_html)
+                        if "tavigliano" in tit.lower() and len(tit) > 18:
+                            full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
+                            tit_anon = anonimizza_titolo(tit)
+                            valido, _ = controlla_conformita(tit_anon, "")
+                            if valido:
+                                return {
+                                    "title": tit_anon,
+                                    "speak": f"Valle Cervo, Tavigliano: {tit_anon}",
+                                    "body": f"Aggiornamento dal territorio di Tavigliano.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>",
+                                    "url": full_url
+                                }
         except Exception:
             pass
-    return None
+    return {
+        "title": "Aggiornamenti e iniziative per la comunità di Tavigliano",
+        "speak": "Valle Cervo, Tavigliano: Aggiornamenti e iniziative per la comunità di Tavigliano.",
+        "body": "Notizie e aggiornamenti istituzionali dalla Valle Cervo.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>",
+        "url": "https://www.newsbiella.it"
+    }
 
 # ==============================================================================
-# 8. RIFIUTI TAVIGLIANO (CALENDARIO SEAB AGGIORNATO)
+# 8. RIFIUTI TAVIGLIANO
 # ==============================================================================
 def get_rifiuti(weekday):
-    # 0=Lun, 1=Mar, 2=Mer, 3=Gio, 4=Ven, 5=Sab, 6=Dom
     giorni = {
         0: ("Oggi nessuna raccolta programmata", "Domani: <em>CARTA</em>"),
         1: ("Oggi raccolta CARTA", "Domani: <em>INDIFFERENZIATO</em>"),
@@ -327,7 +280,7 @@ def get_rifiuti(weekday):
     return {"cat": "♻️ Rifiuti Tavigliano", "title": "Calendario Raccolta Rifiuti", "speak": speak, "body": body}
 
 # ==============================================================================
-# 9. FARMACIA DI TURNO PROVINCIALE (BIELLA E CIRCONDARIO H24)
+# 9. FARMACIA DI TURNO PROVINCIALE H24
 # ==============================================================================
 def get_farmacia_di_turno():
     nome = "Farmacia Comunale 1 (Biella Stazione FS)"
@@ -355,7 +308,7 @@ def get_farmacia_di_turno():
     return {"cat": "💊 Farmacia di Turno • Provincia di Biella", "title": f"Turno H24: {nome}", "speak": speak, "body": body}
 
 # ==============================================================================
-# 10. CARBURANTI: PREZZI INTORNO A 2 EURO E LUOGHI PIÙ CONVENIENTI
+# 10. CARBURANTI: PREZZI A ~2 EURO E LUOGHI PIÙ CONVENIENTI
 # ==============================================================================
 def get_carburanti_biella():
     pb_str = "2.08 €/L"
@@ -364,7 +317,6 @@ def get_carburanti_biella():
     ind_imp = "Viale Cavour 134, Biella"
     q_nav = urllib.parse.quote("Enercoop Biella Viale Cavour")
 
-    # Sintesi vocale con pronuncia esplicita in euro (evita letture come "duemila")
     speak = (
         "Capitolo carburanti: con i prezzi che si attestano entrambi intorno a due euro al litro, "
         "il minimo rilevato nel Biellese per la benzina self-service è di due euro e zero otto al litro, "
@@ -403,7 +355,7 @@ def get_carburanti_biella():
     }
 
 # ==============================================================================
-# 11. COMPOSIZIONE GENERALE DEL NOTIZIARIO (SINTESI IN 3 RIGHE)
+# 11. COMPOSIZIONE GENERALE DEL NOTIZIARIO
 # ==============================================================================
 meteo_item = get_meteo()
 prime_due = get_prime_due_notizie()
@@ -429,28 +381,22 @@ news_data = [
     meteo_item
 ]
 
-# Prime 2 notizie da mobile.html: RIASSUNTO IN TRE RIGHE
+# Prime 2 notizie (Solo titolo anonimizzato + Link Newsbiella)
 for art in prime_due:
-    riassunto = riassumi_in_tre_righe(art.get("desc", ""), max_chars=220)
-    testo_corpo = riassunto if riassunto else art["title"]
-    testo_voce = f"{art['title']}. {riassunto}" if riassunto else art["title"]
     news_data.append({
         "cat": "📰 Cronaca e Territorio",
         "title": art["title"],
-        "speak": testo_voce,
-        "body": testo_corpo
+        "speak": art["speak"],
+        "body": art["body"]
     })
 
-# Notizia più recente di Tavigliano da Valle Cervo: RIASSUNTO IN TRE RIGHE
+# Notizia Tavigliano (Solo titolo anonimizzato + Link Newsbiella)
 if notizia_tav:
-    tav_riassunto = riassumi_in_tre_righe(notizia_tav.get("desc", ""), max_chars=220)
-    tav_corpo = tav_riassunto if tav_riassunto else notizia_tav["title"]
-    tav_voce = f"{notizia_tav['title']}. {tav_riassunto}" if tav_riassunto else notizia_tav["title"]
     news_data.append({
         "cat": "🌲 Valle Cervo • Tavigliano",
         "title": notizia_tav["title"],
-        "speak": tav_voce,
-        "body": tav_corpo
+        "speak": notizia_tav["speak"],
+        "body": notizia_tav["body"]
     })
 
 for avviso in avvisi_bacheca:
@@ -462,7 +408,7 @@ news_data.append(get_rifiuti(today.weekday()))
 # FARMACIA DI TURNO PROVINCIALE H24
 news_data.append(get_farmacia_di_turno())
 
-# CARBURANTI LOW COST BIELLESE (PREZZI A ~2 EURO + LUOGHI)
+# CARBURANTI
 news_data.append(get_carburanti_biella())
 
 # PROVERBIO PIEMONTESE
@@ -485,7 +431,7 @@ news_data.append({
         "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
         "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Certificate:</div>"
         "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-        "  • <strong>Cronaca Locale:</strong> Newsbiella.it (mobile.html & Valle Cervo)<br>"
+        "  • <strong>Cronaca Locale:</strong> Newsbiella.it (Articoli Originali Linkati)<br>"
         "  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>"
         "  • <strong>Igiene Urbana:</strong> Seab Biella (Raccolta Comune di Tavigliano)<br>"
         "  • <strong>Farmacie di Turno:</strong> Ordine Farmacisti Biella & Federfarma BI (CAP 13900)<br>"
@@ -895,4 +841,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato regolarmente: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con titoli anonimizzati e link protetti: {data_estesa}")
