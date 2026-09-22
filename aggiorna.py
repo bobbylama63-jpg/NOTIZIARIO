@@ -72,11 +72,12 @@ def controlla_conformita(titolo, testo):
         return False, "Testo troppo breve"
     return True, "Conforme"
 
-# Funzione per anonimizzare eventuali nomi propri nei titoli
-def anonimizza_titolo(titolo):
-    # Rimuove nomi propri comuni o sigle se presenti, mantenendo il fatto di cronaca
+def varia_titolo_biella(titolo):
     t = pulisci_testo(titolo)
-    # Sostituisce eventuali pattern di nomi propri isolati o iniziali puntate se necessario
+    if "chiavazza" in t.lower() and "truffa" in t.lower():
+        return "Operazione dei Carabinieri a Chiavazza dopo un tentativo di raggiro ai danni di anziani"
+    if "arte" in t.lower() or "mostra" in t.lower():
+        return "Nuovi appuntamenti culturali e mostre d'arte aperte al pubblico a Biella"
     return t
 
 # ==============================================================================
@@ -111,8 +112,7 @@ def get_bacheca_google_fogli():
                             "cat": cat,
                             "title": tit,
                             "speak": testo_lettura,
-                            "body": det if det else tit,
-                            "url": ""
+                            "body": det if det else tit
                         })
     except Exception:
         pass
@@ -149,18 +149,17 @@ def get_meteo():
                 f"• <strong>Venti:</strong> deboli di brezza montana.<br>"
                 f"<div style='margin-top:10px;'><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:0.83rem;'>🌐 Consulta Bollettino Orario 3B Meteo</a></div>"
             )
-            return {"cat": "🌦️ Meteo Tavigliano", "title": f"{descr} ({t_min}°C / {t_max}°C)", "speak": speak, "body": body, "url": ""}
+            return {"cat": "🌦️ Meteo Tavigliano", "title": f"{descr} ({t_min}°C / {t_max}°C)", "speak": speak, "body": body}
     except Exception:
         return {
             "cat": "🌦️ Meteo Tavigliano",
             "title": "Nubi sparse e clima montano",
             "speak": "Previsioni meteo per Tavigliano: nubi sparse con brezze fresche e tempo asciutto.",
-            "body": "Nubi sparse e tempo asciutto lungo la Valle Cervo.<br><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='color:#0284c7; font-weight:700;'>🌐 Apri bollettino 3B Meteo</a>",
-            "url": ""
+            "body": "Nubi sparse e tempo asciutto lungo la Valle Cervo.<br><a href='https://www.3bmeteo.com/meteo/tavigliano' target='_blank' style='color:#0284c7; font-weight:700;'>🌐 Apri bollettino 3B Meteo</a>"
         }
 
 # ==============================================================================
-# 6. PRIME 2 NOTIZIE DA NEWSBIELLA (SOLO TITOLO ANONIMIZZATO + LINK ORIGINALE)
+# 6. PRIME 2 NOTIZIE DA NEWSBIELLA (SOTTO L'ETICHETTA "NOTIZIE DI BIELLA")
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
@@ -190,16 +189,15 @@ def get_prime_due_notizie():
                     continue
                 
                 full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
-                tit_anon = anonimizza_titolo(tit)
+                tit_variato = varia_titolo_biella(tit)
                 
-                valido, _ = controlla_conformita(tit_anon, "")
+                valido, _ = controlla_conformita(tit_variato, "")
                 if valido:
                     seen.add(tit)
                     articoli.append({
-                        "title": tit_anon,
-                        "speak": f"Cronaca e territorio: {tit_anon}",
-                        "body": f"Notizia della redazione territoriale di Newsbiella.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>",
-                        "url": full_url
+                        "title": tit_variato,
+                        "speak": f"Notizie di Biella: {tit_variato}",
+                        "body": f"Cronaca e attualità dal territorio biellese.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
                     })
                 if len(articoli) >= 2:
                     break
@@ -209,22 +207,20 @@ def get_prime_due_notizie():
     if len(articoli) < 2:
         articoli = [
             {
-                "title": "Tentata truffa a Chiavazza con finto tecnico dell'acquedotto",
-                "speak": "Cronaca e territorio: Tentata truffa a Chiavazza con finto tecnico dell'acquedotto.",
-                "body": "Tentativo di raggiro sventato nel quartiere grazie alla prontezza di un residente.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>",
-                "url": "https://www.newsbiella.it"
+                "title": "Operazione dei Carabinieri a Chiavazza dopo un tentativo di raggiro",
+                "speak": "Notizie di Biella: Operazione dei Carabinieri a Chiavazza dopo un tentativo di raggiro.",
+                "body": "Tentativo di truffa sventato ai danni di una coppia di anziani residenti nel quartiere.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>"
             },
             {
-                "title": "Eventi culturali e valorizzazione artistica nel Biellese",
-                "speak": "Cronaca e territorio: Eventi culturali e valorizzazione artistica nel Biellese.",
-                "body": "Iniziative e mostre d'arte aperte al pubblico nei centri della provincia.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>",
-                "url": "https://www.newsbiella.it"
+                "title": "Nuovi appuntamenti culturali e mostre d'arte aperte al pubblico",
+                "speak": "Notizie di Biella: Nuovi appuntamenti culturali e mostre d'arte aperte al pubblico.",
+                "body": "Iniziative e rassegne artistiche promosse nel cuore della città e della provincia.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>"
             }
         ]
     return articoli[:2]
 
 # ==============================================================================
-# 7. NOTIZIA TAVIGLIANO DALLA VALLE CERVO (SOLO TITOLO ANONIMIZZATO + LINK)
+# 7. NOTIZIA TAVIGLIANO / PRATETTO (MENU -> NEWSBIELLA VALLE CERVO)
 # ==============================================================================
 def get_notizia_tavigliano():
     sorgenti_valle = [
@@ -237,28 +233,25 @@ def get_notizia_tavigliano():
             req = urllib.request.Request(url, headers=HEADERS)
             with urllib.request.urlopen(req, timeout=7) as res:
                 raw_text = res.read().decode('utf-8', errors='ignore')
-                if "tavigliano" in raw_text.lower():
+                if "tavigliano" in raw_text.lower() or "pratetto" in raw_text.lower():
                     pattern_link = re.compile(r'<a\b[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/|/mobile/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
                     for href, inner_html in pattern_link.findall(raw_text):
                         tit = pulisci_testo(inner_html)
-                        if "tavigliano" in tit.lower() and len(tit) > 18:
+                        if ("tavigliano" in tit.lower() or "pratetto" in tit.lower()) and len(tit) > 15:
                             full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
-                            tit_anon = anonimizza_titolo(tit)
-                            valido, _ = controlla_conformita(tit_anon, "")
+                            valido, _ = controlla_conformita(tit, "")
                             if valido:
                                 return {
-                                    "title": tit_anon,
-                                    "speak": f"Valle Cervo, Tavigliano: {tit_anon}",
-                                    "body": f"Aggiornamento dal territorio di Tavigliano.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>",
-                                    "url": full_url
+                                    "title": tit,
+                                    "speak": f"Notizie di Tavigliano: {tit}",
+                                    "body": f"Aggiornamento istituzionale e comunitario da Tavigliano e Pratetto.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
                                 }
         except Exception:
             pass
     return {
-        "title": "Aggiornamenti e iniziative per la comunità di Tavigliano",
-        "speak": "Valle Cervo, Tavigliano: Aggiornamenti e iniziative per la comunità di Tavigliano.",
-        "body": "Notizie e aggiornamenti istituzionali dalla Valle Cervo.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>",
-        "url": "https://www.newsbiella.it"
+        "title": "Aggiornamenti e iniziative per la comunità di Tavigliano e Pratetto",
+        "speak": "Notizie di Tavigliano: Aggiornamenti e iniziative per la comunità di Tavigliano e Pratetto.",
+        "body": "Notizie e aggiornamenti dedicati al territorio di Tavigliano e alla frazione Pratetto.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>"
     }
 
 # ==============================================================================
@@ -308,7 +301,7 @@ def get_farmacia_di_turno():
     return {"cat": "💊 Farmacia di Turno • Provincia di Biella", "title": f"Turno H24: {nome}", "speak": speak, "body": body}
 
 # ==============================================================================
-# 10. CARBURANTI: PREZZI A ~2 EURO E LUOGHI PIÙ CONVENIENTI
+# 10. CARBURANTI: PREZZI INTORNO A 2 EURO E LUOGHI PIÙ CONVENIENTI
 # ==============================================================================
 def get_carburanti_biella():
     pb_str = "2.08 €/L"
@@ -381,19 +374,19 @@ news_data = [
     meteo_item
 ]
 
-# Prime 2 notizie (Solo titolo anonimizzato + Link Newsbiella)
+# Prime 2 notizie sotto l'etichetta "Notizie di Biella"
 for art in prime_due:
     news_data.append({
-        "cat": "📰 Cronaca e Territorio",
+        "cat": "📰 Notizie di Biella",
         "title": art["title"],
         "speak": art["speak"],
         "body": art["body"]
     })
 
-# Notizia Tavigliano (Solo titolo anonimizzato + Link Newsbiella)
+# Notizia Tavigliano / Pratetto sotto l'etichetta "Notizie di Tavigliano"
 if notizia_tav:
     news_data.append({
-        "cat": "🌲 Valle Cervo • Tavigliano",
+        "cat": "🌲 Notizie di Tavigliano",
         "title": notizia_tav["title"],
         "speak": notizia_tav["speak"],
         "body": notizia_tav["body"]
@@ -448,7 +441,7 @@ testo_condivisione = (
     f"📻 *NOTIZIARIO DI TAVIGLIANO*\n"
     f"📅 {data_estesa}\n\n"
     f"🌦️ Meteo: {meteo_item['title']}\n"
-    f"📰 Primo piano: {prime_due[0]['title']}\n"
+    f"📰 Notizie di Biella: {prime_due[0]['title']}\n"
     f"⛽ Benzina e Diesel Low Cost Biella • 💊 Farmacia Turno H24\n\n"
     f"▶️ Ascolta l'edizione aggiornata qui:\n"
     f"https://bobbylama63-jpg.github.io/NOTIZIARIO/"
@@ -695,7 +688,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
 <div class="app-container">
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Notizie Newsbiella • Valle Cervo • Farmacia Turno H24 • Carburanti Low Cost Biella • Raccolta Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Notizie di Biella • Notizie di Tavigliano • Farmacia Turno H24 • Carburanti Low Cost • Raccolta Seab</div>
   </div>
 
   <header>
@@ -750,7 +743,7 @@ function renderCards() {{
       </div>
     `;
     newsStream.appendChild(card);
-  }});
+  });
 }}
 
 function startBgMusic() {{
@@ -841,4 +834,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con titoli anonimizzati e link protetti: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con etichetta Notizie di Biella e Tavigliano: {data_estesa}")
