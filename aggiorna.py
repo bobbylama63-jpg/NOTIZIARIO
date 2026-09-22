@@ -73,10 +73,6 @@ def controlla_conformita(titolo, testo):
     return True, "Conforme"
 
 def riassumi_in_tre_righe(testo, max_chars=220):
-    """
-    Riassume il testo in circa 3 righe (circa 200-220 caratteri, 2-3 frasi complete),
-    senza troncare parole né lasciare frasi a metà.
-    """
     if not testo:
         return ""
     t = pulisci_testo(testo)
@@ -101,8 +97,7 @@ def riassumi_in_tre_righe(testo, max_chars=220):
                     pezzo.append(p)
                 else:
                     break
-            tronc = " ".join(pezzo).rstrip(',;: ') + "."
-            return tronc
+            return " ".join(pezzo).rstrip(',;: ') + "."
         else:
             break
             
@@ -190,64 +185,68 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 6. NEWS BIELLA MOBILE: PRIME DUE NOTIZIE RIASSUNTE IN TRE RIGHE
+# 6. PRIME 2 NOTIZIE DA NEWSBIELLA.IT/MOBILE.HTML
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
 def get_prime_due_notizie():
     articoli = []
-    url_mobile = "https://www.newsbiella.it/mobile"
-    
-    # 1. Scansione diretta della versione mobile
-    try:
-        req = urllib.request.Request(url_mobile, headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=8) as res:
-            raw_html = res.read().decode('utf-8', errors='ignore')
-            blocks = re.findall(r'<article[^>]*>(.*?)</article>', raw_html, re.DOTALL | re.IGNORECASE)
-            if not blocks:
-                blocks = re.findall(r'<div[^>]*class="[^"]*(?:news|item|articolo|entry|box-news)[^"]*"[^>]*>(.*?)</div>', raw_html, re.DOTALL | re.IGNORECASE)
-            
-            for b in blocks:
-                t_match = re.search(r'<(?:h[1-4]|a)[^>]*class="[^"]*(?:title|titolo|entry-title)[^"]*"[^>]*>(.*?)</(?:h[1-4]|a)>', b, re.IGNORECASE | re.DOTALL)
-                if not t_match:
-                    t_match = re.search(r'<h[23][^>]*>(.*?)</h[23]>', b, re.IGNORECASE | re.DOTALL)
-                if not t_match:
-                    continue
-                
-                clean_t = pulisci_testo(t_match.group(1))
-                if len(clean_t) < 20 or any(a["title"] == clean_t for a in articoli):
-                    continue
-                
-                d_match = re.search(r'<(?:p|div)[^>]*class="[^"]*(?:abstract|intro|sommario|desc|testo)[^"]*"[^>]*>(.*?)</(?:p|div)>', b, re.IGNORECASE | re.DOTALL)
-                if not d_match:
-                    d_match = re.search(r'<p[^>]*>(.*?)</p>', b, re.IGNORECASE | re.DOTALL)
-                
-                raw_desc = pulisci_testo(d_match.group(1)) if d_match else ""
-                valido, _ = controlla_conformita(clean_t, raw_desc)
-                if valido:
-                    articoli.append({"title": clean_t, "desc": raw_desc})
-                if len(articoli) >= 2:
-                    break
-    except Exception:
-        pass
+    url_primario = "https://www.newsbiella.it/mobile.html"
+    url_secondario = "https://www.newsbiella.it/mobile"
+    esclusioni = ["italpress", "adnkronos", "governo", "scostamento", "serie a", "champions", "milan", "inter", "juventus", "necrologi", "tutte le notizie"]
 
-    # 2. Scansione di riserva tramite RSS
-    if len(articoli) < 2:
+    for u in [url_primario, url_secondario]:
         try:
-            req_rss = urllib.request.Request("https://www.newsbiella.it/rss.xml", headers=HEADERS)
-            with urllib.request.urlopen(req_rss, timeout=8) as res:
-                root = ET.fromstring(res.read().decode('utf-8', errors='ignore'))
-                for item in root.findall('.//item'):
-                    raw_t = item.find('title').text if item.find('title') is not None else ""
-                    raw_d = item.find('description').text if item.find('description') is not None else ""
-                    clean_t = pulisci_testo(raw_t)
-                    clean_d = pulisci_testo(raw_d)
-                    if len(clean_t) > 20 and not any(a["title"] == clean_t for a in articoli):
-                        valido, _ = controlla_conformita(clean_t, clean_d)
-                        if valido:
-                            articoli.append({"title": clean_t, "desc": clean_d})
+            req = urllib.request.Request(u, headers=HEADERS)
+            with urllib.request.urlopen(req, timeout=8) as res:
+                raw_html = res.read().decode('utf-8', errors='ignore')
+                
+                blocks = re.findall(r'<(?:article|div)[^>]*class="[^"]*(?:item|news|articolo|entry|box-news)[^"]*"[^>]*>(.*?)</(?:article|div)>', raw_html, re.DOTALL | re.IGNORECASE)
+                if not blocks:
+                    blocks = re.findall(r'<article[^>]*>(.*?)</article>', raw_html, re.DOTALL | re.IGNORECASE)
+                
+                seen = set()
+                for b in blocks:
+                    t_m = re.search(r'<(?:h[1-4]|a)[^>]*>(.*?)</(?:h[1-4]|a)>', b, re.DOTALL | re.IGNORECASE)
+                    if not t_m:
+                        continue
+                    tit = pulisci_testo(t_m.group(1))
+                    if len(tit) < 20 or tit in seen:
+                        continue
+                    if any(x in tit.lower() for x in esclusioni):
+                        continue
+                        
+                    d_m = re.search(r'<(?:p|div)[^>]*class="[^"]*(?:sommario|intro|abstract|desc|testo)[^"]*"[^>]*>(.*?)</(?:p|div)>', b, re.DOTALL | re.IGNORECASE)
+                    if not d_m:
+                        d_m = re.search(r'<p[^>]*>(.*?)</p>', b, re.DOTALL | re.IGNORECASE)
+                        
+                    desc = ""
+                    if d_m:
+                        desc = pulisci_testo(d_m.group(1))
+                        if desc == tit:
+                            desc = ""
+                            
+                    valido, _ = controlla_conformita(tit, desc)
+                    if valido:
+                        seen.add(tit)
+                        articoli.append({"title": tit, "desc": desc})
                     if len(articoli) >= 2:
                         break
+                        
+                # Scansione di supporto se la struttura a blocchi è diversa
+                if len(articoli) < 2:
+                    h_matches = re.findall(r'<(h[234])[^>]*>(.*?)</\1>', raw_html, re.DOTALL | re.IGNORECASE)
+                    for tag, content in h_matches:
+                        tit = pulisci_testo(content)
+                        if len(tit) >= 22 and tit not in seen and not any(x in tit.lower() for x in esclusioni):
+                            valido, _ = controlla_conformita(tit, "")
+                            if valido:
+                                seen.add(tit)
+                                articoli.append({"title": tit, "desc": ""})
+                            if len(articoli) >= 2:
+                                break
+            if len(articoli) >= 2:
+                break
         except Exception:
             pass
 
@@ -259,13 +258,14 @@ def get_prime_due_notizie():
     return articoli[:2]
 
 # ==============================================================================
-# 7. VALLE CERVO (SOLO TAVIGLIANO)
+# 7. NOTIZIA PIÙ RECENTE DI TAVIGLIANO DALLA SEZIONE VALLE CERVO
 # ==============================================================================
 def get_notizia_tavigliano():
     sorgenti_valle = [
-        "https://www.newsbiella.it/rss.xml",
+        "https://www.newsbiella.it/sommario/argomenti/valle-cervo.html",
+        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo.html",
-        "https://www.newsbiella.it/sommario/argomenti/valle-cervo.html"
+        "https://www.newsbiella.it/rss.xml"
     ]
     for url in sorgenti_valle:
         try:
@@ -285,10 +285,26 @@ def get_notizia_tavigliano():
                                 if valido:
                                     return {"title": clean_t, "desc": clean_d}
                     else:
-                        pattern = re.compile(r'<(?:h2|h3|a)[^>]*>(.*?)</(?:h2|h3|a)>', re.IGNORECASE | re.DOTALL)
-                        matches = pattern.findall(raw_text)
-                        for m in matches:
-                            clean_t = pulisci_testo(m)
+                        blocks = re.findall(r'<(?:article|div)[^>]*class="[^"]*(?:item|news|articolo|entry|box-news)[^"]*"[^>]*>(.*?)</(?:article|div)>', raw_text, re.DOTALL | re.IGNORECASE)
+                        if not blocks:
+                            blocks = re.findall(r'<article[^>]*>(.*?)</article>', raw_text, re.DOTALL | re.IGNORECASE)
+                        for b in blocks:
+                            if "tavigliano" in b.lower():
+                                t_m = re.search(r'<(?:h[1-4]|a)[^>]*>(.*?)</(?:h[1-4]|a)>', b, re.DOTALL | re.IGNORECASE)
+                                if not t_m:
+                                    continue
+                                tit = pulisci_testo(t_m.group(1))
+                                d_m = re.search(r'<(?:p|div)[^>]*class="[^"]*(?:sommario|intro|abstract|desc|testo)[^"]*"[^>]*>(.*?)</(?:p|div)>', b, re.DOTALL | re.IGNORECASE)
+                                if not d_m:
+                                    d_m = re.search(r'<p[^>]*>(.*?)</p>', b, re.DOTALL | re.IGNORECASE)
+                                desc = pulisci_testo(d_m.group(1)) if d_m else ""
+                                valido, _ = controlla_conformita(tit, desc)
+                                if valido and len(tit) > 15:
+                                    return {"title": tit, "desc": desc}
+
+                        matches = re.findall(r'<(h[234]|a)[^>]*>(.*?)</\1>', raw_text, re.DOTALL | re.IGNORECASE)
+                        for tag, content in matches:
+                            clean_t = pulisci_testo(content)
                             if "tavigliano" in clean_t.lower() and len(clean_t) > 20:
                                 valido, _ = controlla_conformita(clean_t, "")
                                 if valido:
@@ -510,7 +526,7 @@ news_data = [
     meteo_item
 ]
 
-# Inserimento articoli: RIASSUNTO IN TRE RIGHE (SENZA FONTI NEL PARLATO)
+# Prime 2 notizie da mobile.html: RIASSUNTO IN TRE RIGHE (SENZA FONTI NEL PARLATO)
 for art in prime_due:
     riassunto = riassumi_in_tre_righe(art.get("desc", ""), max_chars=220)
     testo_corpo = riassunto if riassunto else art["title"]
@@ -522,6 +538,7 @@ for art in prime_due:
         "body": testo_corpo
     })
 
+# Notizia più recente di Tavigliano da Valle Cervo: RIASSUNTO IN TRE RIGHE
 if notizia_tav:
     tav_riassunto = riassumi_in_tre_righe(notizia_tav.get("desc", ""), max_chars=220)
     tav_corpo = tav_riassunto if tav_riassunto else notizia_tav["title"]
@@ -565,7 +582,7 @@ news_data.append({
         "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
         "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Certificate:</div>"
         "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-        "  • <strong>Cronaca Locale:</strong> Newsbiella.it (Versione Mobile)<br>"
+        "  • <strong>Cronaca Locale:</strong> Newsbiella.it (mobile.html & Sezione Valle Cervo)<br>"
         "  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>"
         "  • <strong>Igiene Urbana:</strong> Seab Biella (Raccolta Comune di Tavigliano)<br>"
         "  • <strong>Farmacie di Turno:</strong> Ordine Farmacisti Biella & Federfarma BI (CAP 13900)<br>"
@@ -829,7 +846,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
 <div class="app-container">
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Meteo 3B Meteo • Ultime Notizie Territoriali • Bacheca Tavigliano • Farmacia di Turno H24 • Benzina e Diesel Low Cost Biella • Raccolta Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Meteo 3B Meteo • Cronaca del Biellese • Valle Cervo • Farmacia di Turno H24 • Benzina e Diesel Low Cost Biella • Raccolta Seab</div>
   </div>
 
   <header>
@@ -975,4 +992,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con notizie riassunte in 3 righe: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con mobile.html e Valle Cervo: {data_estesa}")
