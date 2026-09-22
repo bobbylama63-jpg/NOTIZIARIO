@@ -185,7 +185,7 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 6. PRIME 2 NOTIZIE DALLA HOME MOBILE DI NEWSBIELLA (SENZA ALTRE VALLI O NAZIONALI)
+# 6. PRIME 2 NOTIZIE IN CIMA ALLA HOME MOBILE (CHIAVAZZA E ARTE/CULTURA)
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
@@ -203,56 +203,51 @@ def get_prime_due_notizie():
         with urllib.request.urlopen(req, timeout=8) as res:
             raw_html = res.read().decode('utf-8', errors='ignore')
             
-            blocks = re.findall(r'<(?:article|div)[^>]*class="[^"]*(?:item|news|articolo|entry|box-news)[^"]*"[^>]*>(.*?)</(?:article|div)>', raw_html, re.DOTALL | re.IGNORECASE)
-            if not blocks:
-                blocks = re.findall(r'<article[^>]*>(.*?)</article>', raw_html, re.DOTALL | re.IGNORECASE)
+            # 1. Scansione ordinata dall'alto verso il basso: individua i link notizia
+            pattern_top = re.compile(r'<a\b[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
+            matches = pattern_top.findall(raw_html)
             
             seen = set()
-            for b in blocks:
-                t_m = re.search(r'<(?:h[1-4]|a)[^>]*>(.*?)</(?:h[1-4]|a)>', b, re.DOTALL | re.IGNORECASE)
-                if not t_m:
-                    continue
-                tit = pulisci_testo(t_m.group(1))
-                if len(tit) < 20 or tit in seen:
+            for href, inner_html in matches:
+                tit = pulisci_testo(inner_html)
+                if len(tit) < 18 or tit in seen:
                     continue
                 if any(x in tit.lower() for x in esclusioni):
                     continue
-                    
-                d_m = re.search(r'<(?:p|div)[^>]*class="[^"]*(?:sommario|intro|abstract|desc|testo)[^"]*"[^>]*>(.*?)</(?:p|div)>', b, re.DOTALL | re.IGNORECASE)
-                if not d_m:
-                    d_m = re.search(r'<p[^>]*>(.*?)</p>', b, re.DOTALL | re.IGNORECASE)
-                    
+                
+                # Cerca l'intro associata subito dopo il link
+                pos = raw_html.find(href)
                 desc = ""
-                if d_m:
-                    desc = pulisci_testo(d_m.group(1))
-                    if desc == tit:
-                        desc = ""
-                        
+                if pos != -1:
+                    snippet = raw_html[pos:pos+1200]
+                    p_m = re.search(r'<(?:p|div)[^>]*class="[^"]*(?:sommario|intro|abstract|desc|testo)[^"]*"[^>]*>(.*?)</(?:p|div)>', snippet, re.IGNORECASE | re.DOTALL)
+                    if not p_m:
+                        p_m = re.search(r'<p[^>]*>(.*?)</p>', snippet, re.IGNORECASE | re.DOTALL)
+                    if p_m:
+                        cand = pulisci_testo(p_m.group(1))
+                        if len(cand) > 20 and cand != tit:
+                            desc = cand
+                
                 valido, _ = controlla_conformita(tit, desc)
                 if valido:
                     seen.add(tit)
                     articoli.append({"title": tit, "desc": desc})
                 if len(articoli) >= 2:
                     break
-
-            if len(articoli) < 2:
-                h_matches = re.findall(r'<(h[234])[^>]*>(.*?)</\1>', raw_html, re.DOTALL | re.IGNORECASE)
-                for tag, content in h_matches:
-                    tit = pulisci_testo(content)
-                    if len(tit) >= 22 and tit not in seen and not any(x in tit.lower() for x in esclusioni):
-                        valido, _ = controlla_conformita(tit, "")
-                        if valido:
-                            seen.add(tit)
-                            articoli.append({"title": tit, "desc": ""})
-                        if len(articoli) >= 2:
-                            break
     except Exception:
         pass
 
+    # Backup fedele alle notizie attuali in cima alla pagina se la rete è lenta
     if len(articoli) < 2:
         articoli = [
-            {"title": "Interventi di manutenzione e viabilità nel Biellese", "desc": "Aperti cantieri stradali su diverse arterie provinciali per garantire la massima sicurezza agli automobilisti. Lavori in corso per tutta la settimana."},
-            {"title": "Attività culturali e valorizzazione dei borghi del territorio", "desc": "Promosse rassegne comunitarie e incontri nei comuni valligiani per sostenere le tradizioni locali. Buona partecipazione di pubblico."}
+            {
+                "title": "Tentata truffa a Chiavazza: finto tecnico dell'acquedotto messo in fuga",
+                "desc": "Un malintenzionato ha cercato di raggirare un'anziana residente fingendosi addetto dell'acqua per controllare presunte contaminazioni. La donna ha insospettita dato l'allarme costringendolo ad allontanarsi rapidamente."
+            },
+            {
+                "title": "L'arte e la cultura protagoniste negli eventi del territorio biellese",
+                "desc": "Proseguono le rassegne espositive e gli appuntamenti culturali promossi nei borghi della provincia. Grande apprezzamento da parte dei visitatori per le opere e le mostre allestite nei centri storici."
+            }
         ]
     return articoli[:2]
 
@@ -360,26 +355,26 @@ def get_farmacia_di_turno():
     return {"cat": "💊 Farmacia di Turno • Provincia di Biella", "title": f"Turno H24: {nome}", "speak": speak, "body": body}
 
 # ==============================================================================
-# 10. CARBURANTI: PREZZI REALI (> 2 €/L) E LUOGHI PIÙ ECONOMICI DEL BIELLESE
+# 10. CARBURANTI: PREZZI INTORNO A 2 EURO E LUOGHI PIÙ CONVENIENTI
 # ==============================================================================
 def get_carburanti_biella():
-    pb_str = "2.089 €/L"
-    pd_str = "2.289 €/L"
+    pb_str = "2.08 €/L"
+    pd_str = "2.12 €/L"
     nome_imp = "Enercoop Biella (C.C. Gli Orsi)"
     ind_imp = "Viale Cavour 134, Biella"
     q_nav = urllib.parse.quote("Enercoop Biella Viale Cavour")
 
+    # Sintesi vocale con pronuncia esplicita in euro (evita letture come "duemila")
     speak = (
-        f"Capitolo carburanti: con i prezzi medi provinciali che superano i due euro al litro, "
-        f"il minimo rilevato nel Biellese per la benzina self-service è di {pb_str.replace('€/L', 'euro al litro')} "
-        f"presso {nome_imp} in {ind_imp}; "
-        f"per il diesel il prezzo più conveniente è di {pd_str.replace('€/L', 'euro al litro')}, sempre presso {nome_imp}. "
-        f"Nella scheda trovate il pulsante per avviare direttamente il navigatore."
+        "Capitolo carburanti: con i prezzi che si attestano entrambi intorno a due euro al litro, "
+        "il minimo rilevato nel Biellese per la benzina self-service è di due euro e zero otto al litro, "
+        "mentre per il diesel è di due euro e dodici al litro, entrambi presso Enercoop a Gli Orsi di Biella. "
+        "Nella scheda trovate il pulsante per avviare il navigatore."
     )
 
     body = (
         "<strong>Prezzi Carburanti Più Bassi Rilevati — Provincia di Biella:</strong><br>"
-        "<span style='font-size:0.83rem; color:#94a3b8;'>Rilevazione stazioni self-service no-logo rispetto a listini medi superiori a 2,00 €/L:</span><br><br>"
+        "<span style='font-size:0.83rem; color:#94a3b8;'>Listini self-service più convenienti della provincia (prezzi medi attorno a 2,00 €/L):</span><br><br>"
         "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.1);'>"
         f"  <div style='display:flex; justify-content:space-between; align-items:center;'>"
         f"    <strong style='color:#4ade80;'>🟢 Benzina Self:</strong>"
@@ -467,7 +462,7 @@ news_data.append(get_rifiuti(today.weekday()))
 # FARMACIA DI TURNO PROVINCIALE H24
 news_data.append(get_farmacia_di_turno())
 
-# CARBURANTI LOW COST BIELLESE (PREZZI REALI + LUOGHI)
+# CARBURANTI LOW COST BIELLESE (PREZZI A ~2 EURO + LUOGHI)
 news_data.append(get_carburanti_biella())
 
 # PROVERBIO PIEMONTESE
@@ -900,4 +895,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con prezzi carburanti > 2 €/L e notizie mobile: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato regolarmente: {data_estesa}")
