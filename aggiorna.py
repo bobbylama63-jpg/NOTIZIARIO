@@ -202,7 +202,6 @@ def get_notizie_biella_unicablock():
             }
         ]
 
-    # Costruzione del blocco unico con le 2 notizie sotto la stessa etichetta
     speak_text = f"Notizie di Biella: {articoli[0]['title']}. {articoli[1]['title']}."
     body_html = (
         f"1. <strong>{articoli[0]['title']}</strong><br>"
@@ -792,13 +791,13 @@ function stopVoiceOnly() {{
   }}
 }}
 
-function stopBroadcast() {
+function stopBroadcast() {{
   stopVoiceOnly();
   stopBgMusic();
   currentTrack = -1;
   onAirSign.classList.remove('active');
   btnMaster.innerText = '▶️ AVVIA TRASMISSIONE COMPLETA';
-}
+}}
 
 window.toggleMasterBroadcast = function() {{
   if (synth.speaking) {{
