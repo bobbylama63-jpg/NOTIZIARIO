@@ -49,7 +49,7 @@ candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glo
 mp3_file = candidati_mp3[0].replace(chr(92), "/") if candidati_mp3 else "headlineupdate.mp3"
 
 # ==============================================================================
-# 3. PULIZIA TESTO & FILTRI DI SICUREZZA
+# 3. PULIZIA TESTO & VARIAZIONE TITOLI
 # ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
@@ -71,6 +71,22 @@ def controlla_conformita(titolo, testo):
     if len(titolo.strip()) < 5:
         return False, "Testo troppo breve"
     return True, "Conforme"
+
+def varia_titolo(titolo):
+    t = pulisci_testo(titolo)
+    # Variazioni specifiche sui temi correnti
+    if "chiavazza" in t.lower() and "truffa" in t.lower():
+        return "Chiavazza: sventata truffa ad anziani con l'intervento dei Carabinieri"
+    if "arte che nutre" in t.lower() or ("arte" in t.lower() and "nutre" in t.lower()):
+        return "Rassegna 'L'arte che nutre': esposizioni e mostre culturali nel Biellese"
+    
+    # Variazioni generiche per titoli futuri (riformulazione e anonimizzazione)
+    t = re.sub(r'\bnel mirino una coppia di anziani\b', 'ai danni di cittadini anziani', t, flags=re.IGNORECASE)
+    t = re.sub(r':\s*fermato un uomo dai Carabinieri', ' - Intervento risolutivo dei Carabinieri', t, flags=re.IGNORECASE)
+    t = re.sub(r'\bnel mirino\b', 'ai danni di', t, flags=re.IGNORECASE)
+    t = re.sub(r'\bspunta\b', 'presentata', t, flags=re.IGNORECASE)
+    t = re.sub(r'\bmaxi\b', 'vasto', t, flags=re.IGNORECASE)
+    return t.strip(" -:")
 
 # ==============================================================================
 # 4. BACHECA GOOGLE FOGLI
@@ -151,7 +167,7 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 6. PRIME 2 NOTIZIE DA NEWSBIELLA (UNICA ETICHETTA CON LE 2 NOTIZIE)
+# 6. PRIME 2 NOTIZIE DA NEWSBIELLA (UNICA ETICHETTA CON TITOLI VARIATI)
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
@@ -184,7 +200,7 @@ def get_notizie_biella_unicablock():
                 valido, _ = controlla_conformita(tit, "")
                 if valido:
                     seen.add(tit)
-                    articoli.append({"title": tit, "url": full_url})
+                    articoli.append({"title": varia_titolo(tit), "url": full_url})
                 if len(articoli) >= 2:
                     break
     except Exception:
@@ -193,32 +209,34 @@ def get_notizie_biella_unicablock():
     if len(articoli) < 2:
         articoli = [
             {
-                "title": "Tentata truffa a Chiavazza, nel mirino una coppia di anziani: fermato un uomo dai Carabinieri",
+                "title": "Chiavazza: sventata truffa ad anziani con l'intervento dei Carabinieri",
                 "url": "https://www.newsbiella.it"
             },
             {
-                "title": "L'arte che nutre: grandi eventi e mostre aperte al pubblico nel Biellese",
+                "title": "Rassegna 'L'arte che nutre': esposizioni e mostre culturali nel Biellese",
                 "url": "https://www.newsbiella.it"
             }
         ]
 
-    speak_text = f"Notizie di Biella: {articoli[0]['title']}. {articoli[1]['title']}."
+    t1 = articoli[0]["title"]
+    t2 = articoli[1]["title"]
+    speak_text = f"Notizie di Biella: {t1}. {t2}."
     body_html = (
-        f"1. <strong>{articoli[0]['title']}</strong><br>"
+        f"1. <strong>{t1}</strong><br>"
         f"<a href='{articoli[0]['url']}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo su Newsbiella ➔</a><br><br>"
-        f"2. <strong>{articoli[1]['title']}</strong><br>"
+        f"2. <strong>{t2}</strong><br>"
         f"<a href='{articoli[1]['url']}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo su Newsbiella ➔</a>"
     )
 
     return {
         "cat": "📰 Notizie di Biella",
-        "title": f"{articoli[0]['title']} • {articoli[1]['title']}",
+        "title": f"{t1} • {t2}",
         "speak": speak_text,
         "body": body_html
     }
 
 # ==============================================================================
-# 7. NOTIZIA TAVIGLIANO / PRATETTO (SEZIONE VALLE CERVO)
+# 7. NOTIZIA TAVIGLIANO / PRATETTO (SEZIONE VALLE CERVO CON TITOLO VARIATO)
 # ==============================================================================
 def get_notizia_tavigliano():
     sorgenti_valle = [
@@ -239,11 +257,12 @@ def get_notizia_tavigliano():
                             full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
                             valido, _ = controlla_conformita(tit, "")
                             if valido:
+                                t_var = varia_titolo(tit)
                                 return {
                                     "cat": "🌲 Notizie di Tavigliano",
-                                    "title": tit,
-                                    "speak": f"Notizie di Tavigliano: {tit}",
-                                    "body": f"Aggiornamento istituzionale e comunitario da Tavigliano e Pratetto.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
+                                    "title": t_var,
+                                    "speak": f"Notizie di Tavigliano: {t_var}.",
+                                    "body": f"<strong>{t_var}</strong><br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
                                 }
         except Exception:
             pass
@@ -818,4 +837,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con successo: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con titoli variati e link: {data_estesa}")
