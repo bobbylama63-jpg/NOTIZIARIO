@@ -72,14 +72,6 @@ def controlla_conformita(titolo, testo):
         return False, "Testo troppo breve"
     return True, "Conforme"
 
-def varia_titolo_biella(titolo):
-    t = pulisci_testo(titolo)
-    if "chiavazza" in t.lower() and "truffa" in t.lower():
-        return "Operazione dei Carabinieri a Chiavazza dopo un tentativo di raggiro ai danni di anziani"
-    if "arte" in t.lower() or "mostra" in t.lower():
-        return "Nuovi appuntamenti culturali e mostre d'arte aperte al pubblico a Biella"
-    return t
-
 # ==============================================================================
 # 4. BACHECA GOOGLE FOGLI
 # ==============================================================================
@@ -159,11 +151,11 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 6. PRIME 2 NOTIZIE DA NEWSBIELLA (SOTTO L'ETICHETTA "NOTIZIE DI BIELLA")
+# 6. PRIME 2 NOTIZIE DA NEWSBIELLA (UNICA ETICHETTA CON LE 2 NOTIZIE)
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
-def get_prime_due_notizie():
+def get_notizie_biella_unicablock():
     articoli = []
     esclusioni = [
         "valsessera", "valsesia", "mosso e sessera", "torino", "canavese",
@@ -189,16 +181,10 @@ def get_prime_due_notizie():
                     continue
                 
                 full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
-                tit_variato = varia_titolo_biella(tit)
-                
-                valido, _ = controlla_conformita(tit_variato, "")
+                valido, _ = controlla_conformita(tit, "")
                 if valido:
                     seen.add(tit)
-                    articoli.append({
-                        "title": tit_variato,
-                        "speak": f"Notizie di Biella: {tit_variato}",
-                        "body": f"Cronaca e attualità dal territorio biellese.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
-                    })
+                    articoli.append({"title": tit, "url": full_url})
                 if len(articoli) >= 2:
                     break
     except Exception:
@@ -207,20 +193,33 @@ def get_prime_due_notizie():
     if len(articoli) < 2:
         articoli = [
             {
-                "title": "Operazione dei Carabinieri a Chiavazza dopo un tentativo di raggiro",
-                "speak": "Notizie di Biella: Operazione dei Carabinieri a Chiavazza dopo un tentativo di raggiro.",
-                "body": "Tentativo di truffa sventato ai danni di una coppia di anziani residenti nel quartiere.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>"
+                "title": "Tentata truffa a Chiavazza, nel mirino una coppia di anziani: fermato un uomo dai Carabinieri",
+                "url": "https://www.newsbiella.it"
             },
             {
-                "title": "Nuovi appuntamenti culturali e mostre d'arte aperte al pubblico",
-                "speak": "Notizie di Biella: Nuovi appuntamenti culturali e mostre d'arte aperte al pubblico.",
-                "body": "Iniziative e rassegne artistiche promosse nel cuore della città e della provincia.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>"
+                "title": "L'arte che nutre: grandi eventi e mostre aperte al pubblico nel Biellese",
+                "url": "https://www.newsbiella.it"
             }
         ]
-    return articoli[:2]
+
+    # Costruzione del blocco unico con le 2 notizie sotto la stessa etichetta
+    speak_text = f"Notizie di Biella: {articoli[0]['title']}. {articoli[1]['title']}."
+    body_html = (
+        f"1. <strong>{articoli[0]['title']}</strong><br>"
+        f"<a href='{articoli[0]['url']}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo su Newsbiella ➔</a><br><br>"
+        f"2. <strong>{articoli[1]['title']}</strong><br>"
+        f"<a href='{articoli[1]['url']}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo su Newsbiella ➔</a>"
+    )
+
+    return {
+        "cat": "📰 Notizie di Biella",
+        "title": f"{articoli[0]['title']} • {articoli[1]['title']}",
+        "speak": speak_text,
+        "body": body_html
+    }
 
 # ==============================================================================
-# 7. NOTIZIA TAVIGLIANO / PRATETTO (MENU -> NEWSBIELLA VALLE CERVO)
+# 7. NOTIZIA TAVIGLIANO / PRATETTO (SEZIONE VALLE CERVO)
 # ==============================================================================
 def get_notizia_tavigliano():
     sorgenti_valle = [
@@ -242,6 +241,7 @@ def get_notizia_tavigliano():
                             valido, _ = controlla_conformita(tit, "")
                             if valido:
                                 return {
+                                    "cat": "🌲 Notizie di Tavigliano",
                                     "title": tit,
                                     "speak": f"Notizie di Tavigliano: {tit}",
                                     "body": f"Aggiornamento istituzionale e comunitario da Tavigliano e Pratetto.<br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
@@ -249,6 +249,7 @@ def get_notizia_tavigliano():
         except Exception:
             pass
     return {
+        "cat": "🌲 Notizie di Tavigliano",
         "title": "Aggiornamenti e iniziative per la comunità di Tavigliano e Pratetto",
         "speak": "Notizie di Tavigliano: Aggiornamenti e iniziative per la comunità di Tavigliano e Pratetto.",
         "body": "Notizie e aggiornamenti dedicati al territorio di Tavigliano e alla frazione Pratetto.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo su Newsbiella ➔</a></div>"
@@ -351,7 +352,7 @@ def get_carburanti_biella():
 # 11. COMPOSIZIONE GENERALE DEL NOTIZIARIO
 # ==============================================================================
 meteo_item = get_meteo()
-prime_due = get_prime_due_notizie()
+notizie_biella_block = get_notizie_biella_unicablock()
 notizia_tav = get_notizia_tavigliano()
 avvisi_bacheca = get_bacheca_google_fogli()
 
@@ -371,26 +372,10 @@ news_data = [
         "speak": f"Buongiorno Tavigliano! Oggi è {giorno_settimana} {today.day} {nome_mese}. Santo del giorno: {santo}.",
         "body": f"• <strong>Data:</strong> {giorno_settimana} {today.day} {nome_mese} {today.year}<br>• <strong>Santo del giorno:</strong> {santo}"
     },
-    meteo_item
+    meteo_item,
+    notizie_biella_block,
+    notizia_tav
 ]
-
-# Prime 2 notizie sotto l'etichetta "Notizie di Biella"
-for art in prime_due:
-    news_data.append({
-        "cat": "📰 Notizie di Biella",
-        "title": art["title"],
-        "speak": art["speak"],
-        "body": art["body"]
-    })
-
-# Notizia Tavigliano / Pratetto sotto l'etichetta "Notizie di Tavigliano"
-if notizia_tav:
-    news_data.append({
-        "cat": "🌲 Notizie di Tavigliano",
-        "title": notizia_tav["title"],
-        "speak": notizia_tav["speak"],
-        "body": notizia_tav["body"]
-    })
 
 for avviso in avvisi_bacheca:
     news_data.append(avviso)
@@ -441,7 +426,7 @@ testo_condivisione = (
     f"📻 *NOTIZIARIO DI TAVIGLIANO*\n"
     f"📅 {data_estesa}\n\n"
     f"🌦️ Meteo: {meteo_item['title']}\n"
-    f"📰 Notizie di Biella: {prime_due[0]['title']}\n"
+    f"📰 Notizie di Biella: {notizie_biella_block['title']}\n"
     f"⛽ Benzina e Diesel Low Cost Biella • 💊 Farmacia Turno H24\n\n"
     f"▶️ Ascolta l'edizione aggiornata qui:\n"
     f"https://bobbylama63-jpg.github.io/NOTIZIARIO/"
@@ -807,13 +792,13 @@ function stopVoiceOnly() {{
   }}
 }}
 
-function stopBroadcast() {{
+function stopBroadcast() {
   stopVoiceOnly();
   stopBgMusic();
   currentTrack = -1;
   onAirSign.classList.remove('active');
   btnMaster.innerText = '▶️ AVVIA TRASMISSIONE COMPLETA';
-}}
+}
 
 window.toggleMasterBroadcast = function() {{
   if (synth.speaking) {{
@@ -834,4 +819,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato e corretto: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con successo: {data_estesa}")
