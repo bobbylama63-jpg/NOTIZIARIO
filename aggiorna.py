@@ -418,7 +418,7 @@ news_data.append({
     "title": "Riepilogo Ufficiale Fonti del Notiziario",
     "speak": (
         "Notiziario completato. Le fonti ufficiali consultate sono riepilogate in fondo al notiziario. "
-        "Una buona giornata a tutta la comunità di Tavigliano!"
+        "Ancora una buona giornata a tutta la comunità di Tavigliano!"
     ),
     "body": (
         "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
@@ -743,7 +743,7 @@ function renderCards() {{
       </div>
     `;
     newsStream.appendChild(card);
-  });
+  }});
 }}
 
 function startBgMusic() {{
@@ -834,4 +834,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con etichetta Notizie di Biella e Tavigliano: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato e corretto: {data_estesa}")
