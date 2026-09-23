@@ -352,7 +352,7 @@ news_data.append({
 })
 
 # ==============================================================================
-# 11. GENERATORE HTML COMPLETO CON SISTEMA ANTI-STANDBY
+# 11. GENERATORE HTML COMPLETO (AUDIO STABILE SENZA INTERRUZIONI)
 # ==============================================================================
 testo_condivisione = (
     f"📻 *NOTIZIARIO DI TAVIGLIANO*\n"
@@ -635,15 +635,16 @@ const NEWS = {json_news};
 
 const synth = window.speechSynthesis;
 let currentTrack = -1;
+let isBroadcasting = false;
 let wakeLock = null;
-let keepAliveTimer = null;
+window.activeUtterance = null; // Riferimento permanente per evitare la chiusura da parte del browser
 
 const newsStream = document.getElementById('newsStream');
 const onAirSign = document.getElementById('onAirSign');
 const btnMaster = document.getElementById('btnMasterPlay');
 const bgMusic = document.getElementById('bgMusic');
 
-// SISTEMA ANTI-STANDBY: IMPEDISCE LO SPEGNIMENTO DELLO SCHERMO
+// SISTEMA SCREEN WAKE LOCK (Mantiene acceso lo schermo durante l'ascolto)
 async function requestWakeLock() {{
   try {{
     if ('wakeLock' in navigator) {{
@@ -660,43 +661,6 @@ function releaseWakeLock() {{
     wakeLock.release().catch(() => {{}});
     wakeLock = null;
   }}
-}}
-
-document.addEventListener('visibilitychange', async () => {{
-  if (wakeLock !== null && document.visibilityState === 'visible') {{
-    await requestWakeLock();
-  }}
-}});
-
-// SPEECHSYNTHESIS KEEP-ALIVE: PREVIENE IL BLOCCO DOPO 15 SECONDI
-function startKeepAlive() {{
-  clearInterval(keepAliveTimer);
-  keepAliveTimer = setInterval(() => {{
-    if (synth && synth.speaking) {{
-      synth.pause();
-      synth.resume();
-    }}
-  }}, 10000);
-}}
-
-function stopKeepAlive() {{
-  clearInterval(keepAliveTimer);
-  keepAliveTimer = null;
-}}
-
-// MEDIA SESSION: MANTIENE ATTIVO L'AUDIO COME LETTORE MULTIMEDIALE
-if ('mediaSession' in navigator) {{
-  navigator.mediaSession.metadata = new MediaMetadata({{
-    title: 'Notiziario di Tavigliano',
-    artist: 'Edizione Giornaliera',
-    album: 'Radio Notiziario Locale'
-  }});
-  navigator.mediaSession.setActionHandler('play', () => {{
-    if (!synth.speaking) toggleMasterBroadcast();
-  }});
-  navigator.mediaSession.setActionHandler('pause', () => {{
-    stopBroadcast();
-  }});
 }}
 
 function renderCards() {{
@@ -724,7 +688,7 @@ function renderCards() {{
 
 function startBgMusic() {{
   if (bgMusic) {{
-    bgMusic.volume = 0.22;
+    bgMusic.volume = 0.20;
     bgMusic.play().catch(() => {{}});
   }}
 }}
@@ -739,15 +703,14 @@ window.playSingleItem = function(index) {{
   if (currentTrack === index && synth.speaking) {{
     stopBroadcast();
   }} else {{
+    isBroadcasting = false;
     requestWakeLock();
-    startKeepAlive();
     startBgMusic();
     startVoice(index, false);
   }}
 }};
 
 function startVoice(index, autoNext) {{
-  stopVoiceOnly();
   currentTrack = index;
   const item = NEWS[index];
 
@@ -760,25 +723,41 @@ function startVoice(index, autoNext) {{
 
   onAirSign.classList.add('active');
 
-  const utter = new SpeechSynthesisUtterance(item.speak);
-  utter.lang = 'it-IT';
-  utter.rate = 0.95;
+  // Interrompe eventuale parlato residuo prima di avviare il nuovo blocco
+  synth.cancel();
 
-  utter.onend = () => {{
+  // Istanzia la voce e la memorizza nella variabile globale per evitare la chiusura del browser
+  window.activeUtterance = new SpeechSynthesisUtterance(item.speak);
+  window.activeUtterance.lang = 'it-IT';
+  window.activeUtterance.rate = 0.95;
+
+  window.activeUtterance.onend = () => {{
     if (activeCard) activeCard.classList.remove('active-play');
-    if (autoNext && index + 1 < NEWS.length) {{
+    if (autoNext && isBroadcasting && index + 1 < NEWS.length) {{
+      setTimeout(() => {{
+        if (isBroadcasting) startVoice(index + 1, true);
+      }}, 300);
+    }} else if (index + 1 >= NEWS.length) {{
+      stopBroadcast();
+    }}
+  }};
+
+  window.activeUtterance.onerror = (e) => {{
+    // Ignora errori di interruzione fittizia durante il passaggio di traccia
+    if (e.error === 'interrupted' || e.error === 'canceled') return;
+    if (autoNext && isBroadcasting && index + 1 < NEWS.length) {{
       startVoice(index + 1, true);
     }} else {{
       stopBroadcast();
     }}
   }};
-  utter.onerror = () => stopBroadcast();
 
-  synth.speak(utter);
+  synth.speak(window.activeUtterance);
 }}
 
 function stopVoiceOnly() {{
   synth.cancel();
+  window.activeUtterance = null;
   if (currentTrack >= 0) {{
     const el = document.getElementById(`card-${{currentTrack}}`);
     if (el) el.classList.remove('active-play');
@@ -786,9 +765,9 @@ function stopVoiceOnly() {{
 }}
 
 function stopBroadcast() {{
+  isBroadcasting = false;
   stopVoiceOnly();
   stopBgMusic();
-  stopKeepAlive();
   releaseWakeLock();
   currentTrack = -1;
   onAirSign.classList.remove('active');
@@ -796,12 +775,12 @@ function stopBroadcast() {{
 }}
 
 window.toggleMasterBroadcast = function() {{
-  if (synth.speaking) {{
+  if (synth.speaking || isBroadcasting) {{
     stopBroadcast();
   }} else {{
+    isBroadcasting = true;
     btnMaster.innerText = '⏸️ METTI IN PAUSA';
     requestWakeLock();
-    startKeepAlive();
     startBgMusic();
     startVoice(0, true);
   }}
@@ -816,4 +795,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con sistema Anti-Standby: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con audio stabile e continuo: {data_estesa}")
