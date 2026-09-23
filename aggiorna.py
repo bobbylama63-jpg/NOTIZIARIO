@@ -283,7 +283,7 @@ def get_carburanti_biella():
     }
 
 # ==============================================================================
-# 10. COMPOSIZIONE GENERALE DEL NOTIZIARIO (SENZA NOTIZIE DI BIELLA)
+# 10. COMPOSIZIONE GENERALE DEL NOTIZIARIO
 # ==============================================================================
 meteo_item = get_meteo()
 notizia_tav = get_notizia_tavigliano()
@@ -352,7 +352,7 @@ news_data.append({
 })
 
 # ==============================================================================
-# 11. GENERATORE HTML COMPLETO
+# 11. GENERATORE HTML COMPLETO CON SISTEMA ANTI-STANDBY
 # ==============================================================================
 testo_condivisione = (
     f"📻 *NOTIZIARIO DI TAVIGLIANO*\n"
@@ -635,10 +635,69 @@ const NEWS = {json_news};
 
 const synth = window.speechSynthesis;
 let currentTrack = -1;
+let wakeLock = null;
+let keepAliveTimer = null;
+
 const newsStream = document.getElementById('newsStream');
 const onAirSign = document.getElementById('onAirSign');
 const btnMaster = document.getElementById('btnMasterPlay');
 const bgMusic = document.getElementById('bgMusic');
+
+// SISTEMA ANTI-STANDBY: IMPEDISCE LO SPEGNIMENTO DELLO SCHERMO
+async function requestWakeLock() {{
+  try {{
+    if ('wakeLock' in navigator) {{
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => {{
+        wakeLock = null;
+      }});
+    }}
+  }} catch (e) {{}}
+}}
+
+function releaseWakeLock() {{
+  if (wakeLock) {{
+    wakeLock.release().catch(() => {{}});
+    wakeLock = null;
+  }}
+}}
+
+document.addEventListener('visibilitychange', async () => {{
+  if (wakeLock !== null && document.visibilityState === 'visible') {{
+    await requestWakeLock();
+  }}
+}});
+
+// SPEECHSYNTHESIS KEEP-ALIVE: PREVIENE IL BLOCCO DOPO 15 SECONDI
+function startKeepAlive() {{
+  clearInterval(keepAliveTimer);
+  keepAliveTimer = setInterval(() => {{
+    if (synth && synth.speaking) {{
+      synth.pause();
+      synth.resume();
+    }}
+  }}, 10000);
+}}
+
+function stopKeepAlive() {{
+  clearInterval(keepAliveTimer);
+  keepAliveTimer = null;
+}}
+
+// MEDIA SESSION: MANTIENE ATTIVO L'AUDIO COME LETTORE MULTIMEDIALE
+if ('mediaSession' in navigator) {{
+  navigator.mediaSession.metadata = new MediaMetadata({{
+    title: 'Notiziario di Tavigliano',
+    artist: 'Edizione Giornaliera',
+    album: 'Radio Notiziario Locale'
+  }});
+  navigator.mediaSession.setActionHandler('play', () => {{
+    if (!synth.speaking) toggleMasterBroadcast();
+  }});
+  navigator.mediaSession.setActionHandler('pause', () => {{
+    stopBroadcast();
+  }});
+}}
 
 function renderCards() {{
   newsStream.innerHTML = '';
@@ -680,6 +739,8 @@ window.playSingleItem = function(index) {{
   if (currentTrack === index && synth.speaking) {{
     stopBroadcast();
   }} else {{
+    requestWakeLock();
+    startKeepAlive();
     startBgMusic();
     startVoice(index, false);
   }}
@@ -727,6 +788,8 @@ function stopVoiceOnly() {{
 function stopBroadcast() {{
   stopVoiceOnly();
   stopBgMusic();
+  stopKeepAlive();
+  releaseWakeLock();
   currentTrack = -1;
   onAirSign.classList.remove('active');
   btnMaster.innerText = '▶️ AVVIA TRASMISSIONE COMPLETA';
@@ -737,6 +800,8 @@ window.toggleMasterBroadcast = function() {{
     stopBroadcast();
   }} else {{
     btnMaster.innerText = '⏸️ METTI IN PAUSA';
+    requestWakeLock();
+    startKeepAlive();
     startBgMusic();
     startVoice(0, true);
   }}
@@ -751,4 +816,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato (senza notizie di Biella): {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con sistema Anti-Standby: {data_estesa}")
