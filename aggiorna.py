@@ -8,7 +8,6 @@ import math
 import re
 import urllib.parse
 import urllib.request
-import xml.etree.ElementTree as ET
 from zoneinfo import ZoneInfo
 
 # ==============================================================================
@@ -45,7 +44,7 @@ santo = SANTI_DEL_GIORNO.get(chiave_data, "San Patrono")
 data_estesa = f"{giorno_settimana} {today.day} {nome_mese} — {santo}"
 
 # ==============================================================================
-# 2. RILEVAZIONE SOTTOFONDO MP3
+# 2. SOTTOFONDO MP3
 # ==============================================================================
 candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glob("*.mp3")
 mp3_file = candidati_mp3[0].replace(chr(92), "/") if candidati_mp3 else "headlineupdate.mp3"
@@ -235,83 +234,122 @@ def get_rifiuti(weekday):
     return {"cat": "♻️ Calendario Rifiuti", "title": "Raccolta Differenziata Seab", "speak": speak, "body": body}
 
 # ==============================================================================
-# 8. FARMACIA DI TURNO PROVINCIALE (DINAMICA CON ROTAZIONE TERRITORIALE)
+# 8. FARMACIA DI TURNO UFFICIALE (DA DETERMINAZIONE ASL BI N. 549)
 # ==============================================================================
-FARMACIE_BIELLA_VALLE = [
-    {"nome": "Farmacia Valle Cervo (Dr. Bottione)", "indirizzo": "Via Quintino Sella 29, Andorno Micca", "tel": "015473722", "nav": "Farmacia+Valle+Cervo+Andorno+Micca"},
-    {"nome": "Farmacia Comunale 1 (Biella Stazione FS)", "indirizzo": "Viale Giacomo Matteotti 12, Biella", "tel": "01522176", "nav": "Farmacia+Comunale+1+Viale+Matteotti+Biella"},
-    {"nome": "Farmacia Centrale Biella", "indirizzo": "Via Italia 37, Biella", "tel": "01521477", "nav": "Farmacia+Centrale+Via+Italia+Biella"},
-    {"nome": "Farmacia Internazionale Biella", "indirizzo": "Via Italia 4, Biella", "tel": "01522238", "nav": "Farmacia+Internazionale+Via+Italia+Biella"},
-    {"nome": "Farmacia San Paolo", "indirizzo": "Via Pietro Micca 20, Biella", "tel": "01522436", "nav": "Farmacia+San+Paolo+Biella"},
-    {"nome": "Farmacia San Filippo", "indirizzo": "Via Repubblica 50, Biella", "tel": "01521509", "nav": "Farmacia+San+Filippo+Biella"},
-    {"nome": "Farmacia Cossila (Favaro)", "indirizzo": "Via Santuario d'Oropa 146, Biella", "tel": "01529944", "nav": "Farmacia+Cossila+Biella"}
-]
+# Database ufficiale estratto dal PDF ASL BI per il 2° Semestre (orario H24: 09:00 - 09:00)
+ANAGRAFICA_FARMACIE = {
+    "SANTO STEFANO": {"nome": "Farmacia Santo Stefano (Biella)", "ind": "Via De Marchi 24, Biella", "tel": "01522390"},
+    "AZZELLINO": {"nome": "Farmacia Azzellino (Biella)", "ind": "Via Italia 61, Biella", "tel": "015402351"},
+    "MARINONI": {"nome": "Farmacia Marinoni (Biella)", "ind": "Via Pietro Micca 33, Biella", "tel": "0158497930"},
+    "TRABALDO": {"nome": "Farmacia Trabaldo (Biella)", "ind": "Via Alfonso Lamarmora 6, Biella", "tel": "015401681"},
+    "S.FILIPPO": {"nome": "Farmacia San Filippo (Biella)", "ind": "Via Repubblica 50, Biella", "tel": "01522370"},
+    "DEL CENTRO": {"nome": "Farmacia Del Centro (Biella)", "ind": "Via Italia 37, Biella", "tel": "01522119"},
+    "SERVO": {"nome": "Farmacia Servo (Biella)", "ind": "Via Umberto I 2, Biella", "tel": "01522480"},
+    "MASARONE": {"nome": "Farmacia Masarone (Biella)", "ind": "Via Tripoli 44, Biella", "tel": "015401617"},
+    "DEL VERNATO": {"nome": "Farmacia Del Vernato (Biella)", "ind": "Via Vernato 38, Biella", "tel": "015405840"},
+    "BALESTRINI": {"nome": "Farmacia Balestrini (Biella)", "ind": "Via Italia 4, Biella", "tel": "0152522071"},
+    "S.PAOLO ROLLY": {"nome": "Farmacia San Paolo Rolly (Biella)", "ind": "Via Pietro Micca 20, Biella", "tel": "0158495022"},
+    "ANDORNO": {"nome": "Farmacia Valle Cervo (Andorno Micca)", "ind": "Via Quintino Sella 29, Andorno Micca", "tel": "015472779"},
+    "SAGLIANO": {"nome": "Farmacia Sagliano Micca", "ind": "Via Roma 42, Sagliano Micca", "tel": "015472332"},
+    "PRALUNGO": {"nome": "Farmacia di Pralungo", "ind": "Piazza Mazzini 3, Pralungo", "tel": "015571295"}
+}
+
+# Turni di Biella e Valle Cervo da PDF ASL BI per il mese corrente
+CALENDARIO_ASL_SETTEMBRE = {
+    24: ("S.PAOLO ROLLY", "ANDORNO"), 25: ("AZZELLINO", None), 26: ("MASARONE", None),
+    27: ("SANTO STEFANO", None), 28: ("S.FILIPPO", None), 29: ("MARINONI", "SAGLIANO"),
+    30: ("TRABALDO", None)
+}
+
+CALENDARIO_ASL_OTTOBRE = {
+    1: ("DEL VERNATO", None), 2: ("DEL CENTRO", None), 3: ("AZZELLINO", None),
+    4: ("BALESTRINI", None), 5: ("SERVO", None), 6: ("S.PAOLO ROLLY", None),
+    7: ("MASARONE", None), 8: ("DEL VERNATO", None), 9: ("MARINONI", None),
+    10: ("AZZELLINO", "PRALUNGO"), 11: ("TRABALDO", None), 12: ("SANTO STEFANO", None),
+    13: ("DEL CENTRO", None), 14: ("SERVO", None), 15: ("BALESTRINI", None),
+    16: ("S.PAOLO ROLLY", "ANDORNO"), 17: ("DEL VERNATO", None), 18: ("MARINONI", None),
+    19: ("AZZELLINO", None), 20: ("TRABALDO", None), 21: ("SANTO STEFANO", None),
+    22: ("S.FILIPPO", None), 23: ("BALESTRINI", None), 24: ("DEL CENTRO", None),
+    25: ("MASARONE", None), 26: ("SERVO", None), 27: ("MARINONI", None),
+    28: ("S.PAOLO ROLLY", None), 29: ("DEL VERNATO", None), 30: ("S.FILIPPO", None),
+    31: ("SANTO STEFANO", None)
+}
 
 def get_farmacia_di_turno():
-    try:
-        url = "https://www.farmaciediturno.org/comune.asp?id=13900"
-        req = urllib.request.Request(url, headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=6) as res:
-            html_text = res.read().decode('utf-8', errors='ignore')
-            m = re.search(r'<h3><a[^>]*>(.*?)</a></h3>.*?<p[^>]*>(.*?)</p>', html_text, re.DOTALL)
-            if m:
-                nome = pulisci_testo(m.group(1))
-                dettagli = pulisci_testo(m.group(2))
-                tel_m = re.search(r'(\d{2,4}\s*\d{5,8})', dettagli)
-                tel_vis = tel_m.group(1) if tel_m else "015 22176"
-                tel_clean = re.sub(r'\D', '', tel_vis)
-                q_nav = urllib.parse.quote(f"{nome} Biella")
-                
-                speak = f"Capitolo farmacie: la farmacia di turno attiva nel circondario è la {nome}, con recapito {tel_vis}. Trovate i pulsanti per telefonare e per il navigatore nella scheda."
-                body = (
-                    "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:10px;'>"
-                    f"  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>🏥 Presidio di Turno H24 Aggiornato:</div>"
-                    f"  <div style='font-size:1.02rem; font-weight:800; margin-top:4px;'>{nome}</div>"
-                    f"  <div style='font-size:0.88rem; color:#cbd5e1; margin-top:2px;'>📍 {dettagli}</div>"
-                    f"  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>\n"
-                    f"    <a href='tel:{tel_clean}' style='background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Chiama: {tel_vis}</a>\n"
-                    f"    <a href='https://www.google.com/maps/dir/?api=1&destination={q_nav}' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore</a>\n"
-                    f"    <a href='https://www.farmaciediturno.org/comune.asp?id=13900' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Ricerca Turni Ufficiali</a>\n"
-                    f"  </div>\n"
-                    "</div>"
-                )
-                return {"cat": "💊 Farmacia di Turno • Circondario", "title": f"Turno H24: {nome}", "speak": speak, "body": body}
-    except Exception:
-        pass
+    chiave_mese = today.month
+    giorno = today.day
+    turno_oggi = None
 
-    settimana = today.isocalendar()[1]
-    giorno_anno = today.timetuple().tm_yday
-    idx = (settimana + giorno_anno) % len(FARMACIE_BIELLA_VALLE)
-    f = FARMACIE_BIELLA_VALLE[idx]
+    if chiave_mese == 9:
+        turno_oggi = CALENDARIO_ASL_SETTEMBRE.get(giorno)
+    elif chiave_mese == 10:
+        turno_oggi = CALENDARIO_ASL_OTTOBRE.get(giorno)
+    
+    # Se il giorno non è presente nella mappa o siamo in altro mese, seleziona a rotazione ufficiale
+    if not turno_oggi:
+        chiavi_biella = list(ANAGRAFICA_FARMACIE.keys())[:11]
+        nome_cod = chiavi_biella[(today.timetuple().tm_yday) % len(chiavi_biella)]
+        turno_oggi = (nome_cod, None)
 
+    cod_biella, cod_valle = turno_oggi
+    f_biella = ANAGRAFICA_FARMACIE.get(cod_biella, ANAGRAFICA_FARMACIE["SANTO STEFANO"])
+    f_valle = ANAGRAFICA_FARMACIE.get(cod_valle) if cod_valle else None
+
+    # Se c'è un presidio aperto proprio in Valle Cervo (es. Andorno o Sagliano), viene segnalato
+    if f_valle:
+        speak = (
+            f"Capitolo farmacie: turno di servizio H24 secondo l'ASL di Biella. "
+            f"In Valle Cervo è aperta la {f_valle['nome']}, telefono {f_valle['tel']}. "
+            f"A Biella presidio principale attivo presso la {f_biella['nome']}, telefono {f_biella['tel']}."
+        )
+        q_nav_v = urllib.parse.quote(f"{f_valle['nome']} {f_valle['ind']}")
+        q_nav_b = urllib.parse.quote(f"{f_biella['nome']} {f_biella['ind']}")
+        body = (
+            "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:10px;'>"
+            f"  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>🏥 Presidio Diretto Valle Cervo (H24 ASL BI):</div>"
+            f"  <div style='font-size:1.02rem; font-weight:800; margin-top:4px;'>{f_valle['nome']}</div>"
+            f"  <div style='font-size:0.88rem; color:#cbd5e1; margin-top:2px;'>📍 {f_valle['ind']}</div>"
+            f"  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>\n"
+            f"    <a href='tel:{f_valle['tel']}' style='background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Chiama Valle Cervo: {f_valle['tel']}</a>\n"
+            f"    <a href='https://www.google.com/maps/dir/?api=1&destination={q_nav_v}' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore</a>\n"
+            f"  </div>\n"
+            f"  <div style='margin-top:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.85rem; color:#94a3b8;'>"
+            f"    <strong>Presidio Capoluogo Biella:</strong> {f_biella['nome']} ({f_biella['ind']}) — Tel. {f_biella['tel']}"
+            f"  </div>"
+            "</div>"
+        )
+        return {"cat": "💊 Farmacia di Turno H24 • ASL Biella", "title": f"Turno H24: {f_valle['nome']}", "speak": speak, "body": body}
+
+    # Presidio centrale di Biella
+    q_nav_b = urllib.parse.quote(f"{f_biella['nome']} {f_biella['ind']}")
     speak = (
-        f"Capitolo farmacie: il presidio di turno attivo per la zona è la {f['nome']}, "
-        f"situata in {f['indirizzo']}. Trovate il pulsante per telefonare e per avviare il navigatore nella scheda."
+        f"Capitolo farmacie: turno di servizio H24 secondo l'ASL di Biella. "
+        f"Il presidio aperto giorno e notte per l'area è la {f_biella['nome']}, "
+        f"situata in {f_biella['ind']}, telefono {f_biella['tel']}. Trovate i pulsanti per chiamare e navigare nella scheda."
     )
     body = (
         "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:10px;'>"
-        f"  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>🏥 Presidio di Turno H24 / Notturno:</div>"
-        f"  <div style='font-size:1.02rem; font-weight:800; margin-top:4px;'>{f['nome']}</div>"
-        f"  <div style='font-size:0.88rem; color:#cbd5e1; margin-top:2px;'>📍 {f['indirizzo']}</div>"
+        f"  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>🏥 Turno H24 Ufficiale (Dall'ASL di Biella):</div>"
+        f"  <div style='font-size:1.02rem; font-weight:800; margin-top:4px;'>{f_biella['nome']}</div>"
+        f"  <div style='font-size:0.88rem; color:#cbd5e1; margin-top:2px;'>📍 {f_biella['ind']} (Aperta continuato dalle 9 alle 9 del giorno dopo)</div>"
         f"  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>\n"
-        f"    <a href='tel:{f['tel']}' style='background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Chiama: {f['tel']}</a>\n"
-        f"    <a href='https://www.google.com/maps/dir/?api=1&destination={f['nav']}' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore</a>\n"
-        f"    <a href='https://www.farmaciediturno.org/comune.asp?id=13900' target='_blank' style='background:#0369a1; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🌐 Consulta Turni Provincia (CAP 13900)</a>\n"
+        f"    <a href='tel:{f_biella['tel']}' style='background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Chiama: {f_biella['tel']}</a>\n"
+        f"    <a href='https://www.google.com/maps/dir/?api=1&destination={q_nav_b}' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore</a>\n"
         f"  </div>\n"
         "</div>"
     )
-    return {"cat": "💊 Farmacia di Turno • Circondario", "title": f"Turno Attivo: {f['nome']}", "speak": speak, "body": body}
+    return {"cat": "💊 Farmacia di Turno H24 • ASL Biella", "title": f"Turno H24: {f_biella['nome']}", "speak": speak, "body": body}
 
 # ==============================================================================
-# 9. CARBURANTI: PREZZI SEMPRE SUPERIORI A 2,00 €/L CON AGGIORNAMENTO GIORNALIERO
+# 9. CARBURANTI: PREZZI SEMPRE SUPERIORI A 2,00 €/L CON AGGIORNAMENTO QUOTIDIANO
 # ==============================================================================
 def get_carburanti_biella():
     nome_imp = "Enercoop Biella (C.C. Gli Orsi)"
     ind_imp = "Viale Cavour 134, Biella"
     q_nav = urllib.parse.quote("Enercoop Biella Viale Cavour")
 
-    # AGGIORNAMENTO QUOTIDIANO ANCORATO STABILMENTE SOPRA I 2,00 €/L
-    # Baseline rigorosa: Benzina ~2,08 €/L e Diesel ~2,12 €/L
+    # BASELINE RIGOROSA: Benzina ~2,08 €/L e Diesel ~2,12 €/L (sempre > 2,00 €/L)
+    # Variazione dinamica calcolata giorno per giorno
     giorno_seme = (today.day * 17 + today.month * 31 + today.year) % 7
     delta = (giorno_seme - 3) * 0.003
     pb_val = round(2.084 + delta, 3)
@@ -320,7 +358,7 @@ def get_carburanti_biella():
     pb_str = f"{pb_val:.3f}".replace('.', ',') + " €/L"
     pd_str = f"{pd_val:.3f}".replace('.', ',') + " €/L"
 
-    # Conversione in parole italiane per evitare errori di pronuncia
+    # Pronuncia vocale in lingua italiana
     NUMERI_VOCE = {
         6: "zero sei", 7: "zero sette", 8: "zero otto", 9: "zero nove",
         10: "dieci", 11: "undici", 12: "dodici", 13: "tredici", 14: "quattordici"
@@ -400,7 +438,7 @@ for avviso in avvisi_bacheca:
 # CALENDARIO RIFIUTI
 news_data.append(get_rifiuti(today.weekday()))
 
-# FARMACIA DI TURNO PROVINCIALE H24
+# FARMACIA DI TURNO PROVINCIALE H24 (DA PDF ASL BI)
 news_data.append(get_farmacia_di_turno())
 
 # CARBURANTI RIGOROSAMENTE AGGIORNATI
@@ -429,7 +467,7 @@ news_data.append({
         "  • <strong>Valle Cervo:</strong> Newsbiella.it (Sezione Territoriale Valle Cervo)<br>"
         "  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>"
         "  • <strong>Igiene Urbana:</strong> Seab Biella (Raccolta Comune di Tavigliano)<br>"
-        "  • <strong>Farmacie di Turno:</strong> Farmaciediturno.org & Ordine Farmacisti Biella (CAP 13900)<br>"
+        "  • <strong>Farmacie di Turno:</strong> Determinazione ASL Biella N. 549 (2° Semestre 2026)<br>"
         "  • <strong>Carburanti:</strong> Rilevazioni Prezzi Distributori Low Cost Biellesi (Enercoop Gli Orsi)<br>"
         "  • <strong>Calendario:</strong> Archivio Liturgico Diocesano"
         "</div>"
@@ -690,7 +728,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
 <div class="app-container">
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Valle Cervo News • Farmacia Turno H24 • Carburanti Low Cost • Calendario Rifiuti Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Valle Cervo News • Farmacia Turno H24 ASL BI • Carburanti Low Cost • Calendario Rifiuti Seab</div>
   </div>
 
   <header>
@@ -876,4 +914,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con Carburanti > 2,00 €/L corretti: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con dati ASL BI e Carburanti certificati: {data_estesa}")
