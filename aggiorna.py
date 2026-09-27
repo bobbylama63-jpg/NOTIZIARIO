@@ -75,15 +75,15 @@ def controlla_conformita(titolo, testo):
 
 def varia_titolo(titolo):
     t = pulisci_testo(titolo)
-    # Variazioni specifiche sui temi rilevati
+    # Variazioni specifiche sulle notizie di cronaca certificate
     if "tre incidenti" in t.lower() and ("cerrione" in t.lower() or "zumaglia" in t.lower()):
         return "Viabilità nel Biellese: tre incidenti stradali con feriti a Cerrione e Zumaglia"
     if "ponderano" in t.lower() and "furto" in t.lower():
-        return "Ponderano: fermato episodio di furto all'interno di un supermercato"
+        return "Ponderano: sventato furto all'interno di un supermercato"
     if "chiavazza" in t.lower() and "truffa" in t.lower():
         return "Chiavazza: sventata truffa ad anziani con l'intervento dei Carabinieri"
     if "arte che nutre" in t.lower():
-        return "Rassegna 'L'arte che nutre': esposizioni e mostre d'arte nel Biellese"
+        return "Rassegna 'L'arte che nutre': esposizioni e mostre culturali nel Biellese"
     
     # Riformulazioni generiche
     t = re.sub(r'^(Valle Cervo|Andorno|Sagliano|Campiglia|Tavigliano)[:\s-]+', '', t, flags=re.IGNORECASE)
@@ -133,16 +133,18 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 5. NOTIZIE DAL BIELLESE (PRIME 2 DA NEWSBIELLA MOBILE)
+# 5. NOTIZIE DAL BIELLESE (ESCLUSI COSSATO E SPETTACOLI)
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
 def get_notizie_biellese():
     articoli = []
+    # Esclusioni rigide: elimina Cossato, Cossatese, Spettacoli, Sport e zone esterne
     esclusioni = [
-        "valsessera", "valsesia", "mosso e sessera", "torino", "canavese",
-        "italpress", "adnkronos", "governo", "scostamento", "serie a", "champions",
-        "milan", "inter", "juventus", "necrologi", "tutte le notizie", "rubriche"
+        "cossato", "cossatese", "spettacolo", "spettacoli", "cinema", "teatro",
+        "musica", "cultura", "valsessera", "valsesia", "mosso e sessera", "torino",
+        "canavese", "italpress", "adnkronos", "governo", "scostamento", "serie a",
+        "champions", "milan", "inter", "juventus", "necrologi", "tutte le notizie", "rubriche"
     ]
     url_target = "https://www.newsbiella.it/mobile.html"
     try:
@@ -156,7 +158,8 @@ def get_notizie_biellese():
                 tit = pulisci_testo(inner_html)
                 if len(tit) < 18 or tit in seen:
                     continue
-                if any(x in tit.lower() for x in esclusioni):
+                # Se il titolo o il link appartiene a Cossato o Spettacoli viene escluso
+                if any(x in tit.lower() for x in esclusioni) or any(x in href.lower() for x in ["cossato", "spettacolo"]):
                     continue
                 full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
                 valido, _ = controlla_conformita(tit, "")
@@ -168,16 +171,16 @@ def get_notizie_biellese():
     except Exception:
         pass
 
-    # Riferimento con titoli variati
+    # Riferimento con le notizie di cronaca della foto
     if len(articoli) < 2:
         articoli = [
             {
                 "title": "Viabilità nel Biellese: tre incidenti stradali con feriti a Cerrione e Zumaglia",
-                "url": "https://www.newsbiella.it"
+                "url": "https://www.newsbiella.it/mobile.html"
             },
             {
-                "title": "Ponderano: fermato episodio di furto all'interno di un supermercato",
-                "url": "https://www.newsbiella.it"
+                "title": "Ponderano: sventato furto all'interno di un supermercato",
+                "url": "https://www.newsbiella.it/mobile.html"
             }
         ]
 
@@ -199,14 +202,13 @@ def get_notizie_biellese():
     }
 
 # ==============================================================================
-# 6. NOTIZIE DELLA VALLE CERVO (CON FILTRO SPECIFICO "TAVIGLIANO")
+# 6. NOTIZIE DELLA VALLE CERVO (FILTRO RIGIDO SOLO PER "TAVIGLIANO")
 # ==============================================================================
 def get_notizia_valle_cervo_tavigliano():
     sorgenti_valle = [
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo.html",
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
-        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/2.html",
-        "https://www.newsbiella.it/sommario/argomenti/valle-cervo.html"
+        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/2.html"
     ]
     pattern_link = re.compile(r'<a[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/|/mobile/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
 
@@ -219,25 +221,28 @@ def get_notizia_valle_cervo_tavigliano():
                     tit = pulisci_testo(inner_html)
                     if len(tit) < 15 or "tutte le notizie" in tit.lower():
                         continue
-                    # Cerca espressamente la parola Tavigliano nel titolo o nel link
+                    # Filtro vincolante: deve contenere Tavigliano o Pratetto
                     if "tavigliano" in tit.lower() or "pratetto" in tit.lower() or "tavigliano" in href.lower():
+                        # Controllo di sicurezza: no cossato
+                        if "cossato" in tit.lower() or "cossato" in href.lower():
+                            continue
                         full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
                         valido, _ = controlla_conformita(tit, "")
                         if valido:
                             t_var = varia_titolo(tit)
                             return {
-                                "cat": "🌲 Notizie di Valle Cervo & Tavigliano",
+                                "cat": "🌲 Notizie di Tavigliano & Valle Cervo",
                                 "title": t_var,
-                                "speak": f"Notizie della Valle Cervo e Tavigliano: {t_var}.",
+                                "speak": f"Notizie da Tavigliano: {t_var}.",
                                 "body": f"<strong>{t_var}</strong><br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
                             }
         except Exception:
             pass
 
     return {
-        "cat": "🌲 Notizie di Valle Cervo & Tavigliano",
-        "title": "Iniziative, ambiente e viabilità per la comunità di Tavigliano",
-        "speak": "Notizie della Valle Cervo: Iniziative, ambiente e viabilità per la comunità di Tavigliano.",
+        "cat": "🌲 Notizie di Tavigliano & Valle Cervo",
+        "title": "Iniziative, territorio e aggiornamenti per la comunità di Tavigliano",
+        "speak": "Notizie da Tavigliano: Iniziative, territorio e aggiornamenti per la comunità di Tavigliano.",
         "body": "Aggiornamenti e notizie dedicate al territorio di Tavigliano e alla Valle Cervo.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo.html' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Consulta la Sezione Valle Cervo su Newsbiella ➔</a></div>"
     }
 
@@ -298,7 +303,7 @@ def get_rifiuti(weekday):
     return {"cat": "♻️ Calendario Rifiuti", "title": "Raccolta Differenziata Seab", "speak": speak, "body": body}
 
 # ==============================================================================
-# 9. FARMACIA DI TURNO UFFICIALE (DA DETERMINAZIONE ASL BI N. 549)
+# 9. FARMACIA DI TURNO UFFICIALE (DETERMINAZIONE ASL BI N. 549)
 # ==============================================================================
 ANAGRAFICA_FARMACIE = {
     "SANTO STEFANO": {"nome": "Farmacia Santo Stefano (Biella)", "ind": "Via De Marchi 24, Biella", "tel": "01522390"},
@@ -965,4 +970,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con Notizie dal Biellese e filtro Tavigliano: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato (Biellese da foto, filtro Tavigliano rigoroso): {data_estesa}")
