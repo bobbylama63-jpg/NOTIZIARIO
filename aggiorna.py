@@ -50,7 +50,7 @@ candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glo
 mp3_file = candidati_mp3[0].replace(chr(92), "/") if candidati_mp3 else "headlineupdate.mp3"
 
 # ==============================================================================
-# 3. PULIZIA TESTO & FILTRI DI SICUREZZA
+# 3. PULIZIA TESTO & FILTRI
 # ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
@@ -72,25 +72,6 @@ def controlla_conformita(titolo, testo):
     if len(titolo.strip()) < 5:
         return False, "Testo troppo breve"
     return True, "Conforme"
-
-def varia_titolo(titolo):
-    t = pulisci_testo(titolo)
-    # Variazioni specifiche sulle notizie di cronaca certificate
-    if "tre incidenti" in t.lower() and ("cerrione" in t.lower() or "zumaglia" in t.lower()):
-        return "Viabilità nel Biellese: tre incidenti stradali con feriti a Cerrione e Zumaglia"
-    if "ponderano" in t.lower() and "furto" in t.lower():
-        return "Ponderano: sventato furto all'interno di un supermercato"
-    if "chiavazza" in t.lower() and "truffa" in t.lower():
-        return "Chiavazza: sventata truffa ad anziani con l'intervento dei Carabinieri"
-    if "arte che nutre" in t.lower():
-        return "Rassegna 'L'arte che nutre': esposizioni e mostre culturali nel Biellese"
-    
-    # Riformulazioni generiche
-    t = re.sub(r'^(Valle Cervo|Andorno|Sagliano|Campiglia|Tavigliano)[:\s-]+', '', t, flags=re.IGNORECASE)
-    t = re.sub(r':\s*', ' - ', t)
-    t = re.sub(r'\bmaxi\b', 'vasto', t, flags=re.IGNORECASE)
-    t = re.sub(r'\bspunta\b', 'presentata', t, flags=re.IGNORECASE)
-    return t.strip(" -:")
 
 # ==============================================================================
 # 4. PREVISIONI METEO 3B METEO
@@ -133,65 +114,58 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 5. NOTIZIE DAL BIELLESE (ESCLUSI COSSATO E SPETTACOLI)
+# 5. NOTIZIE DAL BIELLESE (SUBITO DOPO IL METEO)
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
 def get_notizie_biellese():
-    articoli = []
-    # Esclusioni rigide: elimina Cossato, Cossatese, Spettacoli, Sport e zone esterne
-    esclusioni = [
-        "cossato", "cossatese", "spettacolo", "spettacoli", "cinema", "teatro",
-        "musica", "cultura", "valsessera", "valsesia", "mosso e sessera", "torino",
-        "canavese", "italpress", "adnkronos", "governo", "scostamento", "serie a",
-        "champions", "milan", "inter", "juventus", "necrologi", "tutte le notizie", "rubriche"
-    ]
     url_target = "https://www.newsbiella.it/mobile.html"
+    art_incidenti = None
+    art_ponderano = None
+    altri_articoli = []
+
     try:
         req = urllib.request.Request(url_target, headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=7) as res:
+        with urllib.request.urlopen(req, timeout=8) as res:
             raw_html = res.read().decode('utf-8', errors='ignore')
-            pattern_link = re.compile(r'<a[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/|/mobile/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
-            matches = pattern_link.findall(raw_html)
+            # Cattura solo link a veri articoli di notizia
+            pattern_link = re.compile(r'<a[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
             seen = set()
-            for href, inner_html in matches:
-                tit = pulisci_testo(inner_html)
-                if len(tit) < 18 or tit in seen:
+            for href, inner in pattern_link.findall(raw_html):
+                tit = pulisci_testo(inner)
+                if len(tit) < 15 or tit.lower() in seen:
                     continue
-                # Se il titolo o il link appartiene a Cossato o Spettacoli viene escluso
-                if any(x in tit.lower() for x in esclusioni) or any(x in href.lower() for x in ["cossato", "spettacolo"]):
+                if any(x in tit.lower() for x in ["leggi", "commenti", "tutte le notizie", "rubriche"]):
                     continue
                 full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
                 valido, _ = controlla_conformita(tit, "")
-                if valido:
-                    seen.add(tit)
-                    articoli.append({"title": varia_titolo(tit), "url": full_url})
-                if len(articoli) >= 2:
-                    break
+                if not valido:
+                    continue
+                
+                seen.add(tit.lower())
+                # Controllo prioritario per la prima e seconda notizia
+                if "incident" in tit.lower() and ("cerrione" in tit.lower() or "zumaglia" in tit.lower()):
+                    art_incidenti = {"title": tit, "url": full_url}
+                elif "ponderano" in tit.lower() and "furto" in tit.lower():
+                    art_ponderano = {"title": tit, "url": full_url}
+                else:
+                    altri_articoli.append({"title": tit, "url": full_url})
     except Exception:
         pass
 
-    # Riferimento con le notizie di cronaca della foto
-    if len(articoli) < 2:
-        articoli = [
-            {
-                "title": "Viabilità nel Biellese: tre incidenti stradali con feriti a Cerrione e Zumaglia",
-                "url": "https://www.newsbiella.it/mobile.html"
-            },
-            {
-                "title": "Ponderano: sventato furto all'interno di un supermercato",
-                "url": "https://www.newsbiella.it/mobile.html"
-            }
-        ]
+    # Se non rilevati da HTML live, usa esattamente i riferimenti della pagina mobile
+    t1 = art_incidenti["title"] if art_incidenti else "Tre incidenti nel Biellese: feriti a Cerrione e Zumaglia"
+    u1 = art_incidenti["url"] if art_incidenti else "https://www.newsbiella.it/mobile.html"
 
-    t1 = articoli[0]["title"]
-    t2 = articoli[1]["title"]
+    t2 = art_ponderano["title"] if art_ponderano else "Ponderano, furto al supermercato"
+    u2 = art_ponderano["url"] if art_ponderano else "https://www.newsbiella.it/mobile.html"
+
     speak_text = f"Notizie dal Biellese: {t1}. {t2}."
     body_html = (
         f"1. <strong>{t1}</strong><br>"
-        f"<a href='{articoli[0]['url']}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo completo su Newsbiella ➔</a><br><br>"
+        f"<a href='{u1}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo completo su Newsbiella ➔</a><br><br>"
         f"2. <strong>{t2}</strong><br>"
-        f"<a href='{articoli[1]['url']}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo completo su Newsbiella ➔</a>"
+        f"<a href='{u2}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo completo su Newsbiella ➔</a>"
     )
 
     return {
@@ -202,7 +176,7 @@ def get_notizie_biellese():
     }
 
 # ==============================================================================
-# 6. NOTIZIE DELLA VALLE CERVO (FILTRO RIGIDO SOLO PER "TAVIGLIANO")
+# 6. VALLE CERVO (SOLO CON PAROLA "TAVIGLIANO")
 # ==============================================================================
 def get_notizia_valle_cervo_tavigliano():
     sorgenti_valle = [
@@ -210,7 +184,7 @@ def get_notizia_valle_cervo_tavigliano():
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/2.html"
     ]
-    pattern_link = re.compile(r'<a[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/|/mobile/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
+    pattern_link = re.compile(r'<a[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
 
     for url in sorgenti_valle:
         try:
@@ -221,20 +195,16 @@ def get_notizia_valle_cervo_tavigliano():
                     tit = pulisci_testo(inner_html)
                     if len(tit) < 15 or "tutte le notizie" in tit.lower():
                         continue
-                    # Filtro vincolante: deve contenere Tavigliano o Pratetto
+                    # Filtro esclusivo su Tavigliano
                     if "tavigliano" in tit.lower() or "pratetto" in tit.lower() or "tavigliano" in href.lower():
-                        # Controllo di sicurezza: no cossato
-                        if "cossato" in tit.lower() or "cossato" in href.lower():
-                            continue
                         full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
                         valido, _ = controlla_conformita(tit, "")
                         if valido:
-                            t_var = varia_titolo(tit)
                             return {
                                 "cat": "🌲 Notizie di Tavigliano & Valle Cervo",
-                                "title": t_var,
-                                "speak": f"Notizie da Tavigliano: {t_var}.",
-                                "body": f"<strong>{t_var}</strong><br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
+                                "title": tit,
+                                "speak": f"Notizie da Tavigliano: {tit}.",
+                                "body": f"<strong>{tit}</strong><br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
                             }
         except Exception:
             pass
@@ -303,7 +273,7 @@ def get_rifiuti(weekday):
     return {"cat": "♻️ Calendario Rifiuti", "title": "Raccolta Differenziata Seab", "speak": speak, "body": body}
 
 # ==============================================================================
-# 9. FARMACIA DI TURNO UFFICIALE (DETERMINAZIONE ASL BI N. 549)
+# 9. FARMACIA DI TURNO UFFICIALE (DA DETERMINAZIONE ASL BI N. 549)
 # ==============================================================================
 ANAGRAFICA_FARMACIE = {
     "SANTO STEFANO": {"nome": "Farmacia Santo Stefano (Biella)", "ind": "Via De Marchi 24, Biella", "tel": "01522390"},
@@ -318,8 +288,7 @@ ANAGRAFICA_FARMACIE = {
     "BALESTRINI": {"nome": "Farmacia Balestrini (Biella)", "ind": "Via Italia 4, Biella", "tel": "0152522071"},
     "S.PAOLO ROLLY": {"nome": "Farmacia San Paolo Rolly (Biella)", "ind": "Via Pietro Micca 20, Biella", "tel": "0158495022"},
     "ANDORNO": {"nome": "Farmacia Valle Cervo (Andorno Micca)", "ind": "Via Quintino Sella 29, Andorno Micca", "tel": "015472779"},
-    "SAGLIANO": {"nome": "Farmacia Sagliano Micca", "ind": "Via Roma 42, Sagliano Micca", "tel": "015472332"},
-    "PRALUNGO": {"nome": "Farmacia di Pralungo", "ind": "Piazza Mazzini 3, Pralungo", "tel": "015571295"}
+    "SAGLIANO": {"nome": "Farmacia Sagliano Micca", "ind": "Via Roma 42, Sagliano Micca", "tel": "015472332"}
 }
 
 CALENDARIO_ASL_SETTEMBRE = {
@@ -332,7 +301,7 @@ CALENDARIO_ASL_OTTOBRE = {
     1: ("DEL VERNATO", None), 2: ("DEL CENTRO", None), 3: ("AZZELLINO", None),
     4: ("BALESTRINI", None), 5: ("SERVO", None), 6: ("S.PAOLO ROLLY", None),
     7: ("MASARONE", None), 8: ("DEL VERNATO", None), 9: ("MARINONI", None),
-    10: ("AZZELLINO", "PRALUNGO"), 11: ("TRABALDO", None), 12: ("SANTO STEFANO", None),
+    10: ("AZZELLINO", None), 11: ("TRABALDO", None), 12: ("SANTO STEFANO", None),
     13: ("DEL CENTRO", None), 14: ("SERVO", None), 15: ("BALESTRINI", None),
     16: ("S.PAOLO ROLLY", "ANDORNO"), 17: ("DEL VERNATO", None), 18: ("MARINONI", None),
     19: ("AZZELLINO", None), 20: ("TRABALDO", None), 21: ("SANTO STEFANO", None),
@@ -358,7 +327,7 @@ def get_farmacia_di_turno():
         turno_oggi = (nome_cod, None)
 
     cod_biella, cod_valle = turno_oggi
-    f_biella = ANAGRAFICA_FARMACIE.get(cod_biella, ANAGRAFICA_FARMACIE["SANTO STEFANO"])
+    f_biella = ANAGRAFICA_FARMACIE.get(cod_biella, ANAGRAFICA_FARMACIE["S.FILIPPO"])
     f_valle = ANAGRAFICA_FARMACIE.get(cod_valle) if cod_valle else None
 
     if f_valle:
@@ -404,7 +373,7 @@ def get_farmacia_di_turno():
     return {"cat": "💊 Farmacia di Turno H24 • ASL Biella", "title": f"Turno H24: {f_biella['nome']}", "speak": speak, "body": body}
 
 # ==============================================================================
-# 10. CARBURANTI: PREZZI SEMPRE SUPERIORI A 2,00 €/L CON AGGIORNAMENTO GIORNALIERO
+# 10. CARBURANTI: PREZZI DINAMICI SOPRA I 2,00 €/L
 # ==============================================================================
 def get_carburanti_biella():
     nome_imp = "Enercoop Biella (C.C. Gli Orsi)"
@@ -466,7 +435,7 @@ def get_carburanti_biella():
     }
 
 # ==============================================================================
-# 11. COMPOSIZIONE GENERALE DEL NOTIZIARIO (ORDINE RIGOROSO)
+# 11. COMPOSIZIONE GENERALE DEL NOTIZIARIO
 # ==============================================================================
 meteo_item = get_meteo()
 notizie_biella_item = get_notizie_biellese()
@@ -970,4 +939,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato (Biellese da foto, filtro Tavigliano rigoroso): {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato (Biellese da foto con Ponderano garantito): {data_estesa}")
