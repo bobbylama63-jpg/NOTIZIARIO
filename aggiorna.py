@@ -68,6 +68,14 @@ def pulisci_testo(testo):
     t = html.unescape(t)
     return " ".join(t.split())
 
+def rimuovi_telefoni_da_voce(testo):
+    if not testo:
+        return ""
+    # Elimina prefissi telefonici e sequenze numeriche di recapiti telefonici dal parlato
+    t = re.sub(r'(?i)\b(?:tel(?:efono)?\.?|cell(?:ulare)?\.?|whatsapp:?)\s*(?:\+39\s*)?(?:0\d{1,4}|\b3\d{2})[\s\./-]?\d{5,8}\b', '', testo)
+    t = re.sub(r'(?:\+39\s*)?(?:0\d{1,4}|\b3\d{2})[\s\./-]\d{2,4}[\s\./-]\d{3,5}\b', '', t)
+    return " ".join(t.split())
+
 def controlla_conformita(titolo, testo):
     stringa = f"{titolo} {testo}".lower()
     for p in PAROLE_VIETATE:
@@ -118,7 +126,7 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 5. VALLE CERVO (SOLO CON PAROLA "TAVIGLIANO")
+# 5. VALLE CERVO (NOTIZIE CON PAROLA 'TAVIGLIANO')
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
@@ -187,6 +195,8 @@ def get_bacheca_google_fogli():
                     valido, _ = controlla_conformita(tit, det)
                     if valido:
                         testo_lettura = f"{tit}. {det}" if det else tit
+                        # Pulizia di sicurezza per non pronunciare telefoni
+                        testo_lettura = rimuovi_telefoni_da_voce(testo_lettura)
                         notizie_bacheca.append({
                             "cat": cat,
                             "title": tit,
@@ -198,7 +208,7 @@ def get_bacheca_google_fogli():
     return notizie_bacheca
 
 # ==============================================================================
-# 7. CALENDARIO RIFIUTI (ESCLUSIVAMENTE DA PDF SEAB TAVIGLIANO 2026)
+# 7. CALENDARIO RIFIUTI SEAB (SOLO A SCHERMO • PARLATO VOCALE DISATTIVATO)
 # ==============================================================================
 CALENDARIO_SEAB = {
     # LUGLIO 2026
@@ -246,55 +256,44 @@ def get_rifiuti():
     
     if oggi_val:
         oggi_str = f"Oggi raccolta: <strong>{oggi_val}</strong>"
-        oggi_speak = f"Oggi raccolta {oggi_val.lower()}"
     else:
         oggi_str = "Oggi: <strong>nessuna raccolta programmata</strong>"
-        oggi_speak = "Oggi nessuna raccolta programmata"
 
     if domani_val:
         domani_str = f"Domani: <strong>{domani_val}</strong>"
-        domani_speak = f"Promemoria per l'indomani: raccolta {domani_val.lower()}."
     else:
         prossimo_str = "Nessun ritiro nei prossimi giorni"
-        prossimo_speak = "Nessun ritiro programmato nei prossimi giorni."
         giorni_it = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
         for i in range(2, 25):
             d_p = today + datetime.timedelta(days=i)
             p_val = CALENDARIO_SEAB.get((d_p.month, d_p.day))
             if p_val:
                 prossimo_str = f"Prossimo turno: {giorni_it[d_p.weekday()]} {d_p.day} (<strong>{p_val}</strong>)"
-                prossimo_speak = f"Prossimo turno programmato: {giorni_it[d_p.weekday()]} {d_p.day} con raccolta {p_val.lower()}."
                 break
         domani_str = prossimo_str
-        domani_speak = prossimo_speak
 
-    speak = (
-        f"Servizio igiene urbana a Tavigliano dal calendario ufficiale Seab: {oggi_speak}. "
-        f"{domani_speak} Trovate il pulsante per consultare in ogni momento il documento PDF originale nella scheda."
-    )
-    
     body = (
         "<div style='background:rgba(0,168,132,0.12); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:8px;'>"
-        f"  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>📋 Calendario Ufficiale SEAB Tavigliano 2026:</div>"
+        f"  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>📋 Calendario SEAB Tavigliano 2026:</div>"
         f"  <div style='font-size:1.02rem; font-weight:800; margin-top:5px;'>• {oggi_str}</div>"
         f"  <div style='font-size:0.92rem; color:#cbd5e1; margin-top:4px;'>• {domani_str}</div>"
         f"  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>"
         f"    <a href='{pdf_rifiuti_file}' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📄 Apri Calendario Ufficiale SEAB (PDF)</a>"
-        f"    <a href='tel:0158352911' style='display:inline-block; background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Contact Center: 015.8352.911</a>"
+        f"    <a href='tel:0158352911' style='display:inline-block; background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 SEAB: 015.8352.911</a>"
         f"  </div>"
-        f"  <div style='font-size:0.78rem; color:#94a3b8; margin-top:8px;'>Prenotazione ingombranti e sfalci al numero 015.83.52.999 o WhatsApp: 349.70.61.166</div>"
+        f"  <div style='font-size:0.78rem; color:#94a3b8; margin-top:8px;'>Ritiro ingombranti/sfalci al n. 015.83.52.999 o WhatsApp: 349.70.61.166</div>"
         "</div>"
     )
     
     return {
         "cat": "♻️ Calendario Rifiuti • SEAB Tavigliano",
         "title": f"{oggi_str.replace('<strong>', '').replace('</strong>', '')} • {domani_str.replace('<strong>', '').replace('</strong>', '')}",
-        "speak": speak,
+        "speak": "",
         "body": body
     }
 
 # ==============================================================================
-# 8. FARMACIA DI TURNO UFFICIALE (DETERMINAZIONE ASL BI N. 549)
+# 8. FARMACIA DI TURNO UFFICIALE (SENZA PRONUNCIA DI NUMERI TELEFONICI)
 # ==============================================================================
 ANAGRAFICA_FARMACIE = {
     "SANTO STEFANO": {"nome": "Farmacia Santo Stefano (Biella)", "ind": "Via De Marchi 24, Biella", "tel": "01522390"},
@@ -351,11 +350,13 @@ def get_farmacia_di_turno():
     f_biella = ANAGRAFICA_FARMACIE.get(cod_biella, ANAGRAFICA_FARMACIE["TRABALDO"])
     f_valle = ANAGRAFICA_FARMACIE.get(cod_valle) if cod_valle else None
 
+    # Parlato vocale pulito senza numeri di telefono
     if f_valle:
         speak = (
             f"Capitolo farmacie: turno di servizio H24 secondo l'ASL di Biella. "
-            f"In Valle Cervo è aperta la {f_valle['nome']}, telefono {f_valle['tel']}. "
-            f"A Biella presidio principale attivo presso la {f_biella['nome']}, telefono {f_biella['tel']}."
+            f"In Valle Cervo è aperta la {f_valle['nome']}, situata in {f_valle['ind']}. "
+            f"A Biella presidio principale attivo presso la {f_biella['nome']}, in {f_biella['ind']}. "
+            f"Trovate i pulsanti per telefonare e per avviare il navigatore direttamente nella scheda."
         )
         q_nav_v = urllib.parse.quote(f"{f_valle['nome']} {f_valle['ind']}")
         body = (
@@ -378,7 +379,7 @@ def get_farmacia_di_turno():
     speak = (
         f"Capitolo farmacie: turno di servizio H24 secondo l'ASL di Biella. "
         f"Il presidio aperto giorno e notte per l'area è la {f_biella['nome']}, "
-        f"situata in {f_biella['ind']}, telefono {f_biella['tel']}."
+        f"situata in {f_biella['ind']}. Trovate il pulsante per telefonare direttamente nella scheda."
     )
     body = (
         "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:10px;'>"
@@ -445,7 +446,7 @@ def get_carburanti_biella():
     }
 
 # ==============================================================================
-# 10. COMPOSIZIONE GENERALE DEL NOTIZIARIO (ORDINE RIGOROSO)
+# 10. COMPOSIZIONE GENERALE DEL NOTIZIARIO
 # ==============================================================================
 meteo_item = get_meteo()
 notizia_valle_tav_item = get_notizia_valle_cervo_tavigliano()
@@ -474,10 +475,10 @@ news_data = [
 for avviso in avvisi_bacheca:
     news_data.append(avviso)
 
-# CALENDARIO RIFIUTI UFFICIALE SEAB (DA PDF TAVIGLIANO)
+# SCHEDA RIFIUTI: attiva a schermo col pulsante PDF, parlato vocale silenziato
 news_data.append(get_rifiuti())
 
-# FARMACIA DI TURNO PROVINCIALE H24 (DA PDF ASL BI)
+# FARMACIA DI TURNO PROVINCIALE H24 (SENZA NUMERI LETTI)
 news_data.append(get_farmacia_di_turno())
 
 # CARBURANTI MIMIT BIELLA
@@ -834,14 +835,18 @@ function renderCards() {{
     let eqSpans = '';
     for (let s = 0; s < 26; s++) eqSpans += '<span></span>';
 
-    card.innerHTML = `
-      <div class="news-cat">${{item.cat}}</div>
-      <div class="news-title">${{item.title}}</div>
-      <div class="news-body">${{item.body}}</div>
+    const audioBarHtml = item.speak && item.speak.trim() !== '' ? `
       <div class="audio-bar">
         <button class="btn-single-play" onclick="playSingleItem(${{index}})">▶</button>
         <div class="eq-spectrum">${{eqSpans}}</div>
       </div>
+    ` : '';
+
+    card.innerHTML = `
+      <div class="news-cat">${{item.cat}}</div>
+      <div class="news-title">${{item.title}}</div>
+      <div class="news-body">${{item.body}}</div>
+      ${{audioBarHtml}}
     `;
     newsStream.appendChild(card);
   }});
@@ -872,9 +877,23 @@ window.playSingleItem = function(index) {{
 }};
 
 function startVoice(index, autoNext) {{
-  currentTrack = index;
+  if (index >= NEWS.length) {{
+    stopBroadcast();
+    return;
+  }}
+
   const item = NEWS[index];
 
+  if (!item.speak || item.speak.trim() === '') {{
+    if (autoNext && isBroadcasting && index + 1 < NEWS.length) {{
+      startVoice(index + 1, true);
+    }} else if (index + 1 >= NEWS.length) {{
+      stopBroadcast();
+    }}
+    return;
+  }}
+
+  currentTrack = index;
   document.querySelectorAll('.news-card').forEach(c => c.classList.remove('active-play'));
   const activeCard = document.getElementById(`card-${{index}}`);
   if (activeCard) {{
@@ -952,4 +971,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato (senza notizie del biellese): {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato (numeri di telefono esclusi dalla voce): {data_estesa}")
