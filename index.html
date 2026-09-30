@@ -285,13 +285,13 @@ const NEWS = [
   {
     "cat": "♻️ Calendario Rifiuti • SEAB Tavigliano",
     "title": "Oggi: nessuna raccolta programmata • Domani: ORGANICO",
-    "speak": "Servizio igiene urbana a Tavigliano dal calendario ufficiale Seab: Oggi nessuna raccolta programmata. Promemoria per l'indomani: raccolta organico. Trovate il pulsante per consultare in ogni momento il documento PDF originale nella scheda.",
-    "body": "<div style='background:rgba(0,168,132,0.12); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:8px;'>  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>📋 Calendario Ufficiale SEAB Tavigliano 2026:</div>  <div style='font-size:1.02rem; font-weight:800; margin-top:5px;'>• Oggi: <strong>nessuna raccolta programmata</strong></div>  <div style='font-size:0.92rem; color:#cbd5e1; margin-top:4px;'>• Domani: <strong>ORGANICO</strong></div>  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='Tavigliano_rifiuti.pdf' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📄 Apri Calendario Ufficiale SEAB (PDF)</a>    <a href='tel:0158352911' style='display:inline-block; background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Contact Center: 015.8352.911</a>  </div>  <div style='font-size:0.78rem; color:#94a3b8; margin-top:8px;'>Prenotazione ingombranti e sfalci al numero 015.83.52.999 o WhatsApp: 349.70.61.166</div></div>"
+    "speak": "",
+    "body": "<div style='background:rgba(0,168,132,0.12); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:8px;'>  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>📋 Calendario SEAB Tavigliano 2026:</div>  <div style='font-size:1.02rem; font-weight:800; margin-top:5px;'>• Oggi: <strong>nessuna raccolta programmata</strong></div>  <div style='font-size:0.92rem; color:#cbd5e1; margin-top:4px;'>• Domani: <strong>ORGANICO</strong></div>  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>    <a href='Tavigliano%20rifiuti%281%29.pdf' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📄 Apri Calendario Ufficiale SEAB (PDF)</a>    <a href='tel:0158352911' style='display:inline-block; background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 SEAB: 015.8352.911</a>  </div>  <div style='font-size:0.78rem; color:#94a3b8; margin-top:8px;'>Ritiro ingombranti/sfalci al n. 015.83.52.999 o WhatsApp: 349.70.61.166</div></div>"
   },
   {
     "cat": "💊 Farmacia di Turno H24 • ASL Biella",
     "title": "Turno H24: Farmacia Trabaldo (Biella)",
-    "speak": "Capitolo farmacie: turno di servizio H24 secondo l'ASL di Biella. Il presidio aperto giorno e notte per l'area è la Farmacia Trabaldo (Biella), situata in Via Alfonso Lamarmora 6, Biella, telefono 015401681.",
+    "speak": "Capitolo farmacie: turno di servizio H24 secondo l'ASL di Biella. Il presidio aperto giorno e notte per l'area è la Farmacia Trabaldo (Biella), situata in Via Alfonso Lamarmora 6, Biella. Trovate il pulsante per telefonare direttamente nella scheda.",
     "body": "<div style='background:rgba(0,168,132,0.15); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:10px;'>  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>🏥 Turno H24 Ufficiale (Dall'ASL di Biella):</div>  <div style='font-size:1.02rem; font-weight:800; margin-top:4px;'>Farmacia Trabaldo (Biella)</div>  <div style='font-size:0.88rem; color:#cbd5e1; margin-top:2px;'>📍 Via Alfonso Lamarmora 6, Biella (Aperta continuato dalle 9 alle 9 del giorno dopo)</div>  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>\n    <a href='tel:015401681' style='background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Chiama: 015401681</a>\n    <a href='https://www.google.com/maps/dir/?api=1&destination=Farmacia%20Trabaldo%20%28Biella%29%20Via%20Alfonso%20Lamarmora%206%2C%20Biella' target='_blank' style='background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore</a>\n  </div>\n</div>"
   },
   {
@@ -353,14 +353,18 @@ function renderCards() {
     let eqSpans = '';
     for (let s = 0; s < 26; s++) eqSpans += '<span></span>';
 
-    card.innerHTML = `
-      <div class="news-cat">${item.cat}</div>
-      <div class="news-title">${item.title}</div>
-      <div class="news-body">${item.body}</div>
+    const audioBarHtml = item.speak && item.speak.trim() !== '' ? `
       <div class="audio-bar">
         <button class="btn-single-play" onclick="playSingleItem(${index})">▶</button>
         <div class="eq-spectrum">${eqSpans}</div>
       </div>
+    ` : '';
+
+    card.innerHTML = `
+      <div class="news-cat">${item.cat}</div>
+      <div class="news-title">${item.title}</div>
+      <div class="news-body">${item.body}</div>
+      ${audioBarHtml}
     `;
     newsStream.appendChild(card);
   });
@@ -391,9 +395,23 @@ window.playSingleItem = function(index) {
 };
 
 function startVoice(index, autoNext) {
-  currentTrack = index;
+  if (index >= NEWS.length) {
+    stopBroadcast();
+    return;
+  }
+
   const item = NEWS[index];
 
+  if (!item.speak || item.speak.trim() === '') {
+    if (autoNext && isBroadcasting && index + 1 < NEWS.length) {
+      startVoice(index + 1, true);
+    } else if (index + 1 >= NEWS.length) {
+      stopBroadcast();
+    }
+    return;
+  }
+
+  currentTrack = index;
   document.querySelectorAll('.news-card').forEach(c => c.classList.remove('active-play'));
   const activeCard = document.getElementById(`card-${index}`);
   if (activeCard) {
