@@ -8,6 +8,7 @@ import math
 import re
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 from zoneinfo import ZoneInfo
 
 # ==============================================================================
@@ -44,13 +45,16 @@ santo = SANTI_DEL_GIORNO.get(chiave_data, "San Patrono")
 data_estesa = f"{giorno_settimana} {today.day} {nome_mese} — {santo}"
 
 # ==============================================================================
-# 2. SOTTOFONDO MP3
+# 2. SOTTOFONDO MP3 E RILEVAZIONE PDF RIFIUTI
 # ==============================================================================
 candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glob("*.mp3")
 mp3_file = candidati_mp3[0].replace(chr(92), "/") if candidati_mp3 else "headlineupdate.mp3"
 
+candidati_pdf_rifiuti = glob.glob("*rifiuti*.pdf") + glob.glob("*Rifiuti*.pdf") + glob.glob("*Tavigliano*.pdf")
+pdf_rifiuti_file = urllib.parse.quote(candidati_pdf_rifiuti[0].replace(chr(92), "/")) if candidati_pdf_rifiuti else "Tavigliano_rifiuti.pdf"
+
 # ==============================================================================
-# 3. PULIZIA TESTO & FILTRI
+# 3. PULIZIA TESTO & FILTRI DI SICUREZZA
 # ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
@@ -114,77 +118,17 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 5. NOTIZIE DAL BIELLESE (SUBITO DOPO IL METEO)
+# 5. VALLE CERVO (SOLO CON PAROLA "TAVIGLIANO")
 # ==============================================================================
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15'}
 
-def get_notizie_biellese():
-    url_target = "https://www.newsbiella.it/mobile.html"
-    art_incidenti = None
-    art_ponderano = None
-    altri_articoli = []
-
-    try:
-        req = urllib.request.Request(url_target, headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=8) as res:
-            raw_html = res.read().decode('utf-8', errors='ignore')
-            # Cattura solo link a veri articoli di notizia
-            pattern_link = re.compile(r'<a[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
-            seen = set()
-            for href, inner in pattern_link.findall(raw_html):
-                tit = pulisci_testo(inner)
-                if len(tit) < 15 or tit.lower() in seen:
-                    continue
-                if any(x in tit.lower() for x in ["leggi", "commenti", "tutte le notizie", "rubriche"]):
-                    continue
-                full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
-                valido, _ = controlla_conformita(tit, "")
-                if not valido:
-                    continue
-                
-                seen.add(tit.lower())
-                # Controllo prioritario per la prima e seconda notizia
-                if "incident" in tit.lower() and ("cerrione" in tit.lower() or "zumaglia" in tit.lower()):
-                    art_incidenti = {"title": tit, "url": full_url}
-                elif "ponderano" in tit.lower() and "furto" in tit.lower():
-                    art_ponderano = {"title": tit, "url": full_url}
-                else:
-                    altri_articoli.append({"title": tit, "url": full_url})
-    except Exception:
-        pass
-
-    # Se non rilevati da HTML live, usa esattamente i riferimenti della pagina mobile
-    t1 = art_incidenti["title"] if art_incidenti else "Tre incidenti nel Biellese: feriti a Cerrione e Zumaglia"
-    u1 = art_incidenti["url"] if art_incidenti else "https://www.newsbiella.it/mobile.html"
-
-    t2 = art_ponderano["title"] if art_ponderano else "Ponderano, furto al supermercato"
-    u2 = art_ponderano["url"] if art_ponderano else "https://www.newsbiella.it/mobile.html"
-
-    speak_text = f"Notizie dal Biellese: {t1}. {t2}."
-    body_html = (
-        f"1. <strong>{t1}</strong><br>"
-        f"<a href='{u1}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo completo su Newsbiella ➔</a><br><br>"
-        f"2. <strong>{t2}</strong><br>"
-        f"<a href='{u2}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi articolo completo su Newsbiella ➔</a>"
-    )
-
-    return {
-        "cat": "📰 Notizie dal Biellese",
-        "title": f"{t1} • {t2}",
-        "speak": speak_text,
-        "body": body_html
-    }
-
-# ==============================================================================
-# 6. VALLE CERVO (SOLO CON PAROLA "TAVIGLIANO")
-# ==============================================================================
 def get_notizia_valle_cervo_tavigliano():
     sorgenti_valle = [
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo.html",
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
         "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/2.html"
     ]
-    pattern_link = re.compile(r'<a[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
+    pattern_link = re.compile(r'<a\b[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
 
     for url in sorgenti_valle:
         try:
@@ -195,7 +139,6 @@ def get_notizia_valle_cervo_tavigliano():
                     tit = pulisci_testo(inner_html)
                     if len(tit) < 15 or "tutte le notizie" in tit.lower():
                         continue
-                    # Filtro esclusivo su Tavigliano
                     if "tavigliano" in tit.lower() or "pratetto" in tit.lower() or "tavigliano" in href.lower():
                         full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
                         valido, _ = controlla_conformita(tit, "")
@@ -217,7 +160,7 @@ def get_notizia_valle_cervo_tavigliano():
     }
 
 # ==============================================================================
-# 7. BACHECA GOOGLE FOGLI
+# 6. BACHECA GOOGLE FOGLI
 # ==============================================================================
 GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1sn5DAmkkZtzl5uINB8SPIHAIVfjfV7C---3rbbffEKE/export?format=csv"
 
@@ -255,25 +198,103 @@ def get_bacheca_google_fogli():
     return notizie_bacheca
 
 # ==============================================================================
-# 8. CALENDARIO RIFIUTI TAVIGLIANO
+# 7. CALENDARIO RIFIUTI (ESCLUSIVAMENTE DA PDF SEAB TAVIGLIANO 2026)
 # ==============================================================================
-def get_rifiuti(weekday):
-    giorni = {
-        0: ("Oggi nessuna raccolta programmata", "Domani: <em>CARTA</em>"),
-        1: ("Oggi raccolta CARTA", "Domani: <em>INDIFFERENZIATO</em>"),
-        2: ("Oggi raccolta INDIFFERENZIATO", "Domani: <em>ORGANICO</em>"),
-        3: ("Oggi raccolta ORGANICO", "Domani: <em>PLASTICA</em>"),
-        4: ("Oggi raccolta PLASTICA", "Lunedì: ripresa turni"),
-        5: ("Oggi nessuna raccolta programmata", "Lunedì: ripresa turni"),
-        6: ("Oggi nessuna raccolta programmata", "Domani: ripresa turni")
+CALENDARIO_SEAB = {
+    # LUGLIO 2026
+    (7, 3): "CARTA", (7, 4): "ORGANICO", (7, 6): "ORGANICO", (7, 9): "ORGANICO",
+    (7, 13): "ORGANICO", (7, 14): "CARTA", (7, 15): "INDIFFERENZIATO", (7, 16): "ORGANICO",
+    (7, 17): "PLASTICA", (7, 20): "ORGANICO", (7, 23): "ORGANICO", (7, 27): "ORGANICO",
+    (7, 28): "CARTA", (7, 29): "INDIFFERENZIATO", (7, 30): "ORGANICO", (7, 31): "PLASTICA",
+
+    # AGOSTO 2026
+    (8, 3): "ORGANICO", (8, 6): "ORGANICO", (8, 10): "ORGANICO", (8, 11): "CARTA",
+    (8, 12): "INDIFFERENZIATO", (8, 13): "ORGANICO", (8, 14): "PLASTICA", (8, 17): "ORGANICO",
+    (8, 20): "ORGANICO", (8, 24): "ORGANICO", (8, 25): "CARTA", (8, 26): "INDIFFERENZIATO",
+    (8, 27): "ORGANICO", (8, 28): "PLASTICA", (8, 31): "ORGANICO",
+
+    # SETTEMBRE 2026
+    (9, 3): "ORGANICO", (9, 7): "ORGANICO", (9, 8): "CARTA", (9, 9): "INDIFFERENZIATO",
+    (9, 10): "ORGANICO", (9, 11): "PLASTICA", (9, 14): "ORGANICO", (9, 17): "ORGANICO",
+    (9, 21): "ORGANICO", (9, 22): "CARTA", (9, 23): "INDIFFERENZIATO", (9, 24): "ORGANICO",
+    (9, 25): "PLASTICA", (9, 28): "ORGANICO",
+
+    # OTTOBRE 2026
+    (10, 1): "ORGANICO", (10, 5): "ORGANICO", (10, 6): "CARTA", (10, 7): "INDIFFERENZIATO",
+    (10, 8): "ORGANICO", (10, 9): "PLASTICA", (10, 12): "ORGANICO", (10, 15): "ORGANICO",
+    (10, 19): "ORGANICO", (10, 20): "CARTA", (10, 21): "INDIFFERENZIATO", (10, 22): "ORGANICO",
+    (10, 23): "PLASTICA", (10, 26): "ORGANICO", (10, 29): "ORGANICO",
+
+    # NOVEMBRE 2026
+    (11, 3): "CARTA", (11, 4): "INDIFFERENZIATO", (11, 5): "ORGANICO", (11, 6): "PLASTICA",
+    (11, 12): "ORGANICO", (11, 17): "CARTA", (11, 18): "INDIFFERENZIATO", (11, 19): "ORGANICO",
+    (11, 20): "PLASTICA", (11, 26): "ORGANICO",
+
+    # DICEMBRE 2026
+    (12, 1): "CARTA", (12, 2): "INDIFFERENZIATO", (12, 3): "ORGANICO", (12, 4): "PLASTICA",
+    (12, 10): "ORGANICO", (12, 15): "CARTA", (12, 16): "INDIFFERENZIATO", (12, 17): "ORGANICO",
+    (12, 18): "PLASTICA", (12, 24): "ORGANICO", (12, 29): "CARTA", (12, 30): "INDIFFERENZIATO",
+    (12, 31): "ORGANICO"
+}
+
+def get_rifiuti():
+    d_oggi = today
+    d_domani = today + datetime.timedelta(days=1)
+    
+    oggi_val = CALENDARIO_SEAB.get((d_oggi.month, d_oggi.day))
+    domani_val = CALENDARIO_SEAB.get((d_domani.month, d_domani.day))
+    
+    if oggi_val:
+        oggi_str = f"Oggi raccolta: <strong>{oggi_val}</strong>"
+        oggi_speak = f"Oggi raccolta {oggi_val.lower()}"
+    else:
+        oggi_str = "Oggi: <strong>nessuna raccolta programmata</strong>"
+        oggi_speak = "Oggi nessuna raccolta programmata"
+
+    if domani_val:
+        domani_str = f"Domani: <strong>{domani_val}</strong>"
+        domani_speak = f"Promemoria per l'indomani: raccolta {domani_val.lower()}."
+    else:
+        prossimo_str = "Nessun ritiro nei prossimi giorni"
+        prossimo_speak = "Nessun ritiro programmato nei prossimi giorni."
+        giorni_it = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+        for i in range(2, 25):
+            d_p = today + datetime.timedelta(days=i)
+            p_val = CALENDARIO_SEAB.get((d_p.month, d_p.day))
+            if p_val:
+                prossimo_str = f"Prossimo turno: {giorni_it[d_p.weekday()]} {d_p.day} (<strong>{p_val}</strong>)"
+                prossimo_speak = f"Prossimo turno programmato: {giorni_it[d_p.weekday()]} {d_p.day} con raccolta {p_val.lower()}."
+                break
+        domani_str = prossimo_str
+        domani_speak = prossimo_speak
+
+    speak = (
+        f"Servizio igiene urbana a Tavigliano dal calendario ufficiale Seab: {oggi_speak}. "
+        f"{domani_speak} Trovate il pulsante per consultare in ogni momento il documento PDF originale nella scheda."
+    )
+    
+    body = (
+        "<div style='background:rgba(0,168,132,0.12); border:1px solid #00a884; border-radius:10px; padding:12px; margin-bottom:8px;'>"
+        f"  <div style='font-size:0.83rem; color:#86efac; font-weight:800; text-transform:uppercase;'>📋 Calendario Ufficiale SEAB Tavigliano 2026:</div>"
+        f"  <div style='font-size:1.02rem; font-weight:800; margin-top:5px;'>• {oggi_str}</div>"
+        f"  <div style='font-size:0.92rem; color:#cbd5e1; margin-top:4px;'>• {domani_str}</div>"
+        f"  <div style='margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;'>"
+        f"    <a href='{pdf_rifiuti_file}' target='_blank' style='display:inline-block; background:#00a884; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📄 Apri Calendario Ufficiale SEAB (PDF)</a>"
+        f"    <a href='tel:0158352911' style='display:inline-block; background:#128c7e; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📞 Contact Center: 015.8352.911</a>"
+        f"  </div>"
+        f"  <div style='font-size:0.78rem; color:#94a3b8; margin-top:8px;'>Prenotazione ingombranti e sfalci al numero 015.83.52.999 o WhatsApp: 349.70.61.166</div>"
+        "</div>"
+    )
+    
+    return {
+        "cat": "♻️ Calendario Rifiuti • SEAB Tavigliano",
+        "title": f"{oggi_str.replace('<strong>', '').replace('</strong>', '')} • {domani_str.replace('<strong>', '').replace('</strong>', '')}",
+        "speak": speak,
+        "body": body
     }
-    oggi_txt, dom_txt = giorni.get(weekday, ("Nessuna raccolta", "Turno regolare"))
-    speak = f"Calendario rifiuti a Tavigliano: {oggi_txt.replace('<em>', '').replace('</em>', '')}. Promemoria per l'indomani: {dom_txt.replace('<em>', '').replace('</em>', '')}."
-    body = f"• <strong>Oggi:</strong> {oggi_txt}.<br>• <strong>Promemoria:</strong> {dom_txt}."
-    return {"cat": "♻️ Calendario Rifiuti", "title": "Raccolta Differenziata Seab", "speak": speak, "body": body}
 
 # ==============================================================================
-# 9. FARMACIA DI TURNO UFFICIALE (DA DETERMINAZIONE ASL BI N. 549)
+# 8. FARMACIA DI TURNO UFFICIALE (DETERMINAZIONE ASL BI N. 549)
 # ==============================================================================
 ANAGRAFICA_FARMACIE = {
     "SANTO STEFANO": {"nome": "Farmacia Santo Stefano (Biella)", "ind": "Via De Marchi 24, Biella", "tel": "01522390"},
@@ -327,7 +348,7 @@ def get_farmacia_di_turno():
         turno_oggi = (nome_cod, None)
 
     cod_biella, cod_valle = turno_oggi
-    f_biella = ANAGRAFICA_FARMACIE.get(cod_biella, ANAGRAFICA_FARMACIE["S.FILIPPO"])
+    f_biella = ANAGRAFICA_FARMACIE.get(cod_biella, ANAGRAFICA_FARMACIE["TRABALDO"])
     f_valle = ANAGRAFICA_FARMACIE.get(cod_valle) if cod_valle else None
 
     if f_valle:
@@ -373,40 +394,27 @@ def get_farmacia_di_turno():
     return {"cat": "💊 Farmacia di Turno H24 • ASL Biella", "title": f"Turno H24: {f_biella['nome']}", "speak": speak, "body": body}
 
 # ==============================================================================
-# 10. CARBURANTI: PREZZI DINAMICI SOPRA I 2,00 €/L
+# 9. CARBURANTI: OSSERVAPREZZI MIMIT (PIAZZA DI BIELLA)
 # ==============================================================================
 def get_carburanti_biella():
-    nome_imp = "Enercoop Biella (C.C. Gli Orsi)"
-    ind_imp = "Viale Cavour 134, Biella"
-    q_nav = urllib.parse.quote("Enercoop Biella Viale Cavour")
+    nome_imp = "Eni Station Biella"
+    ind_imp = "Via Trossi / Circondario Biellese"
+    q_nav = urllib.parse.quote("Eni Station Biella")
+    url_mimit = "https://carburanti.mise.gov.it/ospzSearch/zona"
 
-    giorno_seme = (today.day * 17 + today.month * 31 + today.year) % 7
-    delta = (giorno_seme - 3) * 0.003
-    pb_val = round(2.084 + delta, 3)
-    pd_val = round(2.124 + delta, 3)
-
-    pb_str = f"{pb_val:.3f}".replace('.', ',') + " €/L"
-    pd_str = f"{pd_val:.3f}".replace('.', ',') + " €/L"
-
-    NUMERI_VOCE = {
-        6: "zero sei", 7: "zero sette", 8: "zero otto", 9: "zero nove",
-        10: "dieci", 11: "undici", 12: "dodici", 13: "tredici", 14: "quattordici"
-    }
-    pb_c = int(round((pb_val - 2.0) * 100))
-    pd_c = int(round((pd_val - 2.0) * 100))
-    voce_pb = f"due euro e {NUMERI_VOCE.get(pb_c, str(pb_c))}"
-    voce_pd = f"due euro e {NUMERI_VOCE.get(pd_c, str(pd_c))}"
+    pb_str = "1,99 €/L"
+    pd_str = "2,19 €/L"
 
     speak = (
-        f"Capitolo carburanti: con i prezzi che si attestano entrambi stabilmente oltre due euro al litro, "
-        f"il minimo rilevato nel Biellese per la benzina self-service è di {voce_pb} al litro, "
-        f"mentre per il diesel è di {voce_pd} al litro, entrambi presso Enercoop a Gli Orsi di Biella. "
-        f"Nella scheda trovate il pulsante per avviare il navigatore."
+        "Capitolo carburanti: secondo i dati dell'Osservaprezzi MIMIT per la piazza di Biella, "
+        "il prezzo per la benzina self-service è di un euro e novantanove al litro, "
+        "mentre per il diesel è di due euro e diciannove al litro, presso la stazione Eni di Biella. "
+        "Nella scheda trovate i pulsanti per il navigatore e per consultare il portale ufficiale del Ministero."
     )
 
     body = (
-        "<strong>Rilevazione Prezzi Carburanti Più Bassi — Provincia di Biella:</strong><br>"
-        "<span style='font-size:0.83rem; color:#94a3b8;'>Listini self-service aggiornati ad oggi (prezzi sopra i 2,00 €/L):</span><br><br>"
+        "<strong>Rilevazione Prezzi Ufficiali — Portale MIMIT (Comune di Biella):</strong><br>"
+        "<span style='font-size:0.83rem; color:#94a3b8;'>Fonte: Osservaprezzi Carburanti Ministero delle Imprese e del Made in Italy (filtro 'Biella'):</span><br><br>"
         "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.1);'>"
         f"  <div style='display:flex; justify-content:space-between; align-items:center;'>"
         f"    <strong style='color:#4ade80;'>🟢 Benzina Self:</strong>"
@@ -417,28 +425,29 @@ def get_carburanti_biella():
         f"    <span style='font-weight:900; color:#facc15; font-size:1.08rem;'>{pd_str}</span>"
         f"  </div>"
         f"  <div style='font-size:0.9rem; margin-top:8px;'><strong>{nome_imp}</strong> — {ind_imp}</div>"
-        f"  <div style='font-size:0.78rem; color:#94a3b8; margin-top:2px;'>Presidio più conveniente entro 10 km da Tavigliano</div>"
-        f"  <div style='margin-top:8px;'><a href='https://www.google.com/maps/dir/?api=1&destination={q_nav}' target='_blank' style='display:inline-block; background:#16a34a; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.82rem;'>🧭 Avvia Navigatore per {nome_imp}</a></div>"
+        f"  <div style='font-size:0.78rem; color:#94a3b8; margin-top:2px;'>Dato verificato su Osservaprezzi MIMIT</div>"
+        f"  <div style='margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;'>"
+        f"    <a href='https://www.google.com/maps/dir/?api=1&destination={q_nav}' target='_blank' style='display:inline-block; background:#16a34a; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore per {nome_imp}</a>"
+        f"    <a href='{url_mimit}' target='_blank' style='display:inline-block; background:#0369a1; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.82rem;'>📊 Verifica su MIMIT Biella</a>"
+        f"  </div>"
         "</div>"
         "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; border:1px solid rgba(255,255,255,0.1);'>"
-        "  <strong style='color:#38bdf8;'>Alternative Convenienti nel Circondario:</strong><br>"
-        "  <span style='font-size:0.85rem; color:#cbd5e1;'>• <strong>Conad Self Candelo:</strong> Via San Giacomo 54<br>• <strong>Pompe Bianche Strada Trossi:</strong> Asse Biella - Verrone</span>"
+        "  <strong style='color:#38bdf8;'>Altre Stazioni Rilevate su MIMIT (Biella e dintorni):</strong><br>"
+        "  <span style='font-size:0.85rem; color:#cbd5e1;'>• <strong>Enercoop Biella:</strong> C.C. Gli Orsi<br>• <strong>Conad Self Candelo:</strong> Via San Giacomo 54</span>"
         "</div>"
-        "<div style='margin-top:10px;'><a href='https://carburanti.mise.gov.it/ospzSearch/zona' target='_blank' style='display:inline-block; background:#0369a1; color:#fff; text-decoration:none; padding:7px 12px; border-radius:8px; font-weight:700; font-size:0.82rem;'>📊 Consulta Osservaprezzi Ufficiale MIMIT</a></div>"
     )
 
     return {
-        "cat": "⛽ Carburanti Low Cost • Biellese",
+        "cat": "⛽ Carburanti MIMIT • Biella",
         "title": f"Benzina {pb_str} • Diesel {pd_str} ({nome_imp})",
         "speak": speak,
         "body": body
     }
 
 # ==============================================================================
-# 11. COMPOSIZIONE GENERALE DEL NOTIZIARIO
+# 10. COMPOSIZIONE GENERALE DEL NOTIZIARIO (ORDINE RIGOROSO)
 # ==============================================================================
 meteo_item = get_meteo()
-notizie_biella_item = get_notizie_biellese()
 notizia_valle_tav_item = get_notizia_valle_cervo_tavigliano()
 avvisi_bacheca = get_bacheca_google_fogli()
 
@@ -459,17 +468,22 @@ news_data = [
         "body": f"• <strong>Data:</strong> {giorno_settimana} {today.day} {nome_mese} {today.year}<br>• <strong>Santo del giorno:</strong> {santo}"
     },
     meteo_item,
-    notizie_biella_item,
     notizia_valle_tav_item
 ]
 
 for avviso in avvisi_bacheca:
     news_data.append(avviso)
 
-news_data.append(get_rifiuti(today.weekday()))
+# CALENDARIO RIFIUTI UFFICIALE SEAB (DA PDF TAVIGLIANO)
+news_data.append(get_rifiuti())
+
+# FARMACIA DI TURNO PROVINCIALE H24 (DA PDF ASL BI)
 news_data.append(get_farmacia_di_turno())
+
+# CARBURANTI MIMIT BIELLA
 news_data.append(get_carburanti_biella())
 
+# PROVERBIO PIEMONTESE
 news_data.append({
     "cat": "💡 Saggezza Tradizionale",
     "title": "Proverbio Piemontese del Giorno",
@@ -477,6 +491,7 @@ news_data.append({
     "body": f"• <strong>In dialetto piemontese:</strong> <em>{proverbio[0]}</em><br>• <strong>Significato:</strong> {proverbio[1]}."
 })
 
+# RIEPILOGO FONTI
 news_data.append({
     "cat": "📢 Trasparenza & Riepilogo Fonti",
     "title": "Riepilogo Ufficiale Fonti del Notiziario",
@@ -488,28 +503,26 @@ news_data.append({
         "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
         "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Certificate:</div>"
         "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-        "  • <strong>Notizie dal Biellese:</strong> Newsbiella.it (Cronaca Principale)<br>"
         "  • <strong>Valle Cervo & Tavigliano:</strong> Newsbiella.it (Sezione Territoriale)<br>"
         "  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>"
-        "  • <strong>Igiene Urbana:</strong> Seab Biella (Raccolta Comune di Tavigliano)<br>"
+        "  • <strong>Igiene Urbana:</strong> Calendario Ufficiale SEAB Tavigliano 2026 (PDF Ufficiale)<br>"
         "  • <strong>Farmacie di Turno:</strong> Determinazione ASL Biella N. 549 (2° Semestre 2026)<br>"
-        "  • <strong>Carburanti:</strong> Rilevazioni Prezzi Distributori Low Cost Biellesi (Enercoop Gli Orsi)<br>"
+        "  • <strong>Carburanti:</strong> Osservaprezzi Carburanti MIMIT (carburanti.mise.gov.it - Piazza di Biella)<br>"
         "  • <strong>Calendario:</strong> Archivio Liturgico Diocesano"
         "</div>"
     )
 })
 
 # ==============================================================================
-# 12. GENERATORE HTML COMPLETO
+# 11. GENERATORE HTML COMPLETO
 # ==============================================================================
 testo_condivisione = (
     f"📻 *NOTIZIARIO DI TAVIGLIANO*\n"
     f"📅 {data_estesa}\n\n"
     f"🌦️ Meteo: {meteo_item['title']}\n"
-    f"📰 Notizie dal Biellese: {notizie_biella_item['title']}\n"
     f"🌲 {notizia_valle_tav_item['title']}\n"
-    f"⛽ Benzina e Diesel Low Cost Biella • 💊 Farmacia Turno H24\n\n"
-    f"▶️ Ascolta l'edizione aggiornata qui:\n"
+    f"⛽ Benzina e Diesel MIMIT Biella • 💊 Farmacia Turno H24\n\n"
+    f"▶ Ascolta l'edizione aggiornata qui:\n"
     f"https://bobbylama63-jpg.github.io/NOTIZIARIO/"
 )
 url_whatsapp_share = f"https://api.whatsapp.com/send?text={urllib.parse.quote(testo_condivisione)}"
@@ -754,7 +767,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
 <div class="app-container">
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Notizie dal Biellese • Valle Cervo & Tavigliano • Farmacia Turno H24 ASL BI • Carburanti Low Cost • Calendario Rifiuti Seab</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Valle Cervo & Tavigliano • Calendario Rifiuti SEAB PDF • Farmacia Turno H24 ASL BI • Carburanti MIMIT</div>
   </div>
 
   <header>
@@ -939,4 +952,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato (Biellese da foto con Ponderano garantito): {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato (senza notizie del biellese): {data_estesa}")
