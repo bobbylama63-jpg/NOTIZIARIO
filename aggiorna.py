@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 from zoneinfo import ZoneInfo
 
 # ==============================================================================
-# 1. FUSO ORARIO ITALIANO (ROMA)
+# 1. FUSO ORARIO ITALIANO (ROMA) & CALENDARIO SANTI
 # ==============================================================================
 ora_italiana = datetime.datetime.now(ZoneInfo("Europe/Rome"))
 today = ora_italiana.date()
@@ -21,7 +21,6 @@ MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
         "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 GIORNI = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
 
-# CALENDARIO COMPLETO SANTI (OTTOBRE - DICEMBRE & PRINCIPALI FESTIVITÀ)
 SANTI_DEL_GIORNO = {
     # SETTEMBRE
     "09-24": "San Pacifico da Sanseverino", "09-25": "San Sergio di Radonez", "09-26": "Santi Cosma e Damiano",
@@ -71,7 +70,7 @@ santo = SANTI_DEL_GIORNO.get(chiave_data, "San Patrono e Protettore")
 data_estesa = f"{giorno_settimana} {today.day} {nome_mese} — {santo}"
 
 # ==============================================================================
-# 2. SOTTOFONDO MP3 E RILEVAZIONE PDF RIFIUTI
+# 2. FILE MULTIMEDIALI & PDF SEAB TAVIGLIANO
 # ==============================================================================
 candidati_mp3 = glob.glob("Digita/*.mp3") + glob.glob("digita/*.mp3") + glob.glob("*.mp3")
 mp3_file = candidati_mp3[0].replace(chr(92), "/") if candidati_mp3 else "headlineupdate.mp3"
@@ -80,7 +79,7 @@ candidati_pdf_rifiuti = glob.glob("*rifiuti*.pdf") + glob.glob("*Rifiuti*.pdf") 
 pdf_rifiuti_file = urllib.parse.quote(candidati_pdf_rifiuti[0].replace(chr(92), "/")) if candidati_pdf_rifiuti else "Tavigliano_rifiuti.pdf"
 
 # ==============================================================================
-# 3. PULIZIA TESTO & FILTRI DI SICUREZZA
+# 3. PULIZIA TESTO, SICUREZZA & DIVIETO NUMERI TELEFONICI IN VOCE
 # ==============================================================================
 PAROLE_VIETATE = [
     "omicidio", "cadavere", "suicidio", "stupro", "violenza sessuale",
@@ -97,7 +96,6 @@ def pulisci_testo(testo):
 def rimuovi_telefoni_da_voce(testo):
     if not testo:
         return ""
-    # Eliminazione assoluta di numeri telefonici e prefissi dal testo parlato
     t = re.sub(r'(?i)\b(?:tel(?:efono)?\.?|cell(?:ulare)?\.?|whatsapp:?)\s*(?:\+39\s*)?(?:0\d{1,4}|\b3\d{2})[\s\./-]?\d{5,8}\b', '', testo)
     t = re.sub(r'(?:\+39\s*)?(?:0\d{1,4}|\b3\d{2})[\s\./-]\d{2,4}[\s\./-]\d{3,5}\b', '', t)
     return " ".join(t.split())
@@ -112,7 +110,7 @@ def controlla_conformita(titolo, testo):
     return True, "Conforme"
 
 # ==============================================================================
-# 4. PREVISIONI METEO 3B METEO
+# 4. PREVISIONI METEO TAVIGLIANO (3B METEO / OPEN-METEO)
 # ==============================================================================
 def get_meteo():
     try:
@@ -152,135 +150,7 @@ def get_meteo():
         }
 
 # ==============================================================================
-# 5. NOTIZIE DAL BIELLESE (FONTE: PRIMABIELLA.IT)
-# ==============================================================================
-HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-
-def get_notizie_biellese():
-    articoli = []
-    seen = set()
-    esclusioni = ["sport", "calcio", "basket", "volley", "oroscopo", "necrologi", "cinema", "ricette"]
-
-    # Tentativo 1: Scansione diretta dei titoli principali da homepage https://primabiella.it/
-    try:
-        req_web = urllib.request.Request("https://primabiella.it/", headers=HEADERS)
-        with urllib.request.urlopen(req_web, timeout=8) as res:
-            raw_html = res.read().decode('utf-8', errors='ignore')
-            pattern = re.compile(r'<h[23][^>]*>\s*<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>\s*</h[23]>', re.DOTALL | re.IGNORECASE)
-            for href, inner in pattern.findall(raw_html):
-                tit = pulisci_testo(inner)
-                if len(tit) < 16 or tit.lower() in seen:
-                    continue
-                if any(bad in tit.lower() for bad in esclusioni):
-                    continue
-                valido, _ = controlla_conformita(tit, "")
-                if valido:
-                    seen.add(tit.lower())
-                    articoli.append({"title": tit, "url": href})
-                    if len(articoli) >= 2:
-                        break
-    except Exception:
-        pass
-
-    # Tentativo 2: Feed RSS ufficiale di PrimaBiella
-    if len(articoli) < 2:
-        try:
-            req_rss = urllib.request.Request("https://primabiella.it/feed/", headers=HEADERS)
-            with urllib.request.urlopen(req_rss, timeout=7) as res:
-                rss_raw = res.read()
-                root = ET.fromstring(rss_raw)
-                for item in root.findall('.//item'):
-                    tit_el = item.find('title')
-                    link_el = item.find('link')
-                    if tit_el is not None and link_el is not None:
-                        tit = pulisci_testo(tit_el.text)
-                        link = link_el.text.strip()
-                        if len(tit) < 16 or tit.lower() in seen:
-                            continue
-                        if any(bad in tit.lower() for bad in esclusioni):
-                            continue
-                        valido, _ = controlla_conformita(tit, "")
-                        if valido:
-                            seen.add(tit.lower())
-                            articoli.append({"title": tit, "url": link})
-                            if len(articoli) >= 2:
-                                break
-        except Exception:
-            pass
-
-    # Cronaca effettiva di apertura su PrimaBiella
-    if len(articoli) < 2:
-        articoli = [
-            {
-                "title": "Boato all'alba nel Biellese: residenti svegliati nella notte",
-                "url": "https://primabiella.it/"
-            },
-            {
-                "title": "Biellese protagonista al concorso: vinta la fascia di Miss Trans Eleganza",
-                "url": "https://primabiella.it/"
-            }
-        ]
-
-    t1, u1 = articoli[0]["title"], articoli[0]["url"]
-    t2, u2 = articoli[1]["title"], articoli[1]["url"]
-
-    speak_text = f"Notizie dal Biellese da PrimaBiella: {t1}. {t2}."
-    body_html = (
-        f"1. <strong>{t1}</strong><br>"
-        f"<a href='{u1}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi l'articolo completo su PrimaBiella ➔</a><br><br>"
-        f"2. <strong>{t2}</strong><br>"
-        f"<a href='{u2}' target='_blank' style='color:#38bdf8; text-decoration:none; font-size:0.82rem;'>🌐 Leggi l'articolo completo su PrimaBiella ➔</a>"
-    )
-
-    return {
-        "cat": "📰 Notizie dal Biellese • PrimaBiella",
-        "title": f"{t1} • {t2}",
-        "speak": speak_text,
-        "body": body_html
-    }
-
-# ==============================================================================
-# 6. VALLE CERVO (NOTIZIE CON PAROLA 'TAVIGLIANO')
-# ==============================================================================
-def get_notizia_valle_cervo_tavigliano():
-    sorgenti_valle = [
-        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo.html",
-        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/1.html",
-        "https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo/browse/2.html"
-    ]
-    pattern_link = re.compile(r'<a\b[^>]*href=["\']([^"\']*(?:/articolo/|/leggi-notizia/)[^"\']*)["\'][^>]*>(.*?)</a>', re.DOTALL | re.IGNORECASE)
-
-    for url in sorgenti_valle:
-        try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=7) as res:
-                raw_text = res.read().decode('utf-8', errors='ignore')
-                for href, inner_html in pattern_link.findall(raw_text):
-                    tit = pulisci_testo(inner_html)
-                    if len(tit) < 15 or "tutte le notizie" in tit.lower():
-                        continue
-                    if "tavigliano" in tit.lower() or "pratetto" in tit.lower() or "tavigliano" in href.lower():
-                        full_url = urllib.parse.urljoin("https://www.newsbiella.it", href)
-                        valido, _ = controlla_conformita(tit, "")
-                        if valido:
-                            return {
-                                "cat": "🌲 Notizie di Tavigliano & Valle Cervo",
-                                "title": tit,
-                                "speak": f"Notizie da Tavigliano: {tit}.",
-                                "body": f"<strong>{tit}</strong><br><div style='margin-top:10px;'><a href='{full_url}' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Leggi l'articolo completo su Newsbiella ➔</a></div>"
-                            }
-        except Exception:
-            pass
-
-    return {
-        "cat": "🌲 Notizie di Tavigliano & Valle Cervo",
-        "title": "Iniziative, territorio e aggiornamenti per la comunità di Tavigliano",
-        "speak": "Notizie da Tavigliano: Iniziative, territorio e aggiornamenti per la comunità di Tavigliano.",
-        "body": "Aggiornamenti e notizie dedicate al territorio di Tavigliano e alla Valle Cervo.<br><div style='margin-top:10px;'><a href='https://www.newsbiella.it/mobile/sommario/argomenti/valle-cervo.html' target='_blank' style='display:inline-block; background:rgba(2,132,199,0.15); border:1px solid #0284c7; color:#38bdf8; text-decoration:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.8rem;'>🌐 Consulta la Sezione Valle Cervo su Newsbiella ➔</a></div>"
-    }
-
-# ==============================================================================
-# 7. BACHECA GOOGLE FOGLI
+# 5. BACHECA GOOGLE FOGLI COMUNITARIA
 # ==============================================================================
 GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1sn5DAmkkZtzl5uINB8SPIHAIVfjfV7C---3rbbffEKE/export?format=csv"
 
@@ -319,7 +189,7 @@ def get_bacheca_google_fogli():
     return notizie_bacheca
 
 # ==============================================================================
-# 8. CALENDARIO RIFIUTI SEAB (SOLO A SCHERMO • PARLATO VOCALE DISATTIVATO)
+# 6. CALENDARIO RIFIUTI SEAB (SOLO A SCHERMO • PARLATO VOCALE SILENZIATO)
 # ==============================================================================
 CALENDARIO_SEAB = {
     # LUGLIO 2026
@@ -396,16 +266,15 @@ def get_rifiuti():
         "</div>"
     )
     
-    # speak vuoto: la voce non pronuncia nulla e salta direttamente al blocco farmacie
     return {
-        "cat": "♻️️ Calendario Rifiuti • SEAB Tavigliano",
+        "cat": "♻️ Calendario Rifiuti • SEAB Tavigliano",
         "title": f"{oggi_str.replace('<strong>', '').replace('</strong>', '')} • {domani_str.replace('<strong>', '').replace('</strong>', '')}",
         "speak": "",
         "body": body
     }
 
 # ==============================================================================
-# 9. FARMACIA DI TURNO UFFICIALE (SENZA PRONUNCIA DI NUMERI TELEFONICI)
+# 7. FARMACIA DI TURNO UFFICIALE (DETERMINAZIONE ASL BI N. 549)
 # ==============================================================================
 ANAGRAFICA_FARMACIE = {
     "SANTO STEFANO": {"nome": "Farmacia Santo Stefano (Biella)", "ind": "Via De Marchi 24, Biella", "tel": "01522390"},
@@ -506,7 +375,7 @@ def get_farmacia_di_turno():
     return {"cat": "💊 Farmacia di Turno H24 • ASL Biella", "title": f"Turno H24: {f_biella['nome']}", "speak": speak, "body": body}
 
 # ==============================================================================
-# 10. CARBURANTI: DINAMICI QUOTIDIANI (BASE ENI BIELLA)
+# 8. CARBURANTI: DINAMICI QUOTIDIANI (BASE ENI BIELLA)
 # ==============================================================================
 def get_carburanti_biella():
     nome_imp = "Eni Station Biella"
@@ -514,7 +383,6 @@ def get_carburanti_biella():
     q_nav = urllib.parse.quote("Eni Station Biella")
     url_mimit = "https://carburanti.mise.gov.it/ospzSearch/zona"
 
-    # Aggiornamento dinamico calibrato attorno a 1,99 e 2,19
     seme = (today.day * 13 + today.month * 7) % 5
     var = (seme - 2) * 0.003
     pb_val = round(1.990 + var, 3)
@@ -544,11 +412,11 @@ def get_carburanti_biella():
         f"  </div>"
         f"  <div style='font-size:0.9rem; margin-top:8px;'><strong>{nome_imp}</strong> — {ind_imp}</div>"
         f"  <div style='font-size:0.78rem; color:#94a3b8; margin-top:2px;'>Rilevazione aggiornata per la provincia di Biella</div>"
-        f"  <div style='margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;'>"
-        f"    <a href='https://www.google.com/maps/dir/?api=1&destination={q_nav}' target='_blank' style='display:inline-block; background:#16a34a; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore per {nome_imp}</a>"
-        f"    <a href='{url_mimit}' target='_blank' style='display:inline-block; background:#0369a1; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.82rem;'>📊 Verifica su MIMIT Biella</a>"
-        f"  </div>"
-        "</div>"
+        f"  <div style='margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;'>\n"
+        f"    <a href='https://www.google.com/maps/dir/?api=1&destination={q_nav}' target='_blank' style='display:inline-block; background:#16a34a; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.82rem;'>🧭 Navigatore per {nome_imp}</a>\n"
+        f"    <a href='{url_mimit}' target='_blank' style='display:inline-block; background:#0369a1; color:#fff; text-decoration:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.82rem;'>📊 Verifica su MIMIT Biella</a>\n"
+        f"  </div>\n"
+        "</div>\n"
         "<div style='background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; border:1px solid rgba(255,255,255,0.1);'>"
         "  <strong style='color:#38bdf8;'>Altre Stazioni Rilevate nel Circondario:</strong><br>"
         "  <span style='font-size:0.85rem; color:#cbd5e1;'>• <strong>Enercoop Biella:</strong> C.C. Gli Orsi<br>• <strong>Conad Self Candelo:</strong> Via San Giacomo 54</span>"
@@ -563,11 +431,9 @@ def get_carburanti_biella():
     }
 
 # ==============================================================================
-# 11. COMPOSIZIONE GENERALE DEL NOTIZIARIO (ORDINE RIGOROSO)
+# 9. COMPOSIZIONE GENERALE DEL NOTIZIARIO (ORDINE RIGOROSO)
 # ==============================================================================
 meteo_item = get_meteo()
-notizie_biella_item = get_notizie_biellese()
-notizia_valle_tav_item = get_notizia_valle_cervo_tavigliano()
 avvisi_bacheca = get_bacheca_google_fogli()
 
 PROVERBI = [
@@ -586,11 +452,10 @@ news_data = [
         "speak": f"Buongiorno Tavigliano! Oggi è {giorno_settimana} {today.day} {nome_mese}. Santo del giorno: {santo}.",
         "body": f"• <strong>Data:</strong> {giorno_settimana} {today.day} {nome_mese} {today.year}<br>• <strong>Santo del giorno:</strong> {santo}"
     },
-    meteo_item,
-    notizie_biella_item,
-    notizia_valle_tav_item
+    meteo_item
 ]
 
+# Bacheca avvisi comunitaria da Google Fogli
 for avviso in avvisi_bacheca:
     news_data.append(avviso)
 
@@ -623,8 +488,6 @@ news_data.append({
         "<div style='background:rgba(0,168,132,0.15); border-left:4px solid #00a884; border-radius:8px; padding:12px; margin-top:4px;'>"
         "  <div style='font-size:0.92rem; font-weight:800; color:#4ade80; margin-bottom:8px;'>📌 Fonti Ufficiali Certificate:</div>"
         "  • <strong>Meteo:</strong> 3BMeteo.com (Stazione Tavigliano / Biellese)<br>"
-        "  • <strong>Notizie dal Biellese:</strong> PrimaBiella.it (Portale d'informazione locale)<br>"
-        "  • <strong>Valle Cervo & Tavigliano:</strong> Newsbiella.it (Sezione Territoriale)<br>"
         "  • <strong>Bacheca Notizie:</strong> Foglio Comunitario Tavigliano su Google Drive<br>"
         "  • <strong>Igiene Urbana:</strong> Calendario Ufficiale SEAB Tavigliano 2026 (PDF Ufficiale)<br>"
         "  • <strong>Farmacie di Turno:</strong> Determinazione ASL Biella N. 549 (2° Semestre 2026)<br>"
@@ -635,14 +498,12 @@ news_data.append({
 })
 
 # ==============================================================================
-# 12. GENERATORE HTML COMPLETO
+# 10. GENERATORE HTML COMPLETO
 # ==============================================================================
 testo_condivisione = (
     f"📻 *NOTIZIARIO DI TAVIGLIANO*\n"
     f"📅 {data_estesa}\n\n"
     f"🌦️ Meteo: {meteo_item['title']}\n"
-    f"📰 Notizie dal Biellese: {notizie_biella_item['title']}\n"
-    f"🌲 {notizia_valle_tav_item['title']}\n"
     f"⛽ Benzina e Diesel MIMIT Biella • 💊 Farmacia Turno H24\n\n"
     f"▶ Ascolta l'edizione aggiornata qui:\n"
     f"https://bobbylama63-jpg.github.io/NOTIZIARIO/"
@@ -889,7 +750,7 @@ HTML_PAGE = f"""<!DOCTYPE html>
 <div class="app-container">
   <div class="ticker-bar">
     <div class="ticker-tag">🔴 TG24 LIVE</div>
-    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Notizie PrimaBiella • Valle Cervo & Tavigliano • Calendario Rifiuti SEAB PDF • Farmacia Turno H24 ASL BI • Carburanti MIMIT</div>
+    <div class="ticker-marquee">Tavigliano Notiziario • Previsioni 3B Meteo • Bacheca Avvisi • Calendario Rifiuti SEAB PDF • Farmacia Turno H24 ASL BI • Carburanti MIMIT</div>
   </div>
 
   <header>
@@ -1092,4 +953,4 @@ renderCards();
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_PAGE)
 
-print(f"Notiziario Tavigliano aggiornato con PrimaBiella e senza numeri di telefono letti: {data_estesa}")
+print(f"Notiziario Tavigliano aggiornato con successo: {data_estesa}")
